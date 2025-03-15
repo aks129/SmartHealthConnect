@@ -54,6 +54,29 @@ export function ConnectCard() {
       setIsConnecting(true);
       setShowAuthModal(true);
       
+      // Special handling for demo connection
+      if (selectedProvider === "demo") {
+        // Use the demo API endpoint to establish a session with sample data
+        const response = await fetch('/api/fhir/demo/connect', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to connect to demo server");
+        }
+        
+        // Redirect to dashboard after a brief delay
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1500);
+        
+        return;
+      }
+      
+      // Normal SMART on FHIR flow for real providers
       // Get the FHIR server URL
       let fhirServerUrl = "";
       if (selectedProvider === "other") {

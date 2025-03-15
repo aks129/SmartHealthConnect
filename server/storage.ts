@@ -49,10 +49,19 @@ export class MemStorage implements IStorage {
     const id = this.sessionCurrentId++;
     const createdAt = new Date();
     
+    // Ensure all properties are properly set (not undefined)
     const session: FhirSession = {
-      ...insertSession,
       id,
-      createdAt
+      createdAt,
+      provider: insertSession.provider,
+      patientId: insertSession.patientId || null,
+      scope: insertSession.scope || null,
+      userId: insertSession.userId || null,
+      accessToken: insertSession.accessToken || null,
+      refreshToken: insertSession.refreshToken || null,
+      tokenExpiry: insertSession.tokenExpiry || null,
+      fhirServer: insertSession.fhirServer || null,
+      state: insertSession.state || null
     };
     
     this.fhirSessions.set(id, session);

@@ -8,6 +8,13 @@ export interface FhirProvider {
 
 export const fhirProviders: FhirProvider[] = [
   {
+    id: 'demo',
+    name: 'Demo Connection (Sample Data)',
+    url: '/api/fhir/demo',
+    description: 'Connect to a sample dataset to try the application',
+    logoIcon: 'ri-file-list-3-line'
+  },
+  {
     id: 'epic',
     name: 'Epic MyChart',
     url: 'https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4',

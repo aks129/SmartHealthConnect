@@ -2,9 +2,892 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import FHIR from 'fhirclient';
+import { v4 as uuidv4 } from 'uuid';
+
+// Sample FHIR data for demo purposes
+const samplePatient = {
+  resourceType: "Patient",
+  id: "demo-patient-1",
+  active: true,
+  name: [
+    {
+      use: "official",
+      family: "Smith",
+      given: ["John", "William"]
+    }
+  ],
+  telecom: [
+    {
+      system: "phone",
+      value: "555-123-4567",
+      use: "home"
+    },
+    {
+      system: "email",
+      value: "john.smith@example.com",
+      use: "work"
+    }
+  ],
+  gender: "male",
+  birthDate: "1980-07-15",
+  address: [
+    {
+      use: "home",
+      line: ["123 Main St"],
+      city: "Anytown",
+      state: "CA",
+      postalCode: "12345",
+      country: "USA"
+    }
+  ],
+  identifier: [
+    {
+      use: "official",
+      type: {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/v2-0203",
+            code: "MR",
+            display: "Medical Record Number"
+          }
+        ],
+        text: "Medical Record Number"
+      },
+      system: "http://hospital.example.org",
+      value: "MRN-7893214"
+    }
+  ]
+};
+
+const sampleConditions = [
+  {
+    resourceType: "Condition",
+    id: "demo-condition-1",
+    clinicalStatus: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/condition-clinical",
+          code: "active",
+          display: "Active"
+        }
+      ]
+    },
+    verificationStatus: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+          code: "confirmed",
+          display: "Confirmed"
+        }
+      ]
+    },
+    category: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/condition-category",
+            code: "problem-list-item",
+            display: "Problem List Item"
+          }
+        ]
+      }
+    ],
+    code: {
+      coding: [
+        {
+          system: "http://snomed.info/sct",
+          code: "73211009",
+          display: "Diabetes mellitus type 2"
+        }
+      ],
+      text: "Type 2 Diabetes"
+    },
+    subject: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    onsetDateTime: "2018-03-15",
+    recordedDate: "2018-03-15"
+  },
+  {
+    resourceType: "Condition",
+    id: "demo-condition-2",
+    clinicalStatus: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/condition-clinical",
+          code: "active",
+          display: "Active"
+        }
+      ]
+    },
+    verificationStatus: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+          code: "confirmed",
+          display: "Confirmed"
+        }
+      ]
+    },
+    category: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/condition-category",
+            code: "problem-list-item",
+            display: "Problem List Item"
+          }
+        ]
+      }
+    ],
+    code: {
+      coding: [
+        {
+          system: "http://snomed.info/sct",
+          code: "38341003",
+          display: "Hypertension"
+        }
+      ],
+      text: "Hypertension"
+    },
+    subject: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    onsetDateTime: "2019-08-10",
+    recordedDate: "2019-08-10"
+  },
+  {
+    resourceType: "Condition",
+    id: "demo-condition-3",
+    clinicalStatus: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/condition-clinical",
+          code: "resolved",
+          display: "Resolved"
+        }
+      ]
+    },
+    verificationStatus: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+          code: "confirmed",
+          display: "Confirmed"
+        }
+      ]
+    },
+    category: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/condition-category",
+            code: "encounter-diagnosis",
+            display: "Encounter Diagnosis"
+          }
+        ]
+      }
+    ],
+    code: {
+      coding: [
+        {
+          system: "http://snomed.info/sct",
+          code: "8098009",
+          display: "Acute bacterial sinusitis"
+        }
+      ],
+      text: "Acute Sinusitis"
+    },
+    subject: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    onsetDateTime: "2023-01-05",
+    abatementDateTime: "2023-01-20",
+    recordedDate: "2023-01-06"
+  }
+];
+
+const sampleObservations = [
+  {
+    resourceType: "Observation",
+    id: "demo-observation-1",
+    status: "final",
+    category: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/observation-category",
+            code: "laboratory",
+            display: "Laboratory"
+          }
+        ],
+        text: "Laboratory"
+      }
+    ],
+    code: {
+      coding: [
+        {
+          system: "http://loinc.org",
+          code: "2093-3",
+          display: "Cholesterol [Mass/volume] in Serum or Plasma"
+        }
+      ],
+      text: "Cholesterol"
+    },
+    subject: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    effectiveDateTime: "2023-02-15T08:30:00Z",
+    issued: "2023-02-15T12:45:00Z",
+    valueQuantity: {
+      value: 210,
+      unit: "mg/dL",
+      system: "http://unitsofmeasure.org",
+      code: "mg/dL"
+    },
+    referenceRange: [
+      {
+        low: {
+          value: 0,
+          unit: "mg/dL",
+          system: "http://unitsofmeasure.org",
+          code: "mg/dL"
+        },
+        high: {
+          value: 200,
+          unit: "mg/dL",
+          system: "http://unitsofmeasure.org",
+          code: "mg/dL"
+        },
+        text: "0-200 mg/dL"
+      }
+    ],
+    interpretation: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+            code: "H",
+            display: "High"
+          }
+        ],
+        text: "High"
+      }
+    ]
+  },
+  {
+    resourceType: "Observation",
+    id: "demo-observation-2",
+    status: "final",
+    category: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/observation-category",
+            code: "laboratory",
+            display: "Laboratory"
+          }
+        ],
+        text: "Laboratory"
+      }
+    ],
+    code: {
+      coding: [
+        {
+          system: "http://loinc.org",
+          code: "2571-8",
+          display: "Triglyceride [Mass/volume] in Serum or Plasma"
+        }
+      ],
+      text: "Triglycerides"
+    },
+    subject: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    effectiveDateTime: "2023-02-15T08:30:00Z",
+    issued: "2023-02-15T12:45:00Z",
+    valueQuantity: {
+      value: 110,
+      unit: "mg/dL",
+      system: "http://unitsofmeasure.org",
+      code: "mg/dL"
+    },
+    referenceRange: [
+      {
+        low: {
+          value: 0,
+          unit: "mg/dL",
+          system: "http://unitsofmeasure.org",
+          code: "mg/dL"
+        },
+        high: {
+          value: 150,
+          unit: "mg/dL",
+          system: "http://unitsofmeasure.org",
+          code: "mg/dL"
+        },
+        text: "0-150 mg/dL"
+      }
+    ],
+    interpretation: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+            code: "N",
+            display: "Normal"
+          }
+        ],
+        text: "Normal"
+      }
+    ]
+  },
+  {
+    resourceType: "Observation",
+    id: "demo-observation-3",
+    status: "final",
+    category: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/observation-category",
+            code: "vital-signs",
+            display: "Vital Signs"
+          }
+        ],
+        text: "Vital Signs"
+      }
+    ],
+    code: {
+      coding: [
+        {
+          system: "http://loinc.org",
+          code: "8867-4",
+          display: "Heart rate"
+        }
+      ],
+      text: "Heart Rate"
+    },
+    subject: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    effectiveDateTime: "2023-03-10T09:15:00Z",
+    issued: "2023-03-10T09:20:00Z",
+    valueQuantity: {
+      value: 72,
+      unit: "beats/minute",
+      system: "http://unitsofmeasure.org",
+      code: "/min"
+    },
+    referenceRange: [
+      {
+        low: {
+          value: 60,
+          unit: "beats/minute",
+          system: "http://unitsofmeasure.org",
+          code: "/min"
+        },
+        high: {
+          value: 100,
+          unit: "beats/minute",
+          system: "http://unitsofmeasure.org",
+          code: "/min"
+        },
+        text: "60-100 beats/minute"
+      }
+    ],
+    interpretation: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+            code: "N",
+            display: "Normal"
+          }
+        ],
+        text: "Normal"
+      }
+    ]
+  },
+  {
+    resourceType: "Observation",
+    id: "demo-observation-4",
+    status: "final",
+    category: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/observation-category",
+            code: "vital-signs",
+            display: "Vital Signs"
+          }
+        ],
+        text: "Vital Signs"
+      }
+    ],
+    code: {
+      coding: [
+        {
+          system: "http://loinc.org",
+          code: "8480-6",
+          display: "Systolic blood pressure"
+        }
+      ],
+      text: "Blood Pressure"
+    },
+    subject: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    effectiveDateTime: "2023-03-10T09:15:00Z",
+    issued: "2023-03-10T09:20:00Z",
+    component: [
+      {
+        code: {
+          coding: [
+            {
+              system: "http://loinc.org",
+              code: "8480-6",
+              display: "Systolic blood pressure"
+            }
+          ],
+          text: "Systolic"
+        },
+        valueQuantity: {
+          value: 138,
+          unit: "mmHg",
+          system: "http://unitsofmeasure.org",
+          code: "mm[Hg]"
+        },
+        interpretation: [
+          {
+            coding: [
+              {
+                system: "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+                code: "H",
+                display: "High"
+              }
+            ],
+            text: "High"
+          }
+        ]
+      },
+      {
+        code: {
+          coding: [
+            {
+              system: "http://loinc.org",
+              code: "8462-4",
+              display: "Diastolic blood pressure"
+            }
+          ],
+          text: "Diastolic"
+        },
+        valueQuantity: {
+          value: 88,
+          unit: "mmHg",
+          system: "http://unitsofmeasure.org",
+          code: "mm[Hg]"
+        },
+        interpretation: [
+          {
+            coding: [
+              {
+                system: "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+                code: "N",
+                display: "Normal"
+              }
+            ],
+            text: "Normal"
+          }
+        ]
+      }
+    ]
+  }
+];
+
+const sampleMedications = [
+  {
+    resourceType: "MedicationRequest",
+    id: "demo-medication-1",
+    status: "active",
+    intent: "order",
+    medicationCodeableConcept: {
+      coding: [
+        {
+          system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+          code: "897122",
+          display: "Metformin 500 MG Oral Tablet"
+        }
+      ],
+      text: "Metformin 500 mg oral tablet"
+    },
+    subject: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    authoredOn: "2022-10-15",
+    requester: {
+      reference: "Practitioner/demo-practitioner-1",
+      display: "Dr. Jane Williams"
+    },
+    dosageInstruction: [
+      {
+        text: "Take 1 tablet by mouth twice daily with meals",
+        timing: {
+          repeat: {
+            frequency: 2,
+            period: 1,
+            periodUnit: "d"
+          }
+        },
+        route: {
+          coding: [
+            {
+              system: "http://snomed.info/sct",
+              code: "26643006",
+              display: "Oral route"
+            }
+          ],
+          text: "Oral"
+        },
+        doseAndRate: [
+          {
+            type: {
+              coding: [
+                {
+                  system: "http://terminology.hl7.org/CodeSystem/dose-rate-type",
+                  code: "ordered",
+                  display: "Ordered"
+                }
+              ]
+            },
+            doseQuantity: {
+              value: 1,
+              unit: "tablet",
+              system: "http://terminology.hl7.org/CodeSystem/v3-orderableDrugForm",
+              code: "TAB"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    resourceType: "MedicationRequest",
+    id: "demo-medication-2",
+    status: "active",
+    intent: "order",
+    medicationCodeableConcept: {
+      coding: [
+        {
+          system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+          code: "197361",
+          display: "Amlodipine 5 MG Oral Tablet"
+        }
+      ],
+      text: "Amlodipine 5 mg oral tablet"
+    },
+    subject: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    authoredOn: "2022-09-05",
+    requester: {
+      reference: "Practitioner/demo-practitioner-1",
+      display: "Dr. Jane Williams"
+    },
+    dosageInstruction: [
+      {
+        text: "Take 1 tablet by mouth once daily",
+        timing: {
+          repeat: {
+            frequency: 1,
+            period: 1,
+            periodUnit: "d"
+          }
+        },
+        route: {
+          coding: [
+            {
+              system: "http://snomed.info/sct",
+              code: "26643006",
+              display: "Oral route"
+            }
+          ],
+          text: "Oral"
+        },
+        doseAndRate: [
+          {
+            type: {
+              coding: [
+                {
+                  system: "http://terminology.hl7.org/CodeSystem/dose-rate-type",
+                  code: "ordered",
+                  display: "Ordered"
+                }
+              ]
+            },
+            doseQuantity: {
+              value: 1,
+              unit: "tablet",
+              system: "http://terminology.hl7.org/CodeSystem/v3-orderableDrugForm",
+              code: "TAB"
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+
+const sampleAllergies = [
+  {
+    resourceType: "AllergyIntolerance",
+    id: "demo-allergy-1",
+    clinicalStatus: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+          code: "active",
+          display: "Active"
+        }
+      ]
+    },
+    verificationStatus: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+          code: "confirmed",
+          display: "Confirmed"
+        }
+      ]
+    },
+    type: "allergy",
+    category: ["medication"],
+    criticality: "high",
+    code: {
+      coding: [
+        {
+          system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+          code: "7980",
+          display: "Penicillin"
+        }
+      ],
+      text: "Penicillin"
+    },
+    patient: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    onsetDateTime: "2015-06-12",
+    recordedDate: "2015-06-12",
+    recorder: {
+      reference: "Practitioner/demo-practitioner-1",
+      display: "Dr. Jane Williams"
+    },
+    reaction: [
+      {
+        substance: {
+          coding: [
+            {
+              system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+              code: "7980",
+              display: "Penicillin"
+            }
+          ]
+        },
+        manifestation: [
+          {
+            coding: [
+              {
+                system: "http://snomed.info/sct",
+                code: "247472004",
+                display: "Hives"
+              }
+            ],
+            text: "Hives"
+          }
+        ],
+        severity: "severe"
+      }
+    ]
+  }
+];
+
+const sampleImmunizations = [
+  {
+    resourceType: "Immunization",
+    id: "demo-immunization-1",
+    status: "completed",
+    vaccineCode: {
+      coding: [
+        {
+          system: "http://hl7.org/fhir/sid/cvx",
+          code: "158",
+          display: "Influenza, injectable, quadrivalent, contains preservative"
+        }
+      ],
+      text: "Influenza vaccine"
+    },
+    patient: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    occurrenceDateTime: "2022-10-30",
+    primarySource: true,
+    location: {
+      reference: "Location/demo-location-1",
+      display: "Community Clinic"
+    },
+    performer: [
+      {
+        actor: {
+          reference: "Practitioner/demo-practitioner-1",
+          display: "Dr. Jane Williams"
+        }
+      }
+    ],
+    note: [
+      {
+        text: "Patient tolerated the vaccination well with no immediate adverse effects."
+      }
+    ]
+  },
+  {
+    resourceType: "Immunization",
+    id: "demo-immunization-2",
+    status: "completed",
+    vaccineCode: {
+      coding: [
+        {
+          system: "http://hl7.org/fhir/sid/cvx",
+          code: "208",
+          display: "COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose"
+        }
+      ],
+      text: "COVID-19 mRNA Vaccine"
+    },
+    patient: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    occurrenceDateTime: "2021-03-15",
+    primarySource: true,
+    location: {
+      reference: "Location/demo-location-1",
+      display: "Community Clinic"
+    },
+    performer: [
+      {
+        actor: {
+          reference: "Practitioner/demo-practitioner-2",
+          display: "Dr. Michael Chen"
+        }
+      }
+    ],
+    lotNumber: "EH9899",
+    expirationDate: "2021-06-30",
+    site: {
+      coding: [
+        {
+          system: "http://snomed.info/sct",
+          code: "368208006",
+          display: "Left upper arm structure"
+        }
+      ]
+    },
+    doseQuantity: {
+      value: 0.3,
+      unit: "mL",
+      system: "http://unitsofmeasure.org",
+      code: "mL"
+    }
+  }
+];
+
+// Demo FHIR client that returns sample data
+class DemoFhirClient {
+  constructor(patientId) {
+    this.patientId = patientId;
+  }
+
+  async request(resourceUrl) {
+    // Parse the resource request
+    if (resourceUrl.startsWith('Patient/')) {
+      return samplePatient;
+    } else if (resourceUrl.startsWith('Condition?patient=')) {
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: sampleConditions.map(resource => ({ resource }))
+      };
+    } else if (resourceUrl.startsWith('Observation?patient=')) {
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: sampleObservations.map(resource => ({ resource }))
+      };
+    } else if (resourceUrl.startsWith('MedicationRequest?patient=')) {
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: sampleMedications.map(resource => ({ resource }))
+      };
+    } else if (resourceUrl.startsWith('AllergyIntolerance?patient=')) {
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: sampleAllergies.map(resource => ({ resource }))
+      };
+    } else if (resourceUrl.startsWith('Immunization?patient=')) {
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: sampleImmunizations.map(resource => ({ resource }))
+      };
+    } else {
+      return { entry: [] };
+    }
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
+  
+  // Demo connection endpoint
+  app.post('/api/fhir/demo/connect', async (req: Request, res: Response) => {
+    try {
+      // Create a demo FHIR session
+      const sessionData = {
+        provider: 'demo',
+        accessToken: 'demo_access_token_' + uuidv4(),
+        refreshToken: 'demo_refresh_token_' + uuidv4(),
+        tokenExpiry: new Date(Date.now() + 3600 * 1000), // 1 hour from now
+        fhirServer: '/api/fhir/demo',
+        patientId: 'demo-patient-1',
+        scope: 'patient/*.read',
+        state: uuidv4()
+      };
+      
+      // Save to storage
+      const session = await storage.createFhirSession(sessionData);
+      
+      res.status(200).json({
+        success: true,
+        message: 'Demo session created successfully'
+      });
+    } catch (error) {
+      console.error('Error creating demo session:', error);
+      res.status(500).json({ message: 'Failed to create demo session' });
+    }
+  });
   
   // Current FHIR session route
   app.get('/api/fhir/sessions/current', async (req: Request, res: Response) => {
@@ -217,9 +1100,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 // Helper function to create an authenticated FHIR client
 async function createFhirClient(session: any) {
+  // Special handling for demo provider
+  if (session.provider === 'demo') {
+    return new DemoFhirClient(session.patientId);
+  }
+  
   // Create a client configuration based on the session
   const clientConfig = {
-    baseUrl: session.fhirServer,
+    serverUrl: session.fhirServer,
     tokenResponse: {
       access_token: session.accessToken,
       refresh_token: session.refreshToken,
