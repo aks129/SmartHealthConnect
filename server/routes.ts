@@ -814,11 +814,13 @@ const sampleImmunizations = [
 
 // Demo FHIR client that returns sample data
 class DemoFhirClient {
-  constructor(patientId) {
+  patientId: string;
+  
+  constructor(patientId: string) {
     this.patientId = patientId;
   }
 
-  async request(resourceUrl) {
+  async request(resourceUrl: string) {
     // Parse the resource request
     if (resourceUrl.startsWith('Patient/')) {
       return samplePatient;
@@ -1106,13 +1108,13 @@ async function createFhirClient(session: any) {
   }
   
   // Create a client configuration based on the session
-  const clientConfig = {
+  const clientConfig: any = {
     serverUrl: session.fhirServer,
     tokenResponse: {
       access_token: session.accessToken,
       refresh_token: session.refreshToken,
       expires_in: 3600, // Assume 1 hour if we don't know
-      token_type: 'Bearer',
+      token_type: 'Bearer' as const, // Force the correct type
       scope: session.scope
     }
   };

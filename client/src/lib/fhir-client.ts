@@ -22,8 +22,9 @@ let currentFhirSession: any = null;
 
 /**
  * Initialize SMART on FHIR authentication
+ * @returns The authorization URL to redirect to
  */
-export async function initializeSmartAuth(fhirServerUrl: string, redirectUri?: string) {
+export async function initializeSmartAuth(fhirServerUrl: string, redirectUri?: string): Promise<string> {
   try {
     // Generate a state parameter to protect against CSRF
     const state = uuidv4();

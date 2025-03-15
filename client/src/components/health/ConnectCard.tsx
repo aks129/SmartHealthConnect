@@ -96,9 +96,13 @@ export function ConnectCard() {
       const authUrl = await initializeSmartAuth(fhirServerUrl);
       
       // Redirect to the authorization URL after a brief delay
-      setTimeout(() => {
-        window.location.href = authUrl;
-      }, 1500);
+      if (authUrl) {
+        setTimeout(() => {
+          window.location.href = authUrl;
+        }, 1500);
+      } else {
+        throw new Error("Failed to generate authentication URL");
+      }
       
     } catch (error) {
       console.error("Error connecting to FHIR server:", error);
