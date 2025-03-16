@@ -1110,6 +1110,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Care Gaps endpoint - HEDIS CQL implementation
+  app.get('/api/fhir/care-gaps', async (req: Request, res: Response) => {
+    try {
+      const session = await storage.getCurrentFhirSession();
+      
+      if (!session) {
+        return res.status(401).json({ message: 'No active FHIR session' });
+      }
+      
+      // Create an authenticated FHIR client
+      const client = await createFhirClient(session);
+      
+      // Gather all required data for care gap evaluation
+      const patientRequest = client.request(`Patient/${session.patientId}`);
+      const conditionsRequest = client.request(`Condition?patient=${session.patientId}`);
+      const observationsRequest = client.request(`Observation?patient=${session.patientId}`);
+      const medicationsRequest = client.request(`MedicationRequest?patient=${session.patientId}`);
+      const immunizationsRequest = client.request(`Immunization?patient=${session.patientId}`);
+      
+      // Fetch all resources in parallel
+      const [patient, conditions, observations, medications, immunizations] = 
+        await Promise.all([
+          patientRequest, 
+          conditionsRequest, 
+          observationsRequest, 
+          medicationsRequest, 
+          immunizationsRequest
+        ]);
+      
+      // Normalize data structure
+      const patientResource = patient;
+      const conditionResources = conditions.entry ? 
+        conditions.entry.map((entry: any) => entry.resource) : [];
+      const observationResources = observations.entry ? 
+        observations.entry.map((entry: any) => entry.resource) : [];
+      const medicationResources = medications.entry ? 
+        medications.entry.map((entry: any) => entry.resource) : [];
+      const immunizationResources = immunizations.entry ? 
+        immunizations.entry.map((entry: any) => entry.resource) : [];
+      
+      // Prepare health context for care gap evaluation
+      const healthContext: PatientHealthContext = {
+        patient: patientResource,
+        conditions: conditionResources,
+        observations: observationResources,
+        medications: medicationResources,
+        immunizations: immunizationResources
+      };
+      
+      // Evaluate care gaps
+      const careGaps = careGapsService.evaluateAllCareGaps(healthContext);
+      
+      res.json(careGaps);
+    } catch (error) {
+      console.error('Error evaluating care gaps:', error);
+      res.status(500).json({ message: 'Failed to evaluate care gaps' });
+    }
+  });
+  
   // Chat API Endpoints
   
   // Get chat history

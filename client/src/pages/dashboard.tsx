@@ -6,12 +6,13 @@ import { PatientSummaryIPS } from '@/components/health/PatientSummaryIPS';
 import { ConditionsSection } from '@/components/health/ConditionsSection';
 import { ObservationsSection } from '@/components/health/ObservationsSection';
 import { ConnectionDetails } from '@/components/health/ConnectionDetails';
+import { CareGapsSection } from '@/components/health/CareGapsSection';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { completeSmartAuth, checkAuth } from '@/lib/fhir-client';
 import { ErrorModal } from '@/components/auth/ErrorModal';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, MessageSquare, FileSpreadsheet } from 'lucide-react';
+import { FileText, MessageSquare, FileSpreadsheet, AlertTriangle } from 'lucide-react';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -95,6 +96,10 @@ export default function Dashboard() {
                 <FileSpreadsheet className="h-4 w-4" />
                 <span className="hidden sm:inline">Patient Summary (IPS)</span>
               </TabsTrigger>
+              <TabsTrigger value="care-gaps" className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="hidden sm:inline">Care Gaps</span>
+              </TabsTrigger>
               <TabsTrigger value="chat" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 <span className="hidden sm:inline">AI Health Assistant</span>
@@ -110,6 +115,10 @@ export default function Dashboard() {
             
             <TabsContent value="ips">
               <PatientSummaryIPS />
+            </TabsContent>
+
+            <TabsContent value="care-gaps">
+              <CareGapsSection />
             </TabsContent>
             
             <TabsContent value="chat">
