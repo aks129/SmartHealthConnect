@@ -31,6 +31,10 @@ export const fhirSessions = pgTable("fhir_sessions", {
   current: boolean("current").default(false),
   endedAt: timestamp("ended_at"),
   createdAt: timestamp("created_at").defaultNow(),
+  // HAPI FHIR server migration information
+  migrated: boolean("migrated").default(false),
+  migrationDate: timestamp("migration_date"),
+  migrationCounts: jsonb("migration_counts"),
 });
 
 export const insertFhirSessionSchema = createInsertSchema(fhirSessions).omit({

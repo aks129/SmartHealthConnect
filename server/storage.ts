@@ -14,6 +14,11 @@ export interface IStorage {
   getFhirSession(id: number): Promise<FhirSession | undefined>;
   getCurrentFhirSession(): Promise<FhirSession | undefined>;
   endCurrentFhirSession(): Promise<boolean>;
+  updateFhirSessionMigration(
+    sessionId: number, 
+    migrated: boolean, 
+    counts?: Record<string, number>
+  ): Promise<FhirSession>;
   
   // Chat Message Management
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
@@ -73,7 +78,11 @@ export class MemStorage implements IStorage {
       fhirServer: insertSession.fhirServer || null,
       state: insertSession.state || null,
       current: insertSession.current || false,
-      endedAt: null
+      endedAt: null,
+      // Add migration fields
+      migrated: false,
+      migrationDate: null,
+      migrationCounts: null
     };
     
     // If current is set to true, update any other current sessions
@@ -125,6 +134,32 @@ export class MemStorage implements IStorage {
     currentSession.endedAt = new Date();
     this.fhirSessions.set(currentSession.id, currentSession);
     return true;
+  }
+  
+  async updateFhirSessionMigration(
+    sessionId: number, 
+    migrated: boolean, 
+    counts?: Record<string, number>
+  ): Promise<FhirSession> {
+    const session = await this.getFhirSession(sessionId);
+    
+    if (!session) {
+      throw new Error(`FHIR session with ID ${sessionId} not found`);
+    }
+    
+    // Update migration information
+    session.migrated = migrated;
+    
+    if (migrated) {
+      session.migrationDate = new Date();
+      session.migrationCounts = counts || null;
+    } else {
+      session.migrationDate = null;
+      session.migrationCounts = null;
+    }
+    
+    this.fhirSessions.set(sessionId, session);
+    return session;
   }
   
   async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {

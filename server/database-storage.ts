@@ -91,6 +91,34 @@ export class DatabaseStorage implements IStorage {
     
     return result.length > 0;
   }
+  
+  async updateFhirSessionMigration(
+    sessionId: number, 
+    migrated: boolean, 
+    counts?: Record<string, number>
+  ): Promise<FhirSession> {
+    const updateData: Partial<FhirSession> = { migrated };
+    
+    if (migrated) {
+      updateData.migrationDate = new Date();
+      updateData.migrationCounts = counts || null;
+    } else {
+      updateData.migrationDate = null;
+      updateData.migrationCounts = null;
+    }
+    
+    const [updatedSession] = await db
+      .update(fhirSessions)
+      .set(updateData)
+      .where(eq(fhirSessions.id, sessionId))
+      .returning();
+    
+    if (!updatedSession) {
+      throw new Error(`FHIR session with ID ${sessionId} not found`);
+    }
+    
+    return updatedSession;
+  }
 
   // Chat Message Management
   async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {
