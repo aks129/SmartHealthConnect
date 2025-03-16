@@ -13,6 +13,7 @@ import { FhirExplorer } from '@/components/fhir/FhirExplorer';
 import { ProviderDirectory } from '@/components/provider/ProviderDirectory';
 import { ConnectedProviders } from '@/components/provider/ConnectedProviders';
 import { ConnectedOrganizations } from '@/components/provider/ConnectedOrganizations';
+import { ResearchDashboard } from '@/components/research/ResearchDashboard';
 import { completeSmartAuth, checkAuth } from '@/lib/fhir-client';
 import { ErrorModal } from '@/components/auth/ErrorModal';
 import { useToast } from '@/hooks/use-toast';
@@ -26,7 +27,8 @@ import {
   Database,
   MapPin,
   User,
-  Building 
+  Building,
+  Beaker 
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -134,6 +136,10 @@ export default function Dashboard() {
                 <MapPin className="h-4 w-4" />
                 <span className="hidden sm:inline">Provider Directory</span>
               </TabsTrigger>
+              <TabsTrigger value="research" className="flex items-center gap-2">
+                <Beaker className="h-4 w-4" />
+                <span className="hidden sm:inline">Research</span>
+              </TabsTrigger>
               <TabsTrigger value="fhir-explorer" className="flex items-center gap-2">
                 <Database className="h-4 w-4" />
                 <span className="hidden sm:inline">FHIR Explorer</span>
@@ -179,6 +185,10 @@ export default function Dashboard() {
             
             <TabsContent value="provider-directory">
               <ProviderDirectory />
+            </TabsContent>
+            
+            <TabsContent value="research">
+              <ResearchDashboard />
             </TabsContent>
             
             <TabsContent value="chat">
