@@ -266,6 +266,25 @@ export type MedicationRequest = z.infer<typeof medicationRequestSchema>;
 export type AllergyIntolerance = z.infer<typeof allergyIntoleranceSchema>;
 export type Immunization = z.infer<typeof immunizationSchema>;
 
+export const careGapSchema = z.object({
+  id: z.string(),
+  patientId: z.string(),
+  title: z.string(),
+  status: z.enum(['due', 'satisfied', 'not_applicable']),
+  description: z.string(),
+  dueDate: z.string().optional(),
+  lastPerformedDate: z.string().optional(),
+  recommendedAction: z.string(),
+  measureId: z.string(),
+  measurePeriodStart: z.string().optional(),
+  measurePeriodEnd: z.string().optional(),
+  category: z.enum(['preventive', 'chronic', 'wellness']),
+  priority: z.enum(['high', 'medium', 'low']).optional(),
+  reason: z.string().optional(),
+});
+
+export type CareGap = z.infer<typeof careGapSchema>;
+
 // Chat Messages for AI conversation feature
 export const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
