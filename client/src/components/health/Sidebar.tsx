@@ -1,6 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, Link } from 'wouter';
 import { Button } from "@/components/ui/button";
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useQuery } from "@tanstack/react-query";
 import { formatFhirDate, getPatientName, endSession } from "@/lib/fhir-client";
 import { 
@@ -12,13 +17,33 @@ import {
   Heart, 
   ShieldCheck, 
   LogOut,
-  User
+  User,
+  ChevronRight,
+  ChevronDown,
+  Clipboard,
+  ClipboardList,
+  FileText,
+  Stethoscope,
+  LineChart,
+  BarChart,
+  CalendarCheck,
+  PenTool,
+  Package,
+  FlaskConical,
+  Beaker
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { Patient } from '@shared/schema';
 
 export function Sidebar() {
   const [location, setLocation] = useLocation();
+  const [openCategories, setOpenCategories] = useState({
+    medications: false,
+    laboratory: false,
+    diagnostics: false,
+    vitals: false
+  });
+  
   const { data: patient } = useQuery<Patient>({
     queryKey: ['/api/fhir/patient'],
   });
@@ -69,7 +94,8 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="p-4">
-        <ul className="space-y-1">
+        <ul className="space-y-2">
+          {/* Summary */}
           <li>
             <Link href="#summary">
               <a className={`flex items-center px-3 py-2 rounded-lg ${location.includes('#summary') || !location.includes('#') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
@@ -78,30 +104,147 @@ export function Sidebar() {
               </a>
             </Link>
           </li>
+          
+          {/* Conditions */}
           <li>
             <Link href="#conditions">
               <a className={`flex items-center px-3 py-2 rounded-lg ${location.includes('#conditions') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                <Activity className="mr-3 h-5 w-5" />
+                <Stethoscope className="mr-3 h-5 w-5" />
                 <span>Conditions</span>
               </a>
             </Link>
           </li>
+          
+          {/* Laboratory & Diagnostics */}
           <li>
-            <Link href="#observations">
-              <a className={`flex items-center px-3 py-2 rounded-lg ${location.includes('#observations') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                <TestTube className="mr-3 h-5 w-5" />
-                <span>Lab Results</span>
-              </a>
-            </Link>
+            <Collapsible 
+              open={openCategories.laboratory} 
+              onOpenChange={(open) => setOpenCategories({...openCategories, laboratory: open})}
+              className="w-full"
+            >
+              <CollapsibleTrigger className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${location.includes('#lab') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <div className="flex items-center">
+                  <FlaskConical className="mr-3 h-5 w-5" />
+                  <span>Laboratory & Diagnostics</span>
+                </div>
+                {openCategories.laboratory ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-8 pr-2 mt-1 space-y-1">
+                <Link href="#lab-orders">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#lab-orders') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <Clipboard className="mr-2 h-4 w-4" />
+                    <span>Lab Orders</span>
+                  </a>
+                </Link>
+                <Link href="#service-requests">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#service-requests') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <ClipboardList className="mr-2 h-4 w-4" />
+                    <span>Service Requests</span>
+                  </a>
+                </Link>
+                <Link href="#diagnostic-reports">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#diagnostic-reports') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    <span>Diagnostic Reports</span>
+                  </a>
+                </Link>
+                <Link href="#observations">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#observations') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <TestTube className="mr-2 h-4 w-4" />
+                    <span>Lab Results</span>
+                  </a>
+                </Link>
+              </CollapsibleContent>
+            </Collapsible>
           </li>
+          
+          {/* Vitals */}
           <li>
-            <Link href="#medications">
-              <a className={`flex items-center px-3 py-2 rounded-lg ${location.includes('#medications') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                <Pill className="mr-3 h-5 w-5" />
-                <span>Medications</span>
-              </a>
-            </Link>
+            <Collapsible 
+              open={openCategories.vitals} 
+              onOpenChange={(open) => setOpenCategories({...openCategories, vitals: open})}
+              className="w-full"
+            >
+              <CollapsibleTrigger className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${location.includes('#vitals') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <div className="flex items-center">
+                  <LineChart className="mr-3 h-5 w-5" />
+                  <span>Vital Signs</span>
+                </div>
+                {openCategories.vitals ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-8 pr-2 mt-1 space-y-1">
+                <Link href="#vital-signs">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#vital-signs') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <Activity className="mr-2 h-4 w-4" />
+                    <span>All Vitals</span>
+                  </a>
+                </Link>
+                <Link href="#vital-blood-pressure">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#vital-blood-pressure') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <BarChart className="mr-2 h-4 w-4" />
+                    <span>Blood Pressure</span>
+                  </a>
+                </Link>
+                <Link href="#vital-weight">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#vital-weight') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <BarChart className="mr-2 h-4 w-4" />
+                    <span>Weight & BMI</span>
+                  </a>
+                </Link>
+              </CollapsibleContent>
+            </Collapsible>
           </li>
+          
+          {/* Medications */}
+          <li>
+            <Collapsible 
+              open={openCategories.medications} 
+              onOpenChange={(open) => setOpenCategories({...openCategories, medications: open})}
+              className="w-full"
+            >
+              <CollapsibleTrigger className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${location.includes('#medications') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <div className="flex items-center">
+                  <Pill className="mr-3 h-5 w-5" />
+                  <span>Medications</span>
+                </div>
+                {openCategories.medications ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-8 pr-2 mt-1 space-y-1">
+                <Link href="#medication-requests">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#medication-requests') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <PenTool className="mr-2 h-4 w-4" />
+                    <span>Prescriptions</span>
+                  </a>
+                </Link>
+                <Link href="#medication-dispenses">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#medication-dispenses') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <Package className="mr-2 h-4 w-4" />
+                    <span>Dispenses</span>
+                  </a>
+                </Link>
+                <Link href="#medication-statements">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#medication-statements') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <ClipboardList className="mr-2 h-4 w-4" />
+                    <span>Statements</span>
+                  </a>
+                </Link>
+              </CollapsibleContent>
+            </Collapsible>
+          </li>
+          
+          {/* Allergies */}
           <li>
             <Link href="#allergies">
               <a className={`flex items-center px-3 py-2 rounded-lg ${location.includes('#allergies') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
@@ -110,11 +253,23 @@ export function Sidebar() {
               </a>
             </Link>
           </li>
+          
+          {/* Immunizations */}
           <li>
             <Link href="#immunizations">
               <a className={`flex items-center px-3 py-2 rounded-lg ${location.includes('#immunizations') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
                 <Syringe className="mr-3 h-5 w-5" />
                 <span>Immunizations</span>
+              </a>
+            </Link>
+          </li>
+          
+          {/* Care Gaps */}
+          <li>
+            <Link href="#care-gaps">
+              <a className={`flex items-center px-3 py-2 rounded-lg ${location.includes('#care-gaps') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <AlertTriangle className="mr-3 h-5 w-5" />
+                <span>Care Gaps</span>
               </a>
             </Link>
           </li>
