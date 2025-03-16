@@ -516,3 +516,259 @@ export const explanationOfBenefitSchema = z.object({
 export type Coverage = z.infer<typeof coverageSchema>;
 export type Claim = z.infer<typeof claimSchema>;
 export type ExplanationOfBenefit = z.infer<typeof explanationOfBenefitSchema>;
+
+export const practitionerSchema = z.object({
+  resourceType: z.literal('Practitioner'),
+  id: z.string(),
+  name: z.array(z.object({
+    use: z.string().optional(),
+    family: z.string().optional(),
+    given: z.array(z.string()).optional(),
+    prefix: z.array(z.string()).optional(),
+    suffix: z.array(z.string()).optional(),
+    text: z.string().optional(),
+  })).optional(),
+  telecom: z.array(z.object({
+    system: z.string().optional(),
+    value: z.string().optional(),
+    use: z.string().optional(),
+  })).optional(),
+  address: z.array(z.object({
+    use: z.string().optional(),
+    type: z.string().optional(),
+    text: z.string().optional(),
+    line: z.array(z.string()).optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    postalCode: z.string().optional(),
+    country: z.string().optional(),
+  })).optional(),
+  gender: z.string().optional(),
+  birthDate: z.string().optional(),
+  qualification: z.array(z.object({
+    identifier: z.array(z.object({
+      system: z.string().optional(),
+      value: z.string().optional(),
+    })).optional(),
+    code: z.object({
+      coding: z.array(z.object({
+        system: z.string().optional(),
+        code: z.string().optional(),
+        display: z.string().optional(),
+      })).optional(),
+      text: z.string().optional(),
+    }).optional(),
+    period: z.object({
+      start: z.string().optional(),
+      end: z.string().optional(),
+    }).optional(),
+    issuer: z.object({
+      reference: z.string().optional(),
+      display: z.string().optional(),
+    }).optional(),
+  })).optional(),
+});
+
+export const organizationSchema = z.object({
+  resourceType: z.literal('Organization'),
+  id: z.string(),
+  identifier: z.array(z.object({
+    system: z.string().optional(),
+    value: z.string().optional(),
+  })).optional(),
+  active: z.boolean().optional(),
+  type: z.array(z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+    text: z.string().optional(),
+  })).optional(),
+  name: z.string().optional(),
+  alias: z.array(z.string()).optional(),
+  telecom: z.array(z.object({
+    system: z.string().optional(),
+    value: z.string().optional(),
+    use: z.string().optional(),
+  })).optional(),
+  address: z.array(z.object({
+    use: z.string().optional(),
+    type: z.string().optional(),
+    text: z.string().optional(),
+    line: z.array(z.string()).optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    postalCode: z.string().optional(),
+    country: z.string().optional(),
+  })).optional(),
+  partOf: z.object({
+    reference: z.string().optional(),
+    display: z.string().optional(),
+  }).optional(),
+});
+
+export const locationSchema = z.object({
+  resourceType: z.literal('Location'),
+  id: z.string(),
+  status: z.string().optional(),
+  name: z.string().optional(),
+  description: z.string().optional(),
+  mode: z.string().optional(),
+  type: z.array(z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+    text: z.string().optional(),
+  })).optional(),
+  telecom: z.array(z.object({
+    system: z.string().optional(),
+    value: z.string().optional(),
+    use: z.string().optional(),
+  })).optional(),
+  address: z.object({
+    use: z.string().optional(),
+    type: z.string().optional(),
+    text: z.string().optional(),
+    line: z.array(z.string()).optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    postalCode: z.string().optional(),
+    country: z.string().optional(),
+  }).optional(),
+  position: z.object({
+    longitude: z.number().optional(),
+    latitude: z.number().optional(),
+    altitude: z.number().optional(),
+  }).optional(),
+  managingOrganization: z.object({
+    reference: z.string().optional(),
+    display: z.string().optional(),
+  }).optional(),
+});
+
+export const appointmentSchema = z.object({
+  resourceType: z.literal('Appointment'),
+  id: z.string(),
+  status: z.string().optional(),
+  serviceCategory: z.array(z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+  })).optional(),
+  serviceType: z.array(z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+  })).optional(),
+  specialty: z.array(z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+  })).optional(),
+  appointmentType: z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+  }).optional(),
+  reasonCode: z.array(z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+    text: z.string().optional(),
+  })).optional(),
+  start: z.string().optional(),
+  end: z.string().optional(),
+  minutesDuration: z.number().optional(),
+  participant: z.array(z.object({
+    type: z.array(z.object({
+      coding: z.array(z.object({
+        system: z.string().optional(),
+        code: z.string().optional(),
+        display: z.string().optional(),
+      })).optional(),
+    })).optional(),
+    actor: z.object({
+      reference: z.string().optional(),
+      display: z.string().optional(),
+    }).optional(),
+    required: z.string().optional(),
+    status: z.string().optional(),
+  })),
+  description: z.string().optional(),
+  location: z.array(z.object({
+    location: z.object({
+      reference: z.string().optional(),
+      display: z.string().optional(),
+    }),
+    status: z.string().optional(),
+  })).optional(),
+});
+
+export const practitionerRoleSchema = z.object({
+  resourceType: z.literal('PractitionerRole'),
+  id: z.string(),
+  active: z.boolean().optional(),
+  period: z.object({
+    start: z.string().optional(),
+    end: z.string().optional(),
+  }).optional(),
+  practitioner: z.object({
+    reference: z.string().optional(),
+    display: z.string().optional(),
+  }).optional(),
+  organization: z.object({
+    reference: z.string().optional(),
+    display: z.string().optional(),
+  }).optional(),
+  code: z.array(z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+    text: z.string().optional(),
+  })).optional(),
+  specialty: z.array(z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+    text: z.string().optional(),
+  })).optional(),
+  location: z.array(z.object({
+    reference: z.string().optional(),
+    display: z.string().optional(),
+  })).optional(),
+  telecom: z.array(z.object({
+    system: z.string().optional(),
+    value: z.string().optional(),
+    use: z.string().optional(),
+  })).optional(),
+  availableTime: z.array(z.object({
+    daysOfWeek: z.array(z.string()).optional(),
+    allDay: z.boolean().optional(),
+    availableStartTime: z.string().optional(),
+    availableEndTime: z.string().optional(),
+  })).optional(),
+});
+
+// Export the types
+export type Practitioner = z.infer<typeof practitionerSchema>;
+export type Organization = z.infer<typeof organizationSchema>;
+export type Location = z.infer<typeof locationSchema>;
+export type Appointment = z.infer<typeof appointmentSchema>;
+export type PractitionerRole = z.infer<typeof practitionerRoleSchema>;

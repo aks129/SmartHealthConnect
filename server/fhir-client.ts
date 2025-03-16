@@ -29,7 +29,12 @@ export type FhirResourceType =
   | 'Immunization'
   | 'Coverage'
   | 'Claim'
-  | 'ExplanationOfBenefit';
+  | 'ExplanationOfBenefit'
+  | 'Practitioner'
+  | 'Organization'
+  | 'Location'
+  | 'Appointment'
+  | 'PractitionerRole';
 
 /**
  * Client for interacting with our local HAPI FHIR server
@@ -181,6 +186,86 @@ export class HapiFhirClient {
    */
   async getPatientExplanationOfBenefits(patientId: string): Promise<ExplanationOfBenefit[]> {
     return this.searchResources<ExplanationOfBenefit>('ExplanationOfBenefit', { patient: patientId });
+  }
+
+  /**
+   * Get practitioners
+   */
+  async getPractitioners(): Promise<Practitioner[]> {
+    return this.searchResources<Practitioner>('Practitioner', {});
+  }
+
+  /**
+   * Get a practitioner by ID
+   */
+  async getPractitioner(id: string): Promise<Practitioner> {
+    return this.getResource<Practitioner>('Practitioner', id);
+  }
+
+  /**
+   * Get organizations
+   */
+  async getOrganizations(): Promise<Organization[]> {
+    return this.searchResources<Organization>('Organization', {});
+  }
+
+  /**
+   * Get an organization by ID
+   */
+  async getOrganization(id: string): Promise<Organization> {
+    return this.getResource<Organization>('Organization', id);
+  }
+
+  /**
+   * Get locations
+   */
+  async getLocations(): Promise<Location[]> {
+    return this.searchResources<Location>('Location', {});
+  }
+
+  /**
+   * Get a location by ID
+   */
+  async getLocation(id: string): Promise<Location> {
+    return this.getResource<Location>('Location', id);
+  }
+
+  /**
+   * Get appointments for a patient
+   */
+  async getPatientAppointments(patientId: string): Promise<Appointment[]> {
+    return this.searchResources<Appointment>('Appointment', { patient: patientId });
+  }
+
+  /**
+   * Get practitioner roles
+   */
+  async getPractitionerRoles(practitionerId?: string): Promise<PractitionerRole[]> {
+    if (practitionerId) {
+      return this.searchResources<PractitionerRole>('PractitionerRole', { practitioner: practitionerId });
+    }
+    return this.searchResources<PractitionerRole>('PractitionerRole', {});
+  }
+
+  /**
+   * Search for practitioners by name, specialty, or location
+   */
+  async searchPractitioners(query: string): Promise<Practitioner[]> {
+    return this.searchResources<Practitioner>('Practitioner', { name: query });
+  }
+
+  /**
+   * Search for organizations by name or type
+   */
+  async searchOrganizations(query: string): Promise<Organization[]> {
+    return this.searchResources<Organization>('Organization', { name: query });
+  }
+
+  /**
+   * Search for locations by name, address, or type
+   */
+  async searchLocations(query: string): Promise<Location[]> {
+    return this.searchResources<Location>('Location', { name: query });
   }
 }
 
