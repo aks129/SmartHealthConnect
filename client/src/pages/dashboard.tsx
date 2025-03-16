@@ -10,11 +10,24 @@ import { CareGapsSection } from '@/components/health/CareGapsSection';
 import { InsuranceSection } from '@/components/health/InsuranceSection';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { FhirExplorer } from '@/components/fhir/FhirExplorer';
+import { ProviderDirectory } from '@/components/provider/ProviderDirectory';
+import { ConnectedProviders } from '@/components/provider/ConnectedProviders';
+import { ConnectedOrganizations } from '@/components/provider/ConnectedOrganizations';
 import { completeSmartAuth, checkAuth } from '@/lib/fhir-client';
 import { ErrorModal } from '@/components/auth/ErrorModal';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, MessageSquare, FileSpreadsheet, AlertTriangle, CreditCard, Database } from 'lucide-react';
+import { 
+  FileText, 
+  MessageSquare, 
+  FileSpreadsheet, 
+  AlertTriangle, 
+  CreditCard, 
+  Database,
+  MapPin,
+  User,
+  Building 
+} from 'lucide-react';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -109,6 +122,18 @@ export default function Dashboard() {
                 <CreditCard className="h-4 w-4" />
                 <span className="hidden sm:inline">Insurance</span>
               </TabsTrigger>
+              <TabsTrigger value="providers" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">My Providers</span>
+              </TabsTrigger>
+              <TabsTrigger value="organizations" className="flex items-center gap-2">
+                <Building className="h-4 w-4" />
+                <span className="hidden sm:inline">My Organizations</span>
+              </TabsTrigger>
+              <TabsTrigger value="provider-directory" className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                <span className="hidden sm:inline">Provider Directory</span>
+              </TabsTrigger>
               <TabsTrigger value="fhir-explorer" className="flex items-center gap-2">
                 <Database className="h-4 w-4" />
                 <span className="hidden sm:inline">FHIR Explorer</span>
@@ -142,6 +167,18 @@ export default function Dashboard() {
               <div className="border rounded-lg overflow-hidden h-full bg-white">
                 <FhirExplorer />
               </div>
+            </TabsContent>
+            
+            <TabsContent value="providers">
+              <ConnectedProviders />
+            </TabsContent>
+            
+            <TabsContent value="organizations">
+              <ConnectedOrganizations />
+            </TabsContent>
+            
+            <TabsContent value="provider-directory">
+              <ProviderDirectory />
             </TabsContent>
             
             <TabsContent value="chat">
