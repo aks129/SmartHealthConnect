@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Sidebar } from '@/components/health/Sidebar';
 import { PatientSummary } from '@/components/health/PatientSummary';
+import { PatientSummaryIPS } from '@/components/health/PatientSummaryIPS';
 import { ConditionsSection } from '@/components/health/ConditionsSection';
 import { ObservationsSection } from '@/components/health/ObservationsSection';
 import { ConnectionDetails } from '@/components/health/ConnectionDetails';
@@ -10,6 +11,7 @@ import { completeSmartAuth, checkAuth } from '@/lib/fhir-client';
 import { ErrorModal } from '@/components/auth/ErrorModal';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, MessageSquare, FileSpreadsheet } from 'lucide-react';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -84,9 +86,19 @@ export default function Dashboard() {
         
         <main className="flex-1 md:ml-64 p-4 md:p-8">
           <Tabs defaultValue="health" className="w-full">
-            <TabsList className="mb-6">
-              <TabsTrigger value="health">Health Records</TabsTrigger>
-              <TabsTrigger value="chat">AI Health Assistant</TabsTrigger>
+            <TabsList className="mb-6 flex w-full sm:w-auto">
+              <TabsTrigger value="health" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">Health Records</span>
+              </TabsTrigger>
+              <TabsTrigger value="ips" className="flex items-center gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                <span className="hidden sm:inline">Patient Summary (IPS)</span>
+              </TabsTrigger>
+              <TabsTrigger value="chat" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">AI Health Assistant</span>
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="health" className="space-y-6">
@@ -94,6 +106,10 @@ export default function Dashboard() {
               <ConditionsSection />
               <ObservationsSection />
               <ConnectionDetails />
+            </TabsContent>
+            
+            <TabsContent value="ips">
+              <PatientSummaryIPS />
             </TabsContent>
             
             <TabsContent value="chat">
