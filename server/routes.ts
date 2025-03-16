@@ -878,7 +878,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fhirServer: '/api/fhir/demo',
         patientId: 'demo-patient-1',
         scope: 'patient/*.read',
-        state: uuidv4()
+        state: uuidv4(),
+        current: true // Set this as the current active session
       };
       
       // Save to storage
@@ -912,7 +913,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fhirServer: session.fhirServer,
         patientId: session.patientId,
         scope: session.scope,
-        createdAt: session.createdAt
+        createdAt: session.createdAt,
+        current: session.current
       };
       
       res.json(sanitizedSession);
@@ -925,7 +927,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new FHIR session
   app.post('/api/fhir/sessions', async (req: Request, res: Response) => {
     try {
-      const session = await storage.createFhirSession(req.body);
+      // Ensure the current flag is set
+      const sessionData = {
+        ...req.body,
+        current: true // Set this as the current active session
+      };
+      
+      const session = await storage.createFhirSession(sessionData);
       
       // Don't expose sensitive data like tokens
       const sanitizedSession = {
@@ -934,7 +942,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fhirServer: session.fhirServer,
         patientId: session.patientId,
         scope: session.scope,
-        createdAt: session.createdAt
+        createdAt: session.createdAt,
+        current: session.current
       };
       
       res.status(201).json(sanitizedSession);
