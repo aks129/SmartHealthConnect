@@ -17,25 +17,15 @@ import { ResearchDashboard } from '@/components/research/ResearchDashboard';
 import { completeSmartAuth, checkAuth } from '@/lib/fhir-client';
 import { ErrorModal } from '@/components/auth/ErrorModal';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  FileText, 
-  MessageSquare, 
-  FileSpreadsheet, 
-  AlertTriangle, 
-  CreditCard, 
-  Database,
-  MapPin,
-  User,
-  Building,
-  Beaker 
-} from 'lucide-react';
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { TabNavigation } from '@/components/ui/tab-navigation';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
+  const [activeTab, setActiveTab] = useState(location.includes('#fhir-explorer') ? 'fhir-explorer' : 'health');
   const { toast } = useToast();
 
   // Check if we're in an auth callback or if we're already authenticated
@@ -104,51 +94,13 @@ export default function Dashboard() {
         
         <main className="flex-1 md:ml-64 p-4 md:p-8">
           <Tabs 
-            defaultValue={location.includes('#fhir-explorer') ? 'fhir-explorer' : 'health'} 
+            value={activeTab} 
             className="w-full"
           >
-            <TabsList className="mb-6 flex w-full sm:w-auto">
-              <TabsTrigger value="health" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">Health Records</span>
-              </TabsTrigger>
-              <TabsTrigger value="ips" className="flex items-center gap-2">
-                <FileSpreadsheet className="h-4 w-4" />
-                <span className="hidden sm:inline">Patient Summary (IPS)</span>
-              </TabsTrigger>
-              <TabsTrigger value="care-gaps" className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                <span className="hidden sm:inline">Care Gaps</span>
-              </TabsTrigger>
-              <TabsTrigger value="insurance" className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                <span className="hidden sm:inline">Insurance</span>
-              </TabsTrigger>
-              <TabsTrigger value="providers" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">My Providers</span>
-              </TabsTrigger>
-              <TabsTrigger value="organizations" className="flex items-center gap-2">
-                <Building className="h-4 w-4" />
-                <span className="hidden sm:inline">My Organizations</span>
-              </TabsTrigger>
-              <TabsTrigger value="provider-directory" className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                <span className="hidden sm:inline">Provider Directory</span>
-              </TabsTrigger>
-              <TabsTrigger value="research" className="flex items-center gap-2">
-                <Beaker className="h-4 w-4" />
-                <span className="hidden sm:inline">Research</span>
-              </TabsTrigger>
-              <TabsTrigger value="fhir-explorer" className="flex items-center gap-2">
-                <Database className="h-4 w-4" />
-                <span className="hidden sm:inline">FHIR Explorer</span>
-              </TabsTrigger>
-              <TabsTrigger value="chat" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">AI Health Assistant</span>
-              </TabsTrigger>
-            </TabsList>
+            <TabNavigation 
+              activeTab={activeTab} 
+              onTabChange={(tabId) => setActiveTab(tabId)} 
+            />
             
             <TabsContent value="health" className="space-y-6">
               <PatientSummary />
