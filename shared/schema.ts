@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, jsonb, timestamp, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -263,3 +263,23 @@ export type Observation = z.infer<typeof observationSchema>;
 export type MedicationRequest = z.infer<typeof medicationRequestSchema>;
 export type AllergyIntolerance = z.infer<typeof allergyIntoleranceSchema>;
 export type Immunization = z.infer<typeof immunizationSchema>;
+
+// Chat Messages for AI conversation feature
+export const chatMessages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  fhirSessionId: integer("fhir_session_id").references(() => fhirSessions.id),
+  role: text("role").notNull(), // "user" or "assistant"
+  content: text("content").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  contextData: json("context_data"), // Store any relevant health data for context
+});
+
+// Define the insert schema for chat messages
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
+  id: true,
+  timestamp: true,
+});
+
+// Define types for chat messages
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type ChatMessage = typeof chatMessages.$inferSelect;

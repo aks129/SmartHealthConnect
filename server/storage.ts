@@ -1,4 +1,5 @@
-import { users, type User, type InsertUser, type FhirSession, type InsertFhirSession } from "@shared/schema";
+import { users, type User, type InsertUser, type FhirSession, type InsertFhirSession, 
+  type ChatMessage, type InsertChatMessage, chatMessages } from "@shared/schema";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -13,6 +14,11 @@ export interface IStorage {
   getFhirSession(id: number): Promise<FhirSession | undefined>;
   getCurrentFhirSession(): Promise<FhirSession | undefined>;
   endCurrentFhirSession(): Promise<boolean>;
+  
+  // Chat Message Management
+  createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  getChatMessages(fhirSessionId: number, limit?: number): Promise<ChatMessage[]>;
+  clearChatHistory(fhirSessionId: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
