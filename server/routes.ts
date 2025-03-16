@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import FHIR from 'fhirclient';
 import { v4 as uuidv4 } from 'uuid';
 import { generateHealthResponse, type HealthContext, type ChatHistoryItem } from './ai-service';
+import { z } from 'zod';
+import { insertChatMessageSchema } from '../shared/schema';
 
 // Sample FHIR data for demo purposes
 const samplePatient = {

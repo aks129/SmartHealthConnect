@@ -117,7 +117,7 @@ export class MemStorage implements IStorage {
       fhirSessionId: insertMessage.fhirSessionId,
       role: insertMessage.role,
       content: insertMessage.content,
-      contextData: insertMessage.contextData || null
+      contextData: insertMessage.contextData ?? null
     };
     
     this.chatMessages.set(id, message);

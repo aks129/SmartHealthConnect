@@ -30,7 +30,7 @@ function generateSystemPrompt(context: HealthContext): string {
   
   // Add patient information
   if (context.patient) {
-    const name = getPatientName(context.patient);
+    const name = getPatientName(context.patient) || 'Unknown';
     const gender = context.patient.gender || 'Unknown';
     const birthDate = context.patient.birthDate ? formatFhirDate(context.patient.birthDate) : 'Unknown';
     
