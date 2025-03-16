@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
-import Rating from 'react-rating';
+// import Rating from 'react-rating'; // Removed as we're using custom stars instead
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -121,10 +121,16 @@ export function ProviderDirectory() {
   const handleMarkerClick = (location: LocationWithDetails) => {
     setSelectedLocation(location);
     if (location.position?.latitude && location.position?.longitude) {
-      setMapCenter({
-        lat: parseFloat(location.position.latitude),
-        lng: parseFloat(location.position.longitude)
-      });
+      // Ensure latitude and longitude are converted to numbers
+      const lat = typeof location.position.latitude === 'string' 
+        ? parseFloat(location.position.latitude) 
+        : location.position.latitude;
+      
+      const lng = typeof location.position.longitude === 'string' 
+        ? parseFloat(location.position.longitude) 
+        : location.position.longitude;
+      
+      setMapCenter({ lat, lng });
     }
   };
 
@@ -219,7 +225,7 @@ export function ProviderDirectory() {
 
           {/* Map View */}
           <div className="border rounded-lg overflow-hidden mb-6">
-            <LoadScript googleMapsApiKey={process.env.GOOGLE_MAPS_API_KEY || ""}>
+            <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ""}>
               <GoogleMap
                 mapContainerStyle={containerStyle}
                 center={mapCenter}
@@ -229,13 +235,19 @@ export function ProviderDirectory() {
                 {locationsWithDetails.map(location => {
                   if (!location.position?.latitude || !location.position?.longitude) return null;
                   
+                  // Ensure coordinates are numbers
+                  const lat = typeof location.position.latitude === 'string' 
+                    ? parseFloat(location.position.latitude) 
+                    : location.position.latitude;
+                  
+                  const lng = typeof location.position.longitude === 'string' 
+                    ? parseFloat(location.position.longitude) 
+                    : location.position.longitude;
+                  
                   return (
                     <Marker
                       key={location.id}
-                      position={{
-                        lat: parseFloat(location.position.latitude),
-                        lng: parseFloat(location.position.longitude)
-                      }}
+                      position={{ lat, lng }}
                       onClick={() => handleMarkerClick(location)}
                     />
                   );
@@ -244,8 +256,12 @@ export function ProviderDirectory() {
                 {selectedLocation && selectedLocation.position?.latitude && selectedLocation.position?.longitude && (
                   <InfoWindow
                     position={{
-                      lat: parseFloat(selectedLocation.position.latitude),
-                      lng: parseFloat(selectedLocation.position.longitude)
+                      lat: typeof selectedLocation.position.latitude === 'string' 
+                        ? parseFloat(selectedLocation.position.latitude) 
+                        : selectedLocation.position.latitude,
+                      lng: typeof selectedLocation.position.longitude === 'string' 
+                        ? parseFloat(selectedLocation.position.longitude) 
+                        : selectedLocation.position.longitude
                     }}
                     onCloseClick={() => setSelectedLocation(null)}
                   >
