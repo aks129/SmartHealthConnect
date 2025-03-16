@@ -1006,6 +1006,673 @@ const sampleClaims = [
   }
 ];
 
+// Sample Practitioners
+const samplePractitioners = [
+  {
+    resourceType: "Practitioner",
+    id: "demo-practitioner-1",
+    active: true,
+    name: [
+      {
+        use: "official",
+        family: "Williams",
+        given: ["Jane"],
+        prefix: ["Dr."],
+        text: "Dr. Jane Williams"
+      }
+    ],
+    telecom: [
+      {
+        system: "phone",
+        value: "555-123-4567",
+        use: "work"
+      },
+      {
+        system: "email",
+        value: "jane.williams@example.org",
+        use: "work"
+      }
+    ],
+    address: [
+      {
+        use: "work",
+        type: "both",
+        line: ["123 Medical Blvd"],
+        city: "Boston",
+        state: "MA",
+        postalCode: "02215",
+        country: "USA"
+      }
+    ],
+    gender: "female",
+    qualification: [
+      {
+        code: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/v2-0360",
+              code: "MD",
+              display: "Doctor of Medicine"
+            }
+          ],
+          text: "Doctor of Medicine"
+        },
+        issuer: {
+          display: "Harvard Medical School"
+        }
+      },
+      {
+        code: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/v2-0360",
+              code: "FPEND",
+              display: "Family Practice Endocrinology"
+            }
+          ],
+          text: "Family Practice Endocrinology"
+        }
+      }
+    ]
+  },
+  {
+    resourceType: "Practitioner",
+    id: "demo-practitioner-2",
+    active: true,
+    name: [
+      {
+        use: "official",
+        family: "Johnson",
+        given: ["Robert"],
+        prefix: ["Dr."],
+        text: "Dr. Robert Johnson"
+      }
+    ],
+    telecom: [
+      {
+        system: "phone",
+        value: "555-987-6543",
+        use: "work"
+      },
+      {
+        system: "email",
+        value: "robert.johnson@example.org",
+        use: "work"
+      }
+    ],
+    address: [
+      {
+        use: "work",
+        type: "both",
+        line: ["456 Cardiology Way"],
+        city: "Boston",
+        state: "MA",
+        postalCode: "02114",
+        country: "USA"
+      }
+    ],
+    gender: "male",
+    qualification: [
+      {
+        code: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/v2-0360",
+              code: "MD",
+              display: "Doctor of Medicine"
+            }
+          ],
+          text: "Doctor of Medicine"
+        }
+      },
+      {
+        code: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/v2-0360",
+              code: "CARD",
+              display: "Cardiology"
+            }
+          ],
+          text: "Cardiology"
+        }
+      }
+    ]
+  },
+  {
+    resourceType: "Practitioner",
+    id: "demo-practitioner-3",
+    active: true,
+    name: [
+      {
+        use: "official",
+        family: "Smith",
+        given: ["Sarah"],
+        prefix: ["Dr."],
+        text: "Dr. Sarah Smith"
+      }
+    ],
+    telecom: [
+      {
+        system: "phone",
+        value: "555-456-7890",
+        use: "work"
+      },
+      {
+        system: "email",
+        value: "sarah.smith@example.org",
+        use: "work"
+      }
+    ],
+    address: [
+      {
+        use: "work",
+        type: "both",
+        line: ["789 Neurology Center"],
+        city: "Cambridge",
+        state: "MA",
+        postalCode: "02139",
+        country: "USA"
+      }
+    ],
+    gender: "female",
+    qualification: [
+      {
+        code: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/v2-0360",
+              code: "MD",
+              display: "Doctor of Medicine"
+            }
+          ],
+          text: "Doctor of Medicine"
+        }
+      },
+      {
+        code: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/v2-0360",
+              code: "NEUR",
+              display: "Neurology"
+            }
+          ],
+          text: "Neurology"
+        }
+      }
+    ]
+  }
+];
+
+// Sample Organizations
+const sampleOrganizations = [
+  {
+    resourceType: "Organization",
+    id: "demo-organization-1",
+    active: true,
+    type: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/organization-type",
+            code: "prov",
+            display: "Healthcare Provider"
+          }
+        ],
+        text: "Healthcare Provider"
+      }
+    ],
+    name: "Boston Medical Center",
+    telecom: [
+      {
+        system: "phone",
+        value: "617-555-1000",
+        use: "work"
+      },
+      {
+        system: "email",
+        value: "info@bostonmedical.example.org",
+        use: "work"
+      }
+    ],
+    address: [
+      {
+        use: "work",
+        type: "both",
+        line: ["1 Medical Center Dr"],
+        city: "Boston",
+        state: "MA",
+        postalCode: "02118",
+        country: "USA"
+      }
+    ]
+  },
+  {
+    resourceType: "Organization",
+    id: "demo-organization-2",
+    active: true,
+    type: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/organization-type",
+            code: "prov",
+            display: "Healthcare Provider"
+          }
+        ],
+        text: "Healthcare Provider"
+      }
+    ],
+    name: "Cambridge Health Alliance",
+    telecom: [
+      {
+        system: "phone",
+        value: "617-555-2000",
+        use: "work"
+      },
+      {
+        system: "email",
+        value: "info@cambridgehealth.example.org",
+        use: "work"
+      }
+    ],
+    address: [
+      {
+        use: "work",
+        type: "both",
+        line: ["1493 Cambridge St"],
+        city: "Cambridge",
+        state: "MA",
+        postalCode: "02139",
+        country: "USA"
+      }
+    ]
+  }
+];
+
+// Sample Locations
+const sampleLocations = [
+  {
+    resourceType: "Location",
+    id: "demo-location-1",
+    status: "active",
+    name: "Boston Medical Center - Main Campus",
+    description: "Main campus of Boston Medical Center",
+    mode: "instance",
+    type: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+            code: "HOSP",
+            display: "Hospital"
+          }
+        ],
+        text: "Hospital"
+      }
+    ],
+    telecom: [
+      {
+        system: "phone",
+        value: "617-555-1000",
+        use: "work"
+      }
+    ],
+    address: {
+      use: "work",
+      type: "both",
+      line: ["1 Medical Center Dr"],
+      city: "Boston",
+      state: "MA",
+      postalCode: "02118",
+      country: "USA"
+    },
+    position: {
+      longitude: -71.0695,
+      latitude: 42.3355
+    },
+    managingOrganization: {
+      reference: "Organization/demo-organization-1",
+      display: "Boston Medical Center"
+    }
+  },
+  {
+    resourceType: "Location",
+    id: "demo-location-2",
+    status: "active",
+    name: "Cambridge Health Alliance - Primary Care",
+    description: "Primary Care facility of Cambridge Health Alliance",
+    mode: "instance",
+    type: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+            code: "OUTPHARM",
+            display: "outpatient pharmacy"
+          }
+        ],
+        text: "Outpatient Clinic"
+      }
+    ],
+    telecom: [
+      {
+        system: "phone",
+        value: "617-555-2100",
+        use: "work"
+      }
+    ],
+    address: {
+      use: "work",
+      type: "both",
+      line: ["1493 Cambridge St", "Suite 200"],
+      city: "Cambridge",
+      state: "MA",
+      postalCode: "02139",
+      country: "USA"
+    },
+    position: {
+      longitude: -71.1060,
+      latitude: 42.3730
+    },
+    managingOrganization: {
+      reference: "Organization/demo-organization-2",
+      display: "Cambridge Health Alliance"
+    }
+  }
+];
+
+// Sample Appointments
+const sampleAppointments = [
+  {
+    resourceType: "Appointment",
+    id: "demo-appointment-1",
+    status: "booked",
+    serviceCategory: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/service-category",
+            code: "17",
+            display: "General Practice"
+          }
+        ]
+      }
+    ],
+    appointmentType: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/v2-0276",
+          code: "FOLLOWUP",
+          display: "A follow up visit from a previous appointment"
+        }
+      ]
+    },
+    reasonCode: [
+      {
+        coding: [
+          {
+            system: "http://snomed.info/sct",
+            code: "413076004",
+            display: "Diabetes follow-up"
+          }
+        ],
+        text: "Diabetes follow-up appointment"
+      }
+    ],
+    start: "2023-04-15T09:00:00Z",
+    end: "2023-04-15T09:30:00Z",
+    minutesDuration: 30,
+    participant: [
+      {
+        actor: {
+          reference: "Patient/demo-patient-1",
+          display: "John William Smith"
+        },
+        required: "required",
+        status: "accepted"
+      },
+      {
+        actor: {
+          reference: "Practitioner/demo-practitioner-1",
+          display: "Dr. Jane Williams"
+        },
+        required: "required",
+        status: "accepted"
+      },
+      {
+        actor: {
+          reference: "Location/demo-location-1",
+          display: "Boston Medical Center - Main Campus"
+        },
+        required: "required",
+        status: "accepted"
+      }
+    ],
+    description: "Diabetes follow-up appointment",
+    location: [
+      {
+        location: {
+          reference: "Location/demo-location-1",
+          display: "Boston Medical Center - Main Campus"
+        },
+        status: "active"
+      }
+    ]
+  },
+  {
+    resourceType: "Appointment",
+    id: "demo-appointment-2",
+    status: "booked",
+    serviceCategory: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/service-category",
+            code: "17",
+            display: "Cardiology"
+          }
+        ]
+      }
+    ],
+    appointmentType: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/v2-0276",
+          code: "ROUTINE",
+          display: "Routine appointment"
+        }
+      ]
+    },
+    reasonCode: [
+      {
+        coding: [
+          {
+            system: "http://snomed.info/sct",
+            code: "38341003",
+            display: "Hypertension"
+          }
+        ],
+        text: "Blood pressure check"
+      }
+    ],
+    start: "2023-05-20T14:00:00Z",
+    end: "2023-05-20T14:45:00Z",
+    minutesDuration: 45,
+    participant: [
+      {
+        actor: {
+          reference: "Patient/demo-patient-1",
+          display: "John William Smith"
+        },
+        required: "required",
+        status: "accepted"
+      },
+      {
+        actor: {
+          reference: "Practitioner/demo-practitioner-2",
+          display: "Dr. Robert Johnson"
+        },
+        required: "required",
+        status: "accepted"
+      },
+      {
+        actor: {
+          reference: "Location/demo-location-2",
+          display: "Cambridge Health Alliance - Primary Care"
+        },
+        required: "required",
+        status: "accepted"
+      }
+    ],
+    description: "Cardiology check-up",
+    location: [
+      {
+        location: {
+          reference: "Location/demo-location-2",
+          display: "Cambridge Health Alliance - Primary Care"
+        },
+        status: "active"
+      }
+    ]
+  }
+];
+
+// Sample PractitionerRoles
+const samplePractitionerRoles = [
+  {
+    resourceType: "PractitionerRole",
+    id: "demo-practitionerrole-1",
+    active: true,
+    period: {
+      start: "2020-01-01"
+    },
+    practitioner: {
+      reference: "Practitioner/demo-practitioner-1",
+      display: "Dr. Jane Williams"
+    },
+    organization: {
+      reference: "Organization/demo-organization-1",
+      display: "Boston Medical Center"
+    },
+    code: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/v2-0286",
+            code: "EP",
+            display: "Endocrinology"
+          }
+        ],
+        text: "Endocrinologist"
+      }
+    ],
+    specialty: [
+      {
+        coding: [
+          {
+            system: "http://snomed.info/sct",
+            code: "408475000",
+            display: "Diabetic medicine"
+          }
+        ],
+        text: "Diabetes Care"
+      }
+    ],
+    location: [
+      {
+        reference: "Location/demo-location-1",
+        display: "Boston Medical Center - Main Campus"
+      }
+    ],
+    telecom: [
+      {
+        system: "phone",
+        value: "617-555-1234",
+        use: "work"
+      },
+      {
+        system: "email",
+        value: "jane.williams@bostonmedical.example.org",
+        use: "work"
+      }
+    ],
+    availableTime: [
+      {
+        daysOfWeek: ["mon", "tue", "wed", "thu", "fri"],
+        availableStartTime: "08:00:00",
+        availableEndTime: "17:00:00"
+      }
+    ]
+  },
+  {
+    resourceType: "PractitionerRole",
+    id: "demo-practitionerrole-2",
+    active: true,
+    period: {
+      start: "2019-05-01"
+    },
+    practitioner: {
+      reference: "Practitioner/demo-practitioner-2",
+      display: "Dr. Robert Johnson"
+    },
+    organization: {
+      reference: "Organization/demo-organization-2",
+      display: "Cambridge Health Alliance"
+    },
+    code: [
+      {
+        coding: [
+          {
+            system: "http://terminology.hl7.org/CodeSystem/v2-0286",
+            code: "CD",
+            display: "Cardiology"
+          }
+        ],
+        text: "Cardiologist"
+      }
+    ],
+    specialty: [
+      {
+        coding: [
+          {
+            system: "http://snomed.info/sct",
+            code: "7610008",
+            display: "Hypertension"
+          }
+        ],
+        text: "Hypertension Management"
+      }
+    ],
+    location: [
+      {
+        reference: "Location/demo-location-2",
+        display: "Cambridge Health Alliance - Primary Care"
+      }
+    ],
+    telecom: [
+      {
+        system: "phone",
+        value: "617-555-2345",
+        use: "work"
+      },
+      {
+        system: "email",
+        value: "robert.johnson@cambridgehealth.example.org",
+        use: "work"
+      }
+    ],
+    availableTime: [
+      {
+        daysOfWeek: ["mon", "wed", "fri"],
+        availableStartTime: "09:00:00",
+        availableEndTime: "18:00:00"
+      }
+    ]
+  }
+];
+
 const sampleExplanationOfBenefits = [
   {
     resourceType: "ExplanationOfBenefit",
@@ -1237,6 +1904,56 @@ class DemoFhirClient {
         resourceType: "Bundle",
         type: "searchset",
         entry: sampleExplanationOfBenefits.map(resource => ({ resource }))
+      };
+    } else if (resourceUrl === 'Practitioner' || resourceUrl.startsWith('Practitioner?')) {
+      // Query for all practitioners or search by name
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: samplePractitioners.map(resource => ({ resource }))
+      };
+    } else if (resourceUrl.startsWith('Practitioner/')) {
+      // Individual practitioner by ID
+      const id = resourceUrl.split('/')[1];
+      const practitioner = samplePractitioners.find(p => p.id === id) || samplePractitioners[0];
+      return practitioner;
+    } else if (resourceUrl === 'Organization' || resourceUrl.startsWith('Organization?')) {
+      // Query for all organizations or search by name
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: sampleOrganizations.map(resource => ({ resource }))
+      };
+    } else if (resourceUrl.startsWith('Organization/')) {
+      // Individual organization by ID
+      const id = resourceUrl.split('/')[1];
+      const organization = sampleOrganizations.find(o => o.id === id) || sampleOrganizations[0];
+      return organization;
+    } else if (resourceUrl === 'Location' || resourceUrl.startsWith('Location?')) {
+      // Query for all locations or search by name
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: sampleLocations.map(resource => ({ resource }))
+      };
+    } else if (resourceUrl.startsWith('Location/')) {
+      // Individual location by ID
+      const id = resourceUrl.split('/')[1];
+      const location = sampleLocations.find(l => l.id === id) || sampleLocations[0];
+      return location;
+    } else if (resourceUrl.startsWith('Appointment?patient=')) {
+      // Query for appointments by patient
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: sampleAppointments.map(resource => ({ resource }))
+      };
+    } else if (resourceUrl === 'PractitionerRole' || resourceUrl.startsWith('PractitionerRole?')) {
+      // Query for all practitioner roles or by practitioner
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: samplePractitionerRoles.map(resource => ({ resource }))
       };
     } else {
       return { entry: [] };
@@ -1618,6 +2335,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error evaluating care gaps:', error);
       res.status(500).json({ message: 'Failed to evaluate care gaps' });
+    }
+  });
+  
+  // Provider Directory Endpoints
+  
+  // Get practitioners
+  app.get('/api/fhir/practitioner', async (req: Request, res: Response) => {
+    try {
+      const session = await storage.getCurrentFhirSession();
+      
+      if (!session) {
+        return res.status(401).json({ message: 'No active FHIR session' });
+      }
+      
+      // Create an authenticated FHIR client
+      const client = await createFhirClient(session);
+      
+      // Handle single practitioner request
+      if (req.query.id) {
+        const practitioner = await client.request(`Practitioner/${req.query.id}`);
+        return res.json(practitioner);
+      }
+      
+      // Handle search by name
+      if (req.query.name) {
+        const practitioners = await client.request(`Practitioner?name=${req.query.name}`);
+        return res.json(practitioners.entry ? practitioners.entry.map((entry: any) => entry.resource) : []);
+      }
+      
+      // Get all practitioners
+      const practitioners = await client.request('Practitioner');
+      res.json(practitioners.entry ? practitioners.entry.map((entry: any) => entry.resource) : []);
+    } catch (error) {
+      console.error('Error fetching practitioners:', error);
+      res.status(500).json({ message: 'Failed to fetch practitioners' });
+    }
+  });
+  
+  // Get organizations
+  app.get('/api/fhir/organization', async (req: Request, res: Response) => {
+    try {
+      const session = await storage.getCurrentFhirSession();
+      
+      if (!session) {
+        return res.status(401).json({ message: 'No active FHIR session' });
+      }
+      
+      // Create an authenticated FHIR client
+      const client = await createFhirClient(session);
+      
+      // Handle single organization request
+      if (req.query.id) {
+        const organization = await client.request(`Organization/${req.query.id}`);
+        return res.json(organization);
+      }
+      
+      // Handle search by name
+      if (req.query.name) {
+        const organizations = await client.request(`Organization?name=${req.query.name}`);
+        return res.json(organizations.entry ? organizations.entry.map((entry: any) => entry.resource) : []);
+      }
+      
+      // Get all organizations
+      const organizations = await client.request('Organization');
+      res.json(organizations.entry ? organizations.entry.map((entry: any) => entry.resource) : []);
+    } catch (error) {
+      console.error('Error fetching organizations:', error);
+      res.status(500).json({ message: 'Failed to fetch organizations' });
+    }
+  });
+  
+  // Get locations
+  app.get('/api/fhir/location', async (req: Request, res: Response) => {
+    try {
+      const session = await storage.getCurrentFhirSession();
+      
+      if (!session) {
+        return res.status(401).json({ message: 'No active FHIR session' });
+      }
+      
+      // Create an authenticated FHIR client
+      const client = await createFhirClient(session);
+      
+      // Handle single location request
+      if (req.query.id) {
+        const location = await client.request(`Location/${req.query.id}`);
+        return res.json(location);
+      }
+      
+      // Handle search by name
+      if (req.query.name) {
+        const locations = await client.request(`Location?name=${req.query.name}`);
+        return res.json(locations.entry ? locations.entry.map((entry: any) => entry.resource) : []);
+      }
+      
+      // Get all locations
+      const locations = await client.request('Location');
+      res.json(locations.entry ? locations.entry.map((entry: any) => entry.resource) : []);
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      res.status(500).json({ message: 'Failed to fetch locations' });
+    }
+  });
+  
+  // Get appointments
+  app.get('/api/fhir/appointment', async (req: Request, res: Response) => {
+    try {
+      const session = await storage.getCurrentFhirSession();
+      
+      if (!session) {
+        return res.status(401).json({ message: 'No active FHIR session' });
+      }
+      
+      // Create an authenticated FHIR client
+      const client = await createFhirClient(session);
+      
+      // Get appointments for the patient
+      const appointments = await client.request(`Appointment?patient=${session.patientId}`);
+      res.json(appointments.entry ? appointments.entry.map((entry: any) => entry.resource) : []);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      res.status(500).json({ message: 'Failed to fetch appointments' });
+    }
+  });
+  
+  // Get practitioner roles
+  app.get('/api/fhir/practitionerrole', async (req: Request, res: Response) => {
+    try {
+      const session = await storage.getCurrentFhirSession();
+      
+      if (!session) {
+        return res.status(401).json({ message: 'No active FHIR session' });
+      }
+      
+      // Create an authenticated FHIR client
+      const client = await createFhirClient(session);
+      
+      // Filter by practitioner if requested
+      if (req.query.practitioner) {
+        const roles = await client.request(`PractitionerRole?practitioner=${req.query.practitioner}`);
+        return res.json(roles.entry ? roles.entry.map((entry: any) => entry.resource) : []);
+      }
+      
+      // Get all practitioner roles
+      const roles = await client.request('PractitionerRole');
+      res.json(roles.entry ? roles.entry.map((entry: any) => entry.resource) : []);
+    } catch (error) {
+      console.error('Error fetching practitioner roles:', error);
+      res.status(500).json({ message: 'Failed to fetch practitioner roles' });
     }
   });
   

@@ -11,7 +11,12 @@ import {
   Immunization,
   Coverage,
   Claim,
-  ExplanationOfBenefit
+  ExplanationOfBenefit,
+  Practitioner,
+  Organization,
+  Location,
+  Appointment,
+  PractitionerRole
 } from '@shared/schema';
 
 // FHIR server base URL
