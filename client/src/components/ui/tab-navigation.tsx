@@ -10,7 +10,10 @@ import {
   MapPin,
   User,
   Building,
-  Beaker 
+  Beaker,
+  BarChart,
+  Activity,
+  LineChart
 } from 'lucide-react';
 
 interface TabGroupProps {
@@ -101,6 +104,33 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             active={activeTab === "insurance"} 
             onClick={onTabChange}
             color="bg-blue-50" 
+          />
+        </TabGroup>
+        
+        <TabGroup label="HEALTH DATA & INSIGHTS">
+          <TabItem 
+            id="visualizations" 
+            icon={<BarChart />} 
+            label="Visualizations" 
+            active={activeTab === "visualizations"} 
+            onClick={onTabChange}
+            color="bg-indigo-50" 
+          />
+          <TabItem 
+            id="activity-feed" 
+            icon={<Activity />} 
+            label="Health Feed" 
+            active={activeTab === "activity-feed"} 
+            onClick={onTabChange}
+            color="bg-pink-50" 
+          />
+          <TabItem 
+            id="trends" 
+            icon={<LineChart />} 
+            label="Health Trends" 
+            active={activeTab === "trends"} 
+            onClick={onTabChange}
+            color="bg-purple-50" 
           />
         </TabGroup>
 

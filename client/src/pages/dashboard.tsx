@@ -196,6 +196,32 @@ export default function Dashboard() {
               />
             </TabsContent>
             
+            <TabsContent value="trends" className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-lg border bg-card p-6">
+                  <h3 className="font-semibold text-lg mb-4 text-primary">Health Trends (Coming Soon)</h3>
+                  <p className="text-muted-foreground">
+                    Track your health data over time with interactive trends analysis. See patterns, correlations, and progress 
+                    toward your health goals.
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-card p-6">
+                  <h3 className="font-semibold text-lg mb-4 text-primary">Advanced Analytics</h3>
+                  <p className="text-muted-foreground">
+                    Powerful health analytics to help you understand your data, identify patterns,
+                    and get insights from your health journey.
+                  </p>
+                </div>
+              </div>
+              <FhirVisualizations 
+                observations={observations}
+                conditions={conditions}
+                medications={medications}
+                allergies={allergies}
+                immunizations={immunizations}
+              />
+            </TabsContent>
+            
             <TabsContent value="fhir-explorer" className="h-[calc(100vh-160px)]">
               <div className="border rounded-lg overflow-hidden h-full bg-white">
                 <FhirExplorer />
