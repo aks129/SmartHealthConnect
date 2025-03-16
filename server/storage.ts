@@ -24,14 +24,18 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private fhirSessions: Map<number, FhirSession>;
+  private chatMessages: Map<number, ChatMessage>;
   private userCurrentId: number;
   private sessionCurrentId: number;
+  private messageCurrentId: number;
 
   constructor() {
     this.users = new Map();
     this.fhirSessions = new Map();
+    this.chatMessages = new Map();
     this.userCurrentId = 1;
     this.sessionCurrentId = 1;
+    this.messageCurrentId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -101,6 +105,52 @@ export class MemStorage implements IStorage {
     // Remove the session
     this.fhirSessions.delete(currentSession.id);
     return true;
+  }
+  
+  async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {
+    const id = this.messageCurrentId++;
+    const timestamp = new Date();
+    
+    const message: ChatMessage = {
+      id,
+      timestamp,
+      fhirSessionId: insertMessage.fhirSessionId,
+      role: insertMessage.role,
+      content: insertMessage.content,
+      contextData: insertMessage.contextData || null
+    };
+    
+    this.chatMessages.set(id, message);
+    return message;
+  }
+  
+  async getChatMessages(fhirSessionId: number, limit?: number): Promise<ChatMessage[]> {
+    // Filter messages by FHIR session ID
+    const messages = Array.from(this.chatMessages.values())
+      .filter(message => message.fhirSessionId === fhirSessionId)
+      // Sort by timestamp in ascending order (oldest first for conversation flow)
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    
+    // Apply limit if specified
+    if (limit !== undefined && limit > 0) {
+      return messages.slice(-limit); // Return the latest 'limit' messages
+    }
+    
+    return messages;
+  }
+  
+  async clearChatHistory(fhirSessionId: number): Promise<boolean> {
+    let deleted = false;
+    
+    // Find all messages for this session and remove them
+    for (const [id, message] of this.chatMessages.entries()) {
+      if (message.fhirSessionId === fhirSessionId) {
+        this.chatMessages.delete(id);
+        deleted = true;
+      }
+    }
+    
+    return deleted;
   }
 }
 
