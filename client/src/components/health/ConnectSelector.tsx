@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   CardHeader, 
   CardTitle, 
   CardDescription, 
-  CardContent 
+  CardContent,
+  CardFooter 
 } from '@/components/ui/card';
 import { 
   Tabs, 
@@ -12,6 +13,7 @@ import {
   TabsList, 
   TabsTrigger 
 } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConnectCard } from '@/components/health/ConnectCard';
@@ -24,7 +26,10 @@ import {
   Server,
   CreditCard,
   Search,
-  CloudCog
+  CloudCog,
+  MapPin,
+  Loader2,
+  Compass as CompassIcon
 } from 'lucide-react';
 import { fhirProviders } from '@/lib/providers';
 
@@ -131,10 +136,67 @@ const connectionTypes = [
   },
 ];
 
+// Sample nearby providers that would be fetched from Google Maps API in production
+const SAMPLE_NEARBY_PROVIDERS = [
+  {
+    id: 'epic-mercy',
+    name: 'Mercy Medical Center',
+    url: 'https://fhir.mercy.com',
+    description: 'Healthcare provider using Epic EHR',
+    logoIcon: 'stethoscope',
+    distance: '2.3 miles',
+    type: 'provider'
+  },
+  {
+    id: 'cvs-local',
+    name: 'CVS Pharmacy - Main Street',
+    url: 'https://fhir.cvs.com',
+    description: 'Pharmacy - prescription records',
+    logoIcon: 'pill',
+    distance: '0.7 miles',
+    type: 'pharmacy'
+  },
+  {
+    id: 'quest-local',
+    name: 'Quest Diagnostics - City Center',
+    url: 'https://fhir.questdiagnostics.com',
+    description: 'Laboratory and diagnostic services',
+    logoIcon: 'microscope',
+    distance: '3.1 miles',
+    type: 'lab'
+  }
+];
+
 export function ConnectSelector() {
   const [activeTab, setActiveTab] = useState('provider');
   const [searchQuery, setSearchQuery] = useState('');
   const [showTefcaSearch, setShowTefcaSearch] = useState(false);
+  const [locationPermission, setLocationPermission] = useState<'granted' | 'denied' | 'pending'>('pending');
+  const [loadingLocation, setLoadingLocation] = useState(false);
+  const [nearbyProviders, setNearbyProviders] = useState(SAMPLE_NEARBY_PROVIDERS);
+  
+  // Request geolocation when component mounts
+  useEffect(() => {
+    if (navigator.geolocation) {
+      setLoadingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // In a real app, we would use the coordinates to fetch nearby providers
+          // from the Google Maps API or similar service
+          setLocationPermission('granted');
+          setLoadingLocation(false);
+          
+          // Here we're just using sample data
+          setNearbyProviders(SAMPLE_NEARBY_PROVIDERS);
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          setLocationPermission('denied');
+          setLoadingLocation(false);
+        }
+      );
+    }
+  }, []);
   
   const filteredProviders = connectionTypes.find(t => t.id === activeTab)?.providers.filter(provider => 
     provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -154,6 +216,63 @@ export function ConnectSelector() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* Location-based recommendations section */}
+        <div className="mb-6 border rounded-lg p-4 bg-gray-50">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-medium flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-gray-600" />
+              Nearby Healthcare Connections
+            </h3>
+            {loadingLocation ? (
+              <div className="flex items-center text-sm text-gray-500">
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                Finding nearby providers...
+              </div>
+            ) : locationPermission === 'denied' ? (
+              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                Location access denied
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <MapPin className="h-3 w-3 mr-1" /> Location access enabled
+              </Badge>
+            )}
+          </div>
+          
+          <p className="text-sm text-gray-600 mb-3">
+            Suggested healthcare connections near your current location
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {nearbyProviders.map(provider => (
+              <Card key={provider.id} className="overflow-hidden border-gray-200">
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      {provider.type === 'provider' && <Stethoscope className="h-6 w-6 text-blue-500" />}
+                      {provider.type === 'pharmacy' && <Pill className="h-6 w-6 text-red-500" />}
+                      {provider.type === 'lab' && <Microscope className="h-6 w-6 text-yellow-500" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm truncate">{provider.name}</h4>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        {provider.distance}
+                      </div>
+                    </div>
+                  </div>
+                  <Button 
+                    className="w-full mt-2"
+                    size="sm"
+                    variant="outline"
+                  >
+                    Connect
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-5 mb-6">
             {connectionTypes.map(type => (

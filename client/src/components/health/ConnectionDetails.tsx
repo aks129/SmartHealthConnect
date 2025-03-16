@@ -6,7 +6,7 @@ import { ConnectSelector } from './ConnectSelector';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Database, AlertCircle } from 'lucide-react';
+import { Database, AlertCircle, Compass as CompassIcon } from 'lucide-react';
 
 export function ConnectionDetails() {
   const [showConnectOptions, setShowConnectOptions] = useState(false);
@@ -45,13 +45,56 @@ export function ConnectionDetails() {
 
   // If no session, show connect options
   if (!session && !isLoading) {
-    return <ConnectSelector />;
+    return (
+      <section className="mb-8">
+        <Card className="shadow-md border-primary/20 mb-4 bg-gradient-to-br from-white to-slate-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <CompassIcon className="h-5 w-5 text-primary" />
+              Connect to Your Health Records
+            </CardTitle>
+            <CardDescription>
+              Choose from multiple connection options to access your health data
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pb-3">
+            <p className="text-sm text-gray-600">
+              Use the connection selector below to find healthcare providers, insurance companies, 
+              pharmacies, labs, and more. You can also use TEFCA to search across multiple networks.
+            </p>
+          </CardContent>
+          <CardFooter className="pt-0 flex justify-end">
+            <Button className="bg-gradient-to-r from-primary to-primary-600 shadow-sm">
+              Get Started
+            </Button>
+          </CardFooter>
+        </Card>
+        <ConnectSelector />
+      </section>
+    );
   }
 
   // If showing connect options, display them
   if (showConnectOptions) {
     return (
       <section className="mb-8">
+        <Card className="shadow-md border-primary/20 mb-4 bg-gradient-to-br from-white to-slate-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <CompassIcon className="h-5 w-5 text-primary" />
+              Add Another Health Data Source
+            </CardTitle>
+            <CardDescription>
+              Connect to additional providers, insurers, pharmacies, labs, or TEFCA
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pb-3">
+            <p className="text-sm text-gray-600">
+              Add connections to expand your health record. You can connect to multiple sources
+              to build a more complete picture of your health.
+            </p>
+          </CardContent>
+        </Card>
         <ConnectSelector />
         <div className="mt-4 flex justify-end">
           <Button 
