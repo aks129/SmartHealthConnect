@@ -143,7 +143,9 @@ export class MemStorage implements IStorage {
     let deleted = false;
     
     // Find all messages for this session and remove them
-    for (const [id, message] of this.chatMessages.entries()) {
+    // Convert to array first to avoid iterator issues
+    const entries = Array.from(this.chatMessages.entries());
+    for (const [id, message] of entries) {
       if (message.fhirSessionId === fhirSessionId) {
         this.chatMessages.delete(id);
         deleted = true;

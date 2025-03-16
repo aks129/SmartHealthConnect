@@ -1100,6 +1100,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Chat API Endpoints
+  
+  // Get chat history
+  app.get('/api/chat/messages', async (req: Request, res: Response) => {
+    try {
+      const session = await storage.getCurrentFhirSession();
+      
+      if (!session) {
+        return res.status(401).json({ message: 'No active FHIR session' });
+      }
+      
+      // Get query parameter for limit (optional)
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      
+      // Get chat messages for the current session
+      const messages = await storage.getChatMessages(session.id, limit);
+      
+      res.json(messages);
+    } catch (error) {
+      console.error('Error fetching chat messages:', error);
+      res.status(500).json({ message: 'Failed to fetch chat messages' });
+    }
+  });
+  
+  // Send new message and get AI response
+  app.post('/api/chat/messages', async (req: Request, res: Response) => {
+    try {
+      const session = await storage.getCurrentFhirSession();
+      
+      if (!session) {
+        return res.status(401).json({ message: 'No active FHIR session' });
+      }
+      
+      // Validate request body
+      const messageSchema = insertChatMessageSchema.extend({
+        content: z.string().min(1, "Message content cannot be empty")
+      });
+      
+      const validatedMessage = messageSchema.parse({
+        ...req.body,
+        role: 'user',
+        fhirSessionId: session.id
+      });
+      
+      // Save user message to storage
+      const userMessage = await storage.createChatMessage(validatedMessage);
+      
+      // Gather patient health context for AI response
+      const healthContext: HealthContext = {};
+      
+      try {
+        // Create FHIR client
+        const client = await createFhirClient(session);
+        
+        // Fetch patient data
+        const patient = await client.request(`Patient/${session.patientId}`);
+        healthContext.patient = patient;
+        
+        // Fetch conditions
+        const conditions = await client.request(`Condition?patient=${session.patientId}`);
+        healthContext.conditions = conditions.entry ? 
+          conditions.entry.map((entry: any) => entry.resource) : [];
+        
+        // Fetch observations (limited to most recent)
+        const observations = await client.request(
+          `Observation?patient=${session.patientId}&_sort=-date&_count=20`
+        );
+        healthContext.observations = observations.entry ? 
+          observations.entry.map((entry: any) => entry.resource) : [];
+        
+        // Fetch medications
+        const medications = await client.request(
+          `MedicationRequest?patient=${session.patientId}&status=active`
+        );
+        healthContext.medications = medications.entry ? 
+          medications.entry.map((entry: any) => entry.resource) : [];
+        
+        // Fetch allergies
+        const allergies = await client.request(
+          `AllergyIntolerance?patient=${session.patientId}`
+        );
+        healthContext.allergies = allergies.entry ? 
+          allergies.entry.map((entry: any) => entry.resource) : [];
+        
+        // Fetch immunizations
+        const immunizations = await client.request(
+          `Immunization?patient=${session.patientId}`
+        );
+        healthContext.immunizations = immunizations.entry ? 
+          immunizations.entry.map((entry: any) => entry.resource) : [];
+        
+      } catch (error) {
+        console.error('Error gathering health context:', error);
+        // Continue with limited context if there was an error
+      }
+      
+      // Get recent chat history
+      const chatHistory = await storage.getChatMessages(session.id, 10);
+      
+      // Format chat history for AI prompt
+      const formattedHistory: ChatHistoryItem[] = chatHistory.map(msg => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content
+      }));
+      
+      // Generate AI response
+      const aiResponseText = await generateHealthResponse(
+        validatedMessage.content,
+        healthContext,
+        formattedHistory
+      );
+      
+      // Save AI response to storage
+      const aiResponseMessage = await storage.createChatMessage({
+        fhirSessionId: session.id,
+        role: 'assistant',
+        content: aiResponseText,
+        contextData: {
+          healthContextSnapshot: healthContext,
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+      // Return both the original message and the response
+      res.status(201).json({
+        userMessage,
+        aiResponse: aiResponseMessage
+      });
+      
+    } catch (error) {
+      console.error('Error processing chat message:', error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: 'Invalid message format', 
+          errors: error.errors 
+        });
+      }
+      
+      res.status(500).json({ message: 'Failed to process chat message' });
+    }
+  });
+  
+  // Clear chat history
+  app.delete('/api/chat/messages', async (req: Request, res: Response) => {
+    try {
+      const session = await storage.getCurrentFhirSession();
+      
+      if (!session) {
+        return res.status(401).json({ message: 'No active FHIR session' });
+      }
+      
+      // Clear chat history for the current session
+      const deleted = await storage.clearChatHistory(session.id);
+      
+      if (deleted) {
+        res.status(200).json({ message: 'Chat history cleared successfully' });
+      } else {
+        res.status(404).json({ message: 'No chat messages found to delete' });
+      }
+    } catch (error) {
+      console.error('Error clearing chat history:', error);
+      res.status(500).json({ message: 'Failed to clear chat history' });
+    }
+  });
+  
   return httpServer;
 }
 
