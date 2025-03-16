@@ -5,9 +5,11 @@ import { PatientSummary } from '@/components/health/PatientSummary';
 import { ConditionsSection } from '@/components/health/ConditionsSection';
 import { ObservationsSection } from '@/components/health/ObservationsSection';
 import { ConnectionDetails } from '@/components/health/ConnectionDetails';
+import { ChatInterface } from '@/components/chat/ChatInterface';
 import { completeSmartAuth, checkAuth } from '@/lib/fhir-client';
 import { ErrorModal } from '@/components/auth/ErrorModal';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -81,10 +83,23 @@ export default function Dashboard() {
         <Sidebar />
         
         <main className="flex-1 md:ml-64 p-4 md:p-8">
-          <PatientSummary />
-          <ConditionsSection />
-          <ObservationsSection />
-          <ConnectionDetails />
+          <Tabs defaultValue="health" className="w-full">
+            <TabsList className="mb-6">
+              <TabsTrigger value="health">Health Records</TabsTrigger>
+              <TabsTrigger value="chat">AI Health Assistant</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="health" className="space-y-6">
+              <PatientSummary />
+              <ConditionsSection />
+              <ObservationsSection />
+              <ConnectionDetails />
+            </TabsContent>
+            
+            <TabsContent value="chat">
+              <ChatInterface />
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
       
