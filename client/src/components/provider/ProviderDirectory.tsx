@@ -70,7 +70,49 @@ export function ProviderDirectory() {
   const { data: practitionerRoles, isLoading: isLoadingRoles } = useQuery<PractitionerRole[]>({
     queryKey: ['/api/fhir/practitionerrole'],
   });
+  
+  // Handle map load
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+  }, []);
 
+  // Process and enhance locations with additional details
+  const locationsWithDetails = React.useMemo(() => {
+    if (!locations || !organizations || !practitioners || !practitionerRoles) {
+      return [];
+    }
+    
+    return locations.map(location => {
+      // Find the organization that manages this location
+      const organization = organizations.find(org => 
+        location.managingOrganization?.reference?.includes(org.id || '')
+      );
+      
+      // Find practitioners at this location
+      const locationPractitioners = practitioners.filter(practitioner => {
+        // Check if any of the practitioner's roles reference this location
+        return practitionerRoles.some(role => 
+          role.practitioner?.reference?.includes(practitioner.id || '') &&
+          role.location?.some(loc => loc.reference?.includes(location.id || ''))
+        );
+      });
+
+      // Generate sample rating and cost data
+      const randomRating = Math.floor(Math.random() * 5) + 1; // 1-5 stars
+      const randomReviews = Math.floor(Math.random() * 100) + 1; // 1-100 reviews
+      const randomCost = Math.floor(Math.random() * 3) + 1; // 1-3 dollar signs (cost level)
+
+      return {
+        ...location,
+        organization,
+        practitioners: locationPractitioners,
+        rating: randomRating,
+        reviewCount: randomReviews,
+        cost: randomCost
+      };
+    });
+  }, [locations, organizations, practitioners, practitionerRoles]);
+  
   // Loading state
   if (isLoadingLocations || isLoadingOrganizations || isLoadingPractitioners || isLoadingRoles) {
     return (
@@ -80,42 +122,6 @@ export function ProviderDirectory() {
       </div>
     );
   }
-
-  // Process and enhance locations with additional details
-  const locationsWithDetails: LocationWithDetails[] = locations?.map(location => {
-    // Find the organization that manages this location
-    const organization = organizations?.find(org => 
-      location.managingOrganization?.reference?.includes(org.id || '')
-    );
-    
-    // Find practitioners at this location
-    const locationPractitioners = practitioners?.filter(practitioner => {
-      // Check if any of the practitioner's roles reference this location
-      return practitionerRoles?.some(role => 
-        role.practitioner?.reference?.includes(practitioner.id || '') &&
-        role.location?.some(loc => loc.reference?.includes(location.id || ''))
-      );
-    });
-
-    // Generate sample rating and cost data
-    const randomRating = Math.floor(Math.random() * 5) + 1; // 1-5 stars
-    const randomReviews = Math.floor(Math.random() * 100) + 1; // 1-100 reviews
-    const randomCost = Math.floor(Math.random() * 3) + 1; // 1-3 dollar signs (cost level)
-
-    return {
-      ...location,
-      organization,
-      practitioners: locationPractitioners,
-      rating: randomRating,
-      reviewCount: randomReviews,
-      cost: randomCost
-    };
-  }) || [];
-
-  // Handle map load
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-  }, []);
 
   // Handle location marker click
   const handleMarkerClick = (location: LocationWithDetails) => {
