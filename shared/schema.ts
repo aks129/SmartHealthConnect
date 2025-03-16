@@ -28,6 +28,8 @@ export const fhirSessions = pgTable("fhir_sessions", {
   patientId: text("patient_id"),
   scope: text("scope"),
   state: text("state"),
+  current: boolean("current").default(false),
+  endedAt: timestamp("ended_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
