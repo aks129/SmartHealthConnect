@@ -30,7 +30,12 @@ import {
   PenTool,
   Package,
   FlaskConical,
-  Beaker
+  Beaker,
+  CreditCard,
+  Receipt,
+  Files,
+  Building2,
+  DollarSign
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { Patient } from '@shared/schema';
@@ -41,7 +46,8 @@ export function Sidebar() {
     medications: false,
     laboratory: false,
     diagnostics: false,
-    vitals: false
+    vitals: false,
+    insurance: false
   });
   
   const { data: patient } = useQuery<Patient>({
@@ -272,6 +278,53 @@ export function Sidebar() {
                 <span>Care Gaps</span>
               </a>
             </Link>
+          </li>
+          
+          {/* Health Insurance */}
+          <li>
+            <Collapsible 
+              open={openCategories.insurance} 
+              onOpenChange={(open) => setOpenCategories({...openCategories, insurance: open})}
+              className="w-full"
+            >
+              <CollapsibleTrigger className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${location.includes('#insurance') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <div className="flex items-center">
+                  <CreditCard className="mr-3 h-5 w-5" />
+                  <span>Health Insurance</span>
+                </div>
+                {openCategories.insurance ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-8 pr-2 mt-1 space-y-1">
+                <Link href="#insurance-coverage">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#insurance-coverage') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <Building2 className="mr-2 h-4 w-4" />
+                    <span>Coverage Plans</span>
+                  </a>
+                </Link>
+                <Link href="#insurance-claims">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#insurance-claims') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <Receipt className="mr-2 h-4 w-4" />
+                    <span>Claims</span>
+                  </a>
+                </Link>
+                <Link href="#insurance-benefits">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#insurance-benefits') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    <span>Benefits & Eligibility</span>
+                  </a>
+                </Link>
+                <Link href="#insurance-explanation">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#insurance-explanation') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <Files className="mr-2 h-4 w-4" />
+                    <span>Explanation of Benefits</span>
+                  </a>
+                </Link>
+              </CollapsibleContent>
+            </Collapsible>
           </li>
         </ul>
       </nav>

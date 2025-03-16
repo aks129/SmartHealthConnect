@@ -304,3 +304,211 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
 // Define types for chat messages
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
+
+// Insurance Resources
+export const coverageSchema = z.object({
+  id: z.string(),
+  resourceType: z.literal("Coverage"),
+  status: z.string(),
+  subscriber: z.object({
+    reference: z.string().optional(),
+    display: z.string().optional(),
+  }).optional(),
+  subscriberId: z.string().optional(),
+  beneficiary: z.object({
+    reference: z.string(),
+  }),
+  relationship: z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+  }).optional(),
+  period: z.object({
+    start: z.string().optional(),
+    end: z.string().optional(),
+  }).optional(),
+  payor: z.array(z.object({
+    reference: z.string().optional(),
+    display: z.string().optional(),
+  })),
+  class: z.array(z.object({
+    type: z.object({
+      coding: z.array(z.object({
+        system: z.string().optional(),
+        code: z.string().optional(),
+        display: z.string().optional(),
+      })).optional(),
+    }).optional(),
+    value: z.string().optional(),
+    name: z.string().optional(),
+  })).optional(),
+  network: z.string().optional(),
+  costToBeneficiary: z.array(z.object({
+    type: z.object({
+      coding: z.array(z.object({
+        system: z.string().optional(),
+        code: z.string().optional(),
+        display: z.string().optional(),
+      })).optional(),
+    }).optional(),
+    valueQuantity: z.object({
+      value: z.number().optional(),
+      unit: z.string().optional(),
+      system: z.string().optional(),
+      code: z.string().optional(),
+    }).optional(),
+    valueMoney: z.object({
+      value: z.number().optional(),
+      currency: z.string().optional(),
+    }).optional(),
+  })).optional(),
+});
+
+export const claimSchema = z.object({
+  id: z.string(),
+  resourceType: z.literal("Claim"),
+  status: z.string(),
+  type: z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+  }).optional(),
+  use: z.string(),
+  patient: z.object({
+    reference: z.string(),
+  }),
+  billablePeriod: z.object({
+    start: z.string().optional(),
+    end: z.string().optional(),
+  }).optional(),
+  created: z.string(),
+  provider: z.object({
+    reference: z.string().optional(),
+    display: z.string().optional(),
+  }).optional(),
+  priority: z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+  }).optional(),
+  insurance: z.array(z.object({
+    focal: z.boolean().optional(),
+    coverage: z.object({
+      reference: z.string().optional(),
+      display: z.string().optional(),
+    }),
+  })),
+  item: z.array(z.object({
+    sequence: z.number(),
+    productOrService: z.object({
+      coding: z.array(z.object({
+        system: z.string().optional(),
+        code: z.string().optional(),
+        display: z.string().optional(),
+      })).optional(),
+      text: z.string().optional(),
+    }),
+    servicedDate: z.string().optional(),
+    unitPrice: z.object({
+      value: z.number().optional(),
+      currency: z.string().optional(),
+    }).optional(),
+    net: z.object({
+      value: z.number().optional(),
+      currency: z.string().optional(),
+    }).optional(),
+  })).optional(),
+  total: z.object({
+    value: z.number().optional(),
+    currency: z.string().optional(),
+  }).optional(),
+});
+
+export const explanationOfBenefitSchema = z.object({
+  id: z.string(),
+  resourceType: z.literal("ExplanationOfBenefit"),
+  status: z.string(),
+  type: z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+  }).optional(),
+  use: z.string(),
+  patient: z.object({
+    reference: z.string(),
+  }),
+  created: z.string(),
+  insurer: z.object({
+    reference: z.string().optional(),
+    display: z.string().optional(),
+  }).optional(),
+  provider: z.object({
+    reference: z.string().optional(),
+    display: z.string().optional(),
+  }).optional(),
+  outcome: z.string(),
+  insurance: z.array(z.object({
+    focal: z.boolean().optional(),
+    coverage: z.object({
+      reference: z.string().optional(),
+      display: z.string().optional(),
+    }),
+  })),
+  item: z.array(z.object({
+    sequence: z.number(),
+    productOrService: z.object({
+      coding: z.array(z.object({
+        system: z.string().optional(),
+        code: z.string().optional(),
+        display: z.string().optional(),
+      })).optional(),
+      text: z.string().optional(),
+    }),
+    servicedDate: z.string().optional(),
+    adjudication: z.array(z.object({
+      category: z.object({
+        coding: z.array(z.object({
+          system: z.string().optional(),
+          code: z.string().optional(),
+          display: z.string().optional(),
+        })).optional(),
+      }),
+      amount: z.object({
+        value: z.number().optional(),
+        currency: z.string().optional(),
+      }).optional(),
+    })).optional(),
+  })).optional(),
+  total: z.array(z.object({
+    category: z.object({
+      coding: z.array(z.object({
+        system: z.string().optional(),
+        code: z.string().optional(),
+        display: z.string().optional(),
+      })).optional(),
+    }),
+    amount: z.object({
+      value: z.number().optional(),
+      currency: z.string().optional(),
+    }).optional(),
+  })).optional(),
+  payment: z.object({
+    amount: z.object({
+      value: z.number().optional(),
+      currency: z.string().optional(),
+    }).optional(),
+    date: z.string().optional(),
+  }).optional(),
+});
+
+export type Coverage = z.infer<typeof coverageSchema>;
+export type Claim = z.infer<typeof claimSchema>;
+export type ExplanationOfBenefit = z.infer<typeof explanationOfBenefitSchema>;
