@@ -1,8 +1,12 @@
 import React from 'react';
 import { ConnectCard } from '@/components/health/ConnectCard';
 import { Heart } from 'lucide-react';
+import { fhirProviders } from '@/lib/providers';
 
 export default function Home() {
+  // Get the demo provider for the home page
+  const demoProvider = fhirProviders.find(p => p.id === 'demo');
+  
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 md:p-8 bg-gray-50">
       {/* Header */}
@@ -16,8 +20,16 @@ export default function Home() {
         </p>
       </header>
       
-      {/* Connect Card Component */}
-      <ConnectCard />
+      <div className="w-full max-w-md mx-auto">
+        {/* Connect Card Component */}
+        <ConnectCard provider={demoProvider} />
+        
+        {/* Additional text */}
+        <p className="mt-4 text-center text-gray-600">
+          Connect to the demo provider to explore the application features,
+          or <a href="/dashboard" className="text-primary hover:underline">visit your dashboard</a> if you're already connected.
+        </p>
+      </div>
       
       {/* Footer */}
       <footer className="mt-8 text-center text-gray-500 text-sm">
