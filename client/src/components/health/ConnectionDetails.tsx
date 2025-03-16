@@ -50,7 +50,19 @@ export function ConnectionDetails() {
 
   // If showing connect options, display them
   if (showConnectOptions) {
-    return <ConnectSelector />;
+    return (
+      <section className="mb-8">
+        <ConnectSelector />
+        <div className="mt-4 flex justify-end">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowConnectOptions(false)}
+          >
+            Cancel
+          </Button>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -131,9 +143,6 @@ export function ConnectionDetails() {
           </Button>
         </CardFooter>
       </Card>
-      
-      {/* Show additional connection options when needed */}
-      {showConnectOptions && <ConnectSelector />}
     </section>
   );
 }

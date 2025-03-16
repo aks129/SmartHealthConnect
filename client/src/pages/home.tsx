@@ -1,6 +1,8 @@
 import React from 'react';
 import { ConnectCard } from '@/components/health/ConnectCard';
-import { Heart } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Heart, Database } from 'lucide-react';
 import { fhirProviders } from '@/lib/providers';
 
 export default function Home() {
@@ -22,7 +24,32 @@ export default function Home() {
       
       <div className="w-full max-w-md mx-auto">
         {/* Connect Card Component */}
-        <ConnectCard provider={demoProvider} />
+        {demoProvider ? (
+          <ConnectCard provider={demoProvider} />
+        ) : (
+          <Card className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0">
+                  <Database className="h-8 w-8 text-gray-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-base truncate">Demo Connection</h3>
+                  <p className="text-sm text-gray-500 truncate">Connect to a sample dataset</p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <Button 
+                  className="w-full"
+                  size="sm"
+                  onClick={() => window.location.href = '/dashboard'}
+                >
+                  Connect
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         {/* Additional text */}
         <p className="mt-4 text-center text-gray-600">
