@@ -35,7 +35,9 @@ import {
   Receipt,
   Files,
   Building2,
-  DollarSign
+  DollarSign,
+  Database,
+  ServerCog
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { Patient } from '@shared/schema';
@@ -47,7 +49,8 @@ export function Sidebar() {
     laboratory: false,
     diagnostics: false,
     vitals: false,
-    insurance: false
+    insurance: false,
+    fhirServer: false
   });
   
   const { data: patient } = useQuery<Patient>({
@@ -321,6 +324,35 @@ export function Sidebar() {
                   <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#insurance-explanation') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
                     <Files className="mr-2 h-4 w-4" />
                     <span>Explanation of Benefits</span>
+                  </a>
+                </Link>
+              </CollapsibleContent>
+            </Collapsible>
+          </li>
+
+          {/* FHIR Server Explorer */}
+          <li>
+            <Collapsible
+              open={openCategories.fhirServer}
+              onOpenChange={(open) => setOpenCategories({...openCategories, fhirServer: open})}
+              className="w-full"
+            >
+              <CollapsibleTrigger className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${location.includes('#fhir-explorer') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                <div className="flex items-center">
+                  <Database className="mr-3 h-5 w-5" />
+                  <span>FHIR Server</span>
+                </div>
+                {openCategories.fhirServer ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-8 pr-2 mt-1 space-y-1">
+                <Link href="#fhir-explorer">
+                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#fhir-explorer') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    <ServerCog className="mr-2 h-4 w-4" />
+                    <span>Resource Explorer</span>
                   </a>
                 </Link>
               </CollapsibleContent>

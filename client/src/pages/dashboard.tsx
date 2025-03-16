@@ -9,11 +9,12 @@ import { ConnectionDetails } from '@/components/health/ConnectionDetails';
 import { CareGapsSection } from '@/components/health/CareGapsSection';
 import { InsuranceSection } from '@/components/health/InsuranceSection';
 import { ChatInterface } from '@/components/chat/ChatInterface';
+import { FhirExplorer } from '@/components/fhir/FhirExplorer';
 import { completeSmartAuth, checkAuth } from '@/lib/fhir-client';
 import { ErrorModal } from '@/components/auth/ErrorModal';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, MessageSquare, FileSpreadsheet, AlertTriangle, CreditCard } from 'lucide-react';
+import { FileText, MessageSquare, FileSpreadsheet, AlertTriangle, CreditCard, Database } from 'lucide-react';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -87,7 +88,10 @@ export default function Dashboard() {
         <Sidebar />
         
         <main className="flex-1 md:ml-64 p-4 md:p-8">
-          <Tabs defaultValue="health" className="w-full">
+          <Tabs 
+            defaultValue={location.includes('#fhir-explorer') ? 'fhir-explorer' : 'health'} 
+            className="w-full"
+          >
             <TabsList className="mb-6 flex w-full sm:w-auto">
               <TabsTrigger value="health" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
@@ -104,6 +108,10 @@ export default function Dashboard() {
               <TabsTrigger value="insurance" className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4" />
                 <span className="hidden sm:inline">Insurance</span>
+              </TabsTrigger>
+              <TabsTrigger value="fhir-explorer" className="flex items-center gap-2">
+                <Database className="h-4 w-4" />
+                <span className="hidden sm:inline">FHIR Explorer</span>
               </TabsTrigger>
               <TabsTrigger value="chat" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
@@ -128,6 +136,12 @@ export default function Dashboard() {
             
             <TabsContent value="insurance">
               <InsuranceSection />
+            </TabsContent>
+            
+            <TabsContent value="fhir-explorer" className="h-[calc(100vh-160px)]">
+              <div className="border rounded-lg overflow-hidden h-full bg-white">
+                <FhirExplorer />
+              </div>
             </TabsContent>
             
             <TabsContent value="chat">
