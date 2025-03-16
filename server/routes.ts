@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { generateHealthResponse, type HealthContext, type ChatHistoryItem } from './ai-service';
 import { careGapsService, type PatientHealthContext } from './care-gaps-service';
 import { z } from 'zod';
-import { insertChatMessageSchema } from '../shared/schema';
+import { insertChatMessageSchema, type Coverage, type Claim, type ExplanationOfBenefit } from '../shared/schema';
 
 // Sample FHIR data for demo purposes
 const samplePatient = {
@@ -816,6 +816,368 @@ const sampleImmunizations = [
   }
 ];
 
+const sampleCoverages = [
+  {
+    resourceType: "Coverage",
+    id: "demo-coverage-1",
+    status: "active",
+    type: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          code: "EHCPOL",
+          display: "extended healthcare"
+        }
+      ],
+      text: "Health Insurance"
+    },
+    subscriberId: "12345678",
+    beneficiary: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    payor: [
+      {
+        reference: "Organization/demo-org-1",
+        display: "National Health Insurance"
+      }
+    ],
+    class: [
+      {
+        type: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/coverage-class",
+              code: "group",
+              display: "Group"
+            }
+          ],
+          text: "Group"
+        },
+        value: "PREMIUM-PLAN-2023",
+        name: "Premium Health Plan 2023"
+      },
+      {
+        type: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/coverage-class",
+              code: "plan",
+              display: "Plan"
+            }
+          ],
+          text: "Plan"
+        },
+        value: "PREMIUM-PLUS",
+        name: "Premium Plus"
+      }
+    ],
+    period: {
+      start: "2023-01-01",
+      end: "2023-12-31"
+    }
+  }
+];
+
+const sampleClaims = [
+  {
+    resourceType: "Claim",
+    id: "demo-claim-1",
+    status: "active",
+    type: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/claim-type",
+          code: "professional",
+          display: "Professional"
+        }
+      ]
+    },
+    use: "claim",
+    patient: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    created: "2023-04-15",
+    provider: {
+      reference: "Practitioner/demo-practitioner-1",
+      display: "Dr. Jane Williams"
+    },
+    priority: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/processpriority",
+          code: "normal"
+        }
+      ]
+    },
+    insurance: [
+      {
+        sequence: 1,
+        focal: true,
+        coverage: {
+          reference: "Coverage/demo-coverage-1",
+          display: "National Health Insurance"
+        }
+      }
+    ],
+    item: [
+      {
+        sequence: 1,
+        productOrService: {
+          coding: [
+            {
+              system: "http://snomed.info/sct",
+              code: "185345009",
+              display: "Encounter for check up"
+            }
+          ],
+          text: "Annual Physical Examination"
+        },
+        servicedDate: "2023-04-15"
+      }
+    ],
+    total: {
+      value: 250.00,
+      currency: "USD"
+    }
+  },
+  {
+    resourceType: "Claim",
+    id: "demo-claim-2",
+    status: "active",
+    type: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/claim-type",
+          code: "pharmacy",
+          display: "Pharmacy"
+        }
+      ]
+    },
+    use: "claim",
+    patient: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    created: "2023-05-02",
+    provider: {
+      reference: "Organization/demo-org-2",
+      display: "City Pharmacy"
+    },
+    priority: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/processpriority",
+          code: "normal"
+        }
+      ]
+    },
+    insurance: [
+      {
+        sequence: 1,
+        focal: true,
+        coverage: {
+          reference: "Coverage/demo-coverage-1",
+          display: "National Health Insurance"
+        }
+      }
+    ],
+    item: [
+      {
+        sequence: 1,
+        productOrService: {
+          coding: [
+            {
+              system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+              code: "897122",
+              display: "Metformin 500 MG Oral Tablet"
+            }
+          ],
+          text: "Metformin 500 mg (90-day supply)"
+        },
+        servicedDate: "2023-05-02"
+      }
+    ],
+    total: {
+      value: 45.00,
+      currency: "USD"
+    }
+  }
+];
+
+const sampleExplanationOfBenefits = [
+  {
+    resourceType: "ExplanationOfBenefit",
+    id: "demo-eob-1",
+    status: "active",
+    type: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/claim-type",
+          code: "professional",
+          display: "Professional"
+        }
+      ]
+    },
+    use: "claim",
+    patient: {
+      reference: "Patient/demo-patient-1",
+      display: "John William Smith"
+    },
+    created: "2023-04-16",
+    insurer: {
+      reference: "Organization/demo-org-1",
+      display: "National Health Insurance"
+    },
+    provider: {
+      reference: "Practitioner/demo-practitioner-1",
+      display: "Dr. Jane Williams"
+    },
+    outcome: "complete",
+    insurance: [
+      {
+        focal: true,
+        coverage: {
+          reference: "Coverage/demo-coverage-1",
+          display: "National Health Insurance"
+        }
+      }
+    ],
+    item: [
+      {
+        sequence: 1,
+        productOrService: {
+          coding: [
+            {
+              system: "http://snomed.info/sct",
+              code: "185345009",
+              display: "Encounter for check up"
+            }
+          ],
+          text: "Annual Physical Examination"
+        },
+        servicedDate: "2023-04-15",
+        adjudication: [
+          {
+            category: {
+              coding: [
+                {
+                  system: "http://terminology.hl7.org/CodeSystem/adjudication",
+                  code: "submitted",
+                  display: "Submitted Amount"
+                }
+              ]
+            },
+            amount: {
+              value: 250.00,
+              currency: "USD"
+            }
+          },
+          {
+            category: {
+              coding: [
+                {
+                  system: "http://terminology.hl7.org/CodeSystem/adjudication",
+                  code: "deductible",
+                  display: "Deductible"
+                }
+              ]
+            },
+            amount: {
+              value: 20.00,
+              currency: "USD"
+            }
+          },
+          {
+            category: {
+              coding: [
+                {
+                  system: "http://terminology.hl7.org/CodeSystem/adjudication",
+                  code: "eligible",
+                  display: "Eligible Amount"
+                }
+              ]
+            },
+            amount: {
+              value: 230.00,
+              currency: "USD"
+            }
+          },
+          {
+            category: {
+              coding: [
+                {
+                  system: "http://terminology.hl7.org/CodeSystem/adjudication",
+                  code: "benefit",
+                  display: "Benefit Amount"
+                }
+              ]
+            },
+            amount: {
+              value: 207.00,
+              currency: "USD"
+            }
+          }
+        ]
+      }
+    ],
+    total: [
+      {
+        category: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/adjudication",
+              code: "submitted",
+              display: "Submitted Amount"
+            }
+          ]
+        },
+        amount: {
+          value: 250.00,
+          currency: "USD"
+        }
+      },
+      {
+        category: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/adjudication",
+              code: "eligible",
+              display: "Eligible Amount"
+            }
+          ]
+        },
+        amount: {
+          value: 230.00,
+          currency: "USD"
+        }
+      },
+      {
+        category: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/adjudication",
+              code: "benefit",
+              display: "Benefit Amount"
+            }
+          ]
+        },
+        amount: {
+          value: 207.00,
+          currency: "USD"
+        }
+      }
+    ],
+    payment: {
+      amount: {
+        value: 207.00,
+        currency: "USD"
+      }
+    }
+  }
+];
+
 // Demo FHIR client that returns sample data
 class DemoFhirClient {
   patientId: string;
@@ -857,6 +1219,24 @@ class DemoFhirClient {
         resourceType: "Bundle",
         type: "searchset",
         entry: sampleImmunizations.map(resource => ({ resource }))
+      };
+    } else if (resourceUrl.startsWith('Coverage?patient=') || resourceUrl.startsWith('Coverage?beneficiary=')) {
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: sampleCoverages.map(resource => ({ resource }))
+      };
+    } else if (resourceUrl.startsWith('Claim?patient=')) {
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: sampleClaims.map(resource => ({ resource }))
+      };
+    } else if (resourceUrl.startsWith('ExplanationOfBenefit?patient=')) {
+      return {
+        resourceType: "Bundle",
+        type: "searchset",
+        entry: sampleExplanationOfBenefits.map(resource => ({ resource }))
       };
     } else {
       return { entry: [] };
@@ -1107,6 +1487,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching immunizations:', error);
       res.status(500).json({ message: 'Failed to fetch immunizations' });
+    }
+  });
+  
+  // Get insurance coverage
+  app.get('/api/fhir/coverage', async (req: Request, res: Response) => {
+    try {
+      const session = await storage.getCurrentFhirSession();
+      
+      if (!session) {
+        return res.status(401).json({ message: 'No active FHIR session' });
+      }
+      
+      // Create an authenticated FHIR client
+      const client = await createFhirClient(session);
+      
+      // Get coverage for the patient
+      const coverage = await client.request(
+        `Coverage?beneficiary=${session.patientId}`
+      );
+      
+      res.json(coverage.entry ? coverage.entry.map((entry: any) => entry.resource) : []);
+    } catch (error) {
+      console.error('Error fetching coverage:', error);
+      res.status(500).json({ message: 'Failed to fetch coverage' });
+    }
+  });
+  
+  // Get claims
+  app.get('/api/fhir/claim', async (req: Request, res: Response) => {
+    try {
+      const session = await storage.getCurrentFhirSession();
+      
+      if (!session) {
+        return res.status(401).json({ message: 'No active FHIR session' });
+      }
+      
+      // Create an authenticated FHIR client
+      const client = await createFhirClient(session);
+      
+      // Get claims for the patient
+      const claims = await client.request(
+        `Claim?patient=${session.patientId}&_sort=-created`
+      );
+      
+      res.json(claims.entry ? claims.entry.map((entry: any) => entry.resource) : []);
+    } catch (error) {
+      console.error('Error fetching claims:', error);
+      res.status(500).json({ message: 'Failed to fetch claims' });
+    }
+  });
+  
+  // Get explanations of benefits
+  app.get('/api/fhir/explanation-of-benefit', async (req: Request, res: Response) => {
+    try {
+      const session = await storage.getCurrentFhirSession();
+      
+      if (!session) {
+        return res.status(401).json({ message: 'No active FHIR session' });
+      }
+      
+      // Create an authenticated FHIR client
+      const client = await createFhirClient(session);
+      
+      // Get EOBs for the patient
+      const explanationOfBenefits = await client.request(
+        `ExplanationOfBenefit?patient=${session.patientId}&_sort=-created`
+      );
+      
+      res.json(explanationOfBenefits.entry ? explanationOfBenefits.entry.map((entry: any) => entry.resource) : []);
+    } catch (error) {
+      console.error('Error fetching explanation of benefits:', error);
+      res.status(500).json({ message: 'Failed to fetch explanation of benefits' });
     }
   });
   

@@ -7,12 +7,13 @@ import { ConditionsSection } from '@/components/health/ConditionsSection';
 import { ObservationsSection } from '@/components/health/ObservationsSection';
 import { ConnectionDetails } from '@/components/health/ConnectionDetails';
 import { CareGapsSection } from '@/components/health/CareGapsSection';
+import { InsuranceSection } from '@/components/health/InsuranceSection';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { completeSmartAuth, checkAuth } from '@/lib/fhir-client';
 import { ErrorModal } from '@/components/auth/ErrorModal';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, MessageSquare, FileSpreadsheet, AlertTriangle } from 'lucide-react';
+import { FileText, MessageSquare, FileSpreadsheet, AlertTriangle, CreditCard } from 'lucide-react';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
