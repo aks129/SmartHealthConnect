@@ -16,6 +16,8 @@ import { ConnectedProviders } from '@/components/provider/ConnectedProviders';
 import { ConnectedOrganizations } from '@/components/provider/ConnectedOrganizations';
 import { ResearchDashboard } from '@/components/research/ResearchDashboard';
 import { FhirVisualizations } from '@/components/visualizations/FhirVisualizations';
+import { AdvancedAnalytics } from '@/components/analytics/AdvancedAnalytics';
+import { MedicalLiterature } from '@/components/literature/MedicalLiterature';
 import { completeSmartAuth, checkAuth } from '@/lib/fhir-client';
 import { ErrorModal } from '@/components/auth/ErrorModal';
 import { useToast } from '@/hooks/use-toast';
@@ -199,17 +201,17 @@ export default function Dashboard() {
             <TabsContent value="trends" className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-lg border bg-card p-6">
-                  <h3 className="font-semibold text-lg mb-4 text-primary">Health Trends (Coming Soon)</h3>
+                  <h3 className="font-semibold text-lg mb-4 text-primary">Health Trends</h3>
                   <p className="text-muted-foreground">
                     Track your health data over time with interactive trends analysis. See patterns, correlations, and progress 
                     toward your health goals.
                   </p>
                 </div>
                 <div className="rounded-lg border bg-card p-6">
-                  <h3 className="font-semibold text-lg mb-4 text-primary">Advanced Analytics</h3>
+                  <h3 className="font-semibold text-lg mb-4 text-primary">Longitudinal Analysis</h3>
                   <p className="text-muted-foreground">
-                    Powerful health analytics to help you understand your data, identify patterns,
-                    and get insights from your health journey.
+                    Evaluate your health data across time to identify important changes and help you make informed decisions
+                    about your care.
                   </p>
                 </div>
               </div>
@@ -219,6 +221,23 @@ export default function Dashboard() {
                 medications={medications}
                 allergies={allergies}
                 immunizations={immunizations}
+              />
+            </TabsContent>
+            
+            <TabsContent value="advanced-analytics" className="space-y-6">
+              <AdvancedAnalytics
+                observations={observations}
+                conditions={conditions}
+                medications={medications}
+                allergies={allergies}
+                immunizations={immunizations}
+              />
+            </TabsContent>
+            
+            <TabsContent value="medical-literature" className="space-y-6">
+              <MedicalLiterature
+                conditions={conditions}
+                medications={medications}
               />
             </TabsContent>
             

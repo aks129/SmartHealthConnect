@@ -13,7 +13,9 @@ import {
   Beaker,
   BarChart,
   Activity,
-  LineChart
+  LineChart,
+  BookOpen,
+  Microscope
 } from 'lucide-react';
 
 interface TabGroupProps {
@@ -131,6 +133,22 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             active={activeTab === "trends"} 
             onClick={onTabChange}
             color="bg-purple-50" 
+          />
+          <TabItem 
+            id="medical-literature" 
+            icon={<BookOpen />} 
+            label="Medical Literature" 
+            active={activeTab === "medical-literature"} 
+            onClick={onTabChange}
+            color="bg-teal-50" 
+          />
+          <TabItem 
+            id="advanced-analytics" 
+            icon={<Microscope />} 
+            label="Advanced Analytics" 
+            active={activeTab === "advanced-analytics"} 
+            onClick={onTabChange}
+            color="bg-cyan-50" 
           />
         </TabGroup>
 
