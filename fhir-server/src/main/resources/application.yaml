@@ -1,0 +1,35 @@
+hapi:
+  fhir:
+    server:
+      path: /fhir
+      name: HAPI FHIR Server
+      version: 1.0.0
+    validation:
+      enabled: true
+      request_validator_factory:
+        enabled: false
+    cors:
+      enabled: true
+      allowed_origin:
+        - '*'
+    tester:
+      home:
+        name: HAPI FHIR Tester
+        server_address: 'http://localhost:8000/fhir'
+        refuse_to_fetch_third_party_urls: false
+        fhir_version: R4
+  rest:
+    server-name: HAPI FHIR Server
+    server-version: 1.0.0
+    implementation-description: HAPI FHIR Server
+    default-response-encoding: json
+    e-tag-support: enabled
+    default-pretty-print: true
+  jpa:
+    model_package: com.example.fhirserver.entities
+    url: 'jdbc:h2:file:./fhir-server/target/database/h2'
+    username: sa
+    password: sa
+    driverClassName: org.h2.Driver
+    hibernate_dialect: org.hibernate.dialect.H2Dialect
+    show_sql: false
