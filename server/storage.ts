@@ -71,8 +71,21 @@ export class MemStorage implements IStorage {
       refreshToken: insertSession.refreshToken || null,
       tokenExpiry: insertSession.tokenExpiry || null,
       fhirServer: insertSession.fhirServer || null,
-      state: insertSession.state || null
+      state: insertSession.state || null,
+      current: insertSession.current || false,
+      endedAt: null
     };
+    
+    // If current is set to true, update any other current sessions
+    if (session.current) {
+      for (const [sid, existingSession] of this.fhirSessions.entries()) {
+        if (existingSession.current) {
+          existingSession.current = false;
+          existingSession.endedAt = new Date();
+          this.fhirSessions.set(sid, existingSession);
+        }
+      }
+    }
     
     this.fhirSessions.set(id, session);
     return session;
@@ -83,16 +96,21 @@ export class MemStorage implements IStorage {
   }
   
   async getCurrentFhirSession(): Promise<FhirSession | undefined> {
-    // In memory storage we'll just return the latest session
-    // In a real app with authentication, you'd get the session associated with the user
+    // Find the session with current=true
     const sessions = Array.from(this.fhirSessions.values());
     
-    if (sessions.length === 0) {
-      return undefined;
+    // First try to find a session with current=true
+    const currentSession = sessions.find(session => session.current === true);
+    if (currentSession) {
+      return currentSession;
     }
     
-    // Sort by id in descending order to get the latest session
-    return sessions.sort((a, b) => b.id - a.id)[0];
+    // If no current session found and we have sessions, return the latest one
+    if (sessions.length > 0) {
+      return sessions.sort((a, b) => b.id - a.id)[0];
+    }
+    
+    return undefined;
   }
   
   async endCurrentFhirSession(): Promise<boolean> {
@@ -102,8 +120,10 @@ export class MemStorage implements IStorage {
       return false;
     }
     
-    // Remove the session
-    this.fhirSessions.delete(currentSession.id);
+    // Mark the session as ended rather than removing it
+    currentSession.current = false;
+    currentSession.endedAt = new Date();
+    this.fhirSessions.set(currentSession.id, currentSession);
     return true;
   }
   

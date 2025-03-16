@@ -30,17 +30,35 @@ export class DatabaseStorage implements IStorage {
 
   // FHIR Session Management
   async createFhirSession(insertSession: InsertFhirSession): Promise<FhirSession> {
+    // Create the session data with appropriate defaults
+    const sessionData = {
+      provider: insertSession.provider,
+      userId: insertSession.userId || null,
+      accessToken: insertSession.accessToken || null,
+      refreshToken: insertSession.refreshToken || null,
+      tokenExpiry: insertSession.tokenExpiry || null,
+      fhirServer: insertSession.fhirServer || null,
+      patientId: insertSession.patientId || null,
+      scope: insertSession.scope || null,
+      state: insertSession.state || null,
+      current: insertSession.current || false,
+      endedAt: null
+    };
+
     // If current is set to true, find any other current sessions and set them to false
-    if (insertSession.current) {
+    if (sessionData.current) {
       await db
         .update(fhirSessions)
-        .set({ current: false })
+        .set({ 
+          current: false,
+          endedAt: new Date()
+        })
         .where(eq(fhirSessions.current, true));
     }
 
     const [session] = await db
       .insert(fhirSessions)
-      .values(insertSession)
+      .values(sessionData)
       .returning();
     
     return session;
