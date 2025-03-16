@@ -1,7 +1,7 @@
 /**
  * Client for interacting with our HAPI FHIR server
  */
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import {
   Patient,
   Condition,

@@ -45,14 +45,14 @@ export class FhirMigrationService {
     
     try {
       // Migrate patient data
-      const migratedPatient = await hapiFhirClient.createResource('Patient', patient);
+      const migratedPatient = await hapiFhirClient.createResource<Patient>('Patient', patient);
       const patientId = migratedPatient.id;
       migrationCounts.patients = 1;
       
       // Migrate conditions
       if (resources.conditions && resources.conditions.length > 0) {
         for (const condition of resources.conditions) {
-          await hapiFhirClient.createResource('Condition', condition);
+          await hapiFhirClient.createResource<Condition>('Condition', condition);
         }
         migrationCounts.conditions = resources.conditions.length;
       }
@@ -60,7 +60,7 @@ export class FhirMigrationService {
       // Migrate observations
       if (resources.observations && resources.observations.length > 0) {
         for (const observation of resources.observations) {
-          await hapiFhirClient.createResource('Observation', observation);
+          await hapiFhirClient.createResource<Observation>('Observation', observation);
         }
         migrationCounts.observations = resources.observations.length;
       }
@@ -68,7 +68,7 @@ export class FhirMigrationService {
       // Migrate medications
       if (resources.medications && resources.medications.length > 0) {
         for (const medication of resources.medications) {
-          await hapiFhirClient.createResource('MedicationRequest', medication);
+          await hapiFhirClient.createResource<MedicationRequest>('MedicationRequest', medication);
         }
         migrationCounts.medications = resources.medications.length;
       }
@@ -76,7 +76,7 @@ export class FhirMigrationService {
       // Migrate allergies
       if (resources.allergies && resources.allergies.length > 0) {
         for (const allergy of resources.allergies) {
-          await hapiFhirClient.createResource('AllergyIntolerance', allergy);
+          await hapiFhirClient.createResource<AllergyIntolerance>('AllergyIntolerance', allergy);
         }
         migrationCounts.allergies = resources.allergies.length;
       }
@@ -84,7 +84,7 @@ export class FhirMigrationService {
       // Migrate immunizations
       if (resources.immunizations && resources.immunizations.length > 0) {
         for (const immunization of resources.immunizations) {
-          await hapiFhirClient.createResource('Immunization', immunization);
+          await hapiFhirClient.createResource<Immunization>('Immunization', immunization);
         }
         migrationCounts.immunizations = resources.immunizations.length;
       }
@@ -92,7 +92,7 @@ export class FhirMigrationService {
       // Migrate coverages
       if (resources.coverages && resources.coverages.length > 0) {
         for (const coverage of resources.coverages) {
-          await hapiFhirClient.createResource('Coverage', coverage);
+          await hapiFhirClient.createResource<Coverage>('Coverage', coverage);
         }
         migrationCounts.coverages = resources.coverages.length;
       }
@@ -100,7 +100,7 @@ export class FhirMigrationService {
       // Migrate claims
       if (resources.claims && resources.claims.length > 0) {
         for (const claim of resources.claims) {
-          await hapiFhirClient.createResource('Claim', claim);
+          await hapiFhirClient.createResource<Claim>('Claim', claim);
         }
         migrationCounts.claims = resources.claims.length;
       }
@@ -108,21 +108,13 @@ export class FhirMigrationService {
       // Migrate explanation of benefits
       if (resources.explanationOfBenefits && resources.explanationOfBenefits.length > 0) {
         for (const eob of resources.explanationOfBenefits) {
-          await hapiFhirClient.createResource('ExplanationOfBenefit', eob);
+          await hapiFhirClient.createResource<ExplanationOfBenefit>('ExplanationOfBenefit', eob);
         }
         migrationCounts.explanationOfBenefits = resources.explanationOfBenefits.length;
       }
       
-      // Update the session with migration status
-      const updatedSession = {
-        ...session,
-        migrated: true,
-        migrationDate: new Date().toISOString(),
-        migrationCounts
-      };
-      
-      // Save migration information to database
-      // (This is a placeholder - we'd need to add this field to the database schema)
+      // Update the session with migration status in the database
+      await storage.updateFhirSessionMigration(session.id, true, migrationCounts);
       
       return migrationCounts;
     } catch (error) {
