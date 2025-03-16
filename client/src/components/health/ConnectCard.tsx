@@ -1,240 +1,142 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { AuthModal } from "@/components/auth/AuthModal";
-import { ErrorModal } from "@/components/auth/ErrorModal";
-import { initializeSmartAuth } from "@/lib/fhir-client";
-import { fhirProviders, getProviderById } from "@/lib/providers";
-import { toast } from "@/hooks/use-toast";
-import { Link2, ShieldCheck, Lock, GitFork } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { FhirProvider } from '@/lib/providers';
+import { initializeSmartAuth } from '@/lib/fhir-client';
+import { Building, Database, Microscope, Pill, Server, Stethoscope } from 'lucide-react';
 
-export function ConnectCard() {
-  const [selectedProvider, setSelectedProvider] = useState<string>("");
-  const [customEndpoint, setCustomEndpoint] = useState<string>("");
-  const [showCustomEndpoint, setShowCustomEndpoint] = useState<boolean>(false);
-  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
-  const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const [isConnecting, setIsConnecting] = useState<boolean>(false);
+interface ConnectCardProps {
+  provider: FhirProvider;
+  className?: string;
+}
 
-  useEffect(() => {
-    // Show custom endpoint field if "other" is selected
-    setShowCustomEndpoint(selectedProvider === "other");
-    
-    // Save selected provider to localStorage for after redirect
-    if (selectedProvider) {
-      localStorage.setItem('selected_provider', selectedProvider);
-    }
-  }, [selectedProvider]);
+export function ConnectCard({ provider, className }: ConnectCardProps) {
+  const { toast } = useToast();
 
+  // Handle connection to provider
   const handleConnect = async () => {
-    if (!selectedProvider) {
-      toast({
-        title: "Provider Required",
-        description: "Please select a healthcare provider.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // If "other" provider is selected, make sure custom endpoint is provided
-    if (selectedProvider === "other" && !customEndpoint) {
-      toast({
-        title: "FHIR Server URL Required",
-        description: "Please enter the FHIR server URL provided by your healthcare provider.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     try {
-      setIsConnecting(true);
-      setShowAuthModal(true);
-      
-      // Special handling for demo connection
-      if (selectedProvider === "demo") {
-        // Use the demo API endpoint to establish a session with sample data
+      // For demo provider, use the demo API route
+      if (provider.id === 'demo') {
         const response = await fetch('/api/fhir/demo/connect', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
         });
-        
         if (!response.ok) {
-          throw new Error("Failed to connect to demo server");
+          throw new Error('Failed to connect to demo provider');
         }
-        
-        // Redirect to dashboard after a brief delay
+        const data = await response.json();
+        if (data.success) {
+          toast({
+            title: 'Connected Successfully',
+            description: `You're now connected to ${provider.name}`,
+          });
+          // Reload the page to show the connected state
+          window.location.reload();
+        }
+      } else if (provider.id.includes('qhin')) {
+        // For TEFCA QHIN providers
+        toast({
+          title: 'TEFCA Authorization',
+          description: `Initiating IAS authorization flow with ${provider.name}`,
+        });
+        // Simulate TEFCA flow
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          toast({
+            title: 'TEFCA Connection Successful',
+            description: `${provider.name} can now search for your records across the TEFCA network`,
+          });
         }, 1500);
-        
-        return;
-      }
-      
-      // Normal SMART on FHIR flow for real providers
-      // Get the FHIR server URL
-      let fhirServerUrl = "";
-      if (selectedProvider === "other") {
-        fhirServerUrl = customEndpoint;
       } else {
-        const provider = getProviderById(selectedProvider);
-        if (provider) {
-          fhirServerUrl = provider.url;
-        }
-      }
-      
-      if (!fhirServerUrl) {
-        throw new Error("Invalid FHIR server URL");
-      }
-      
-      // Initialize SMART on FHIR authentication
-      const authUrl = await initializeSmartAuth(fhirServerUrl);
-      
-      // Redirect to the authorization URL after a brief delay
-      if (authUrl) {
-        setTimeout(() => {
+        // For SMART on FHIR providers
+        const authUrl = await initializeSmartAuth(provider.url);
+        if (authUrl) {
           window.location.href = authUrl;
-        }, 1500);
-      } else {
-        throw new Error("Failed to generate authentication URL");
+        }
       }
-      
     } catch (error) {
-      console.error("Error connecting to FHIR server:", error);
-      setShowAuthModal(false);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to connect to the FHIR server. Please try again.");
-      setShowErrorModal(true);
-    } finally {
-      setIsConnecting(false);
+      console.error('Connection error:', error);
+      toast({
+        title: 'Connection Failed',
+        description: error instanceof Error ? error.message : 'Could not connect to provider',
+        variant: 'destructive',
+      });
     }
   };
 
-  return (
-    <>
-      <Card className="w-full max-w-xl">
-        <CardHeader>
-          <CardTitle>Connect to Your Health Records</CardTitle>
-          <CardDescription>
-            This application uses SMART on FHIR to securely connect to your health provider and display your medical information.
-          </CardDescription>
-          
-          <div className="flex flex-wrap gap-3 mt-4">
-            <div className="flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm">
-              <Lock className="mr-1 h-3 w-3" />
-              <span>Secure Connection</span>
+  // Get the appropriate icon based on provider type
+  const getProviderIcon = () => {
+    if (!provider || !provider.logoIcon) {
+      return <Database className="h-8 w-8 text-gray-500" />;
+    }
+    
+    switch (provider.logoIcon) {
+      case 'server':
+        return <Server className="h-8 w-8 text-gray-500" />;
+      case 'building':
+        return <Building className="h-8 w-8 text-gray-500" />;
+      case 'microscope':
+        return <Microscope className="h-8 w-8 text-gray-500" />;
+      case 'pill':
+        return <Pill className="h-8 w-8 text-gray-500" />;
+      case 'stethoscope':
+        return <Stethoscope className="h-8 w-8 text-gray-500" />;
+      default:
+        return <Database className="h-8 w-8 text-gray-500" />;
+    }
+  };
+
+  // If provider is undefined, show a placeholder
+  if (!provider) {
+    return (
+      <Card className={cn("overflow-hidden", className)}>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0">
+              <Database className="h-8 w-8 text-gray-300" />
             </div>
-            <div className="flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm">
-              <ShieldCheck className="mr-1 h-3 w-3" />
-              <span>HIPAA Compliant</span>
-            </div>
-            <div className="flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm">
-              <GitFork className="mr-1 h-3 w-3" />
-              <span>Privacy Protected</span>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-base truncate">Connection unavailable</h3>
+              <p className="text-sm text-gray-500 truncate">Provider information missing</p>
             </div>
           </div>
-        </CardHeader>
-        
-        <CardContent>
-          <div className="mb-6">
-            <Label htmlFor="provider" className="block text-sm font-medium mb-2">
-              Select Your Health Provider
-            </Label>
-            <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-              <SelectTrigger id="provider" className="w-full">
-                <SelectValue placeholder="Choose a provider" />
-              </SelectTrigger>
-              <SelectContent>
-                {fhirProviders.map((provider) => (
-                  <SelectItem key={provider.id} value={provider.id}>
-                    {provider.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="mt-4">
+            <Button 
+              className="w-full"
+              size="sm"
+              disabled
+            >
+              Connect
+            </Button>
           </div>
-
-          {showCustomEndpoint && (
-            <div className="mb-6">
-              <Label htmlFor="fhir-endpoint" className="block text-sm font-medium mb-2">
-                FHIR Server Endpoint
-              </Label>
-              <Input
-                type="url"
-                id="fhir-endpoint"
-                placeholder="https://fhir.example.org/api/fhir"
-                value={customEndpoint}
-                onChange={(e) => setCustomEndpoint(e.target.value)}
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                Enter the FHIR server URL provided by your healthcare provider
-              </p>
-            </div>
-          )}
-
-          <Button 
-            onClick={handleConnect}
-            disabled={isConnecting}
-            className="w-full"
-          >
-            <Link2 className="mr-2 h-4 w-4" />
-            Connect to Health Records
-          </Button>
         </CardContent>
-        
-        <CardFooter className="flex-col bg-gray-50 rounded-b-lg border-t">
-          <h3 className="text-sm font-semibold uppercase text-gray-500 mb-3 w-full">How It Works</h3>
-          <div className="space-y-4 w-full">
-            <div className="flex">
-              <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mr-3">
-                1
-              </div>
-              <div>
-                <p className="text-gray-700">Select your healthcare provider from the dropdown list</p>
-              </div>
-            </div>
-            <div className="flex">
-              <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mr-3">
-                2
-              </div>
-              <div>
-                <p className="text-gray-700">You'll be redirected to your provider's secure login page</p>
-              </div>
-            </div>
-            <div className="flex">
-              <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mr-3">
-                3
-              </div>
-              <div>
-                <p className="text-gray-700">Authorize this app to access your health records</p>
-              </div>
-            </div>
-            <div className="flex">
-              <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mr-3">
-                4
-              </div>
-              <div>
-                <p className="text-gray-700">View your health information securely in this application</p>
-              </div>
-            </div>
-          </div>
-        </CardFooter>
       </Card>
-      
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
-      />
-      
-      <ErrorModal 
-        isOpen={showErrorModal} 
-        onClose={() => setShowErrorModal(false)} 
-        message={errorMessage}
-      />
-    </>
+    );
+  }
+
+  return (
+    <Card className={cn("overflow-hidden", className)}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            {getProviderIcon()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-base truncate">{provider.name || 'Unknown Provider'}</h3>
+            <p className="text-sm text-gray-500 truncate">{provider.description || 'No description available'}</p>
+          </div>
+        </div>
+        <div className="mt-4">
+          <Button 
+            className="w-full"
+            size="sm"
+            onClick={handleConnect}
+          >
+            Connect
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
