@@ -58,10 +58,11 @@ function generateSystemPrompt(context: HealthContext): string {
     context.medications.forEach(med => {
       let display = 'Unknown medication';
       if (med.medicationCodeableConcept) {
-        display = med.medicationCodeableConcept.text || 
-          (med.medicationCodeableConcept.coding && med.medicationCodeableConcept.coding.length > 0 
-            ? med.medicationCodeableConcept.coding[0].display || med.medicationCodeableConcept.coding[0].code 
-            : 'Unknown medication');
+        if (med.medicationCodeableConcept.text) {
+          display = med.medicationCodeableConcept.text;
+        } else if (med.medicationCodeableConcept.coding && med.medicationCodeableConcept.coding.length > 0) {
+          display = med.medicationCodeableConcept.coding[0].display || med.medicationCodeableConcept.coding[0].code || 'Unknown medication';
+        }
       } else if (med.medicationReference) {
         display = med.medicationReference.display || med.medicationReference.reference || 'Unknown medication';
       }

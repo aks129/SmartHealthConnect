@@ -267,7 +267,7 @@ export type Immunization = z.infer<typeof immunizationSchema>;
 // Chat Messages for AI conversation feature
 export const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
-  fhirSessionId: integer("fhir_session_id").references(() => fhirSessions.id),
+  fhirSessionId: integer("fhir_session_id").references(() => fhirSessions.id).notNull(),
   role: text("role").notNull(), // "user" or "assistant"
   content: text("content").notNull(),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
