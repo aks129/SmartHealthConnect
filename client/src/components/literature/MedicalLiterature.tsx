@@ -542,7 +542,7 @@ export function MedicalLiterature({ conditions, medications }: MedicalLiterature
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <FileText className="h-6 w-6 text-primary" />
+                    <BookOpenText className="h-6 w-6 text-green-600" />
                     <CardTitle>MedlinePlus</CardTitle>
                   </div>
                   <CardDescription>
