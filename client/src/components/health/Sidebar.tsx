@@ -350,7 +350,16 @@ export function Sidebar() {
               </CollapsibleTrigger>
               <CollapsibleContent className="pl-8 pr-2 mt-1 space-y-1">
                 <Link href="#fhir-explorer">
-                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#fhir-explorer') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                  <a 
+                    className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#fhir-explorer') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                    onClick={() => {
+                      // Force the tab to switch to FHIR Explorer 
+                      const tabElements = document.querySelectorAll('[data-state="inactive"][value="fhir-explorer"]');
+                      if (tabElements.length > 0) {
+                        (tabElements[0] as HTMLElement).click();
+                      }
+                    }}
+                  >
                     <ServerCog className="mr-2 h-4 w-4" />
                     <span>Resource Explorer</span>
                   </a>
