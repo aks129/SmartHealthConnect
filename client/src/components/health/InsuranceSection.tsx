@@ -6,7 +6,7 @@ import { getQueryFn } from "@/lib/queryClient";
 import { formatFhirDate } from "@/lib/fhir-client";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { type Coverage, type Claim, type ExplanationOfBenefit } from "../../../shared/schema";
+import { type Coverage, type Claim, type ExplanationOfBenefit } from "@shared/schema";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export function InsuranceSection() {
@@ -76,7 +76,7 @@ export function InsuranceSection() {
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Status</p>
-                        <Badge variant={coverage.status === "active" ? "success" : "destructive"}>
+                        <Badge variant={coverage.status === "active" ? "default" : "destructive"} className={coverage.status === "active" ? "bg-green-500 hover:bg-green-500/80" : ""}>
                           {coverage.status === "active" ? "Active" : coverage.status}
                         </Badge>
                       </div>
