@@ -869,11 +869,11 @@ export function ImmunizationsTimeline({ immunizations }: ImmunizationsTimelinePr
       }
       
       // Draw points for each vaccine
-      g.selectAll(`.vaccine-point-${name.replace(/\\s+/g, '-')}`)
+      g.selectAll(`.vaccine-point-${name.replace(/\s+/g, '-').replace(/[,.']/g, '')}`)
         .data(vaccines)
         .enter()
         .append('circle')
-        .attr('class', `vaccine-point-${name.replace(/\\s+/g, '-')}`)
+        .attr('class', `vaccine-point-${name.replace(/\s+/g, '-').replace(/[,.']/g, '')}`)
         .attr('cx', d => xScale(d.occurrenceDateTime ? new Date(d.occurrenceDateTime) : new Date()))
         .attr('cy', y + yScale.bandwidth() / 2)
         .attr('r', 6)
