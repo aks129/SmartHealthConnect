@@ -77,15 +77,34 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   return (
     <div className="flex flex-col space-y-4 md:space-y-6 mb-6 overflow-x-auto pb-2">
       <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-6">
-        <TabGroup label="CONNECTIONS">
+        <TabGroup label="PREVENTIVE HEALTH">
           <TabItem 
-            id="connect-records" 
-            icon={<Link />} 
-            label="Connect Records" 
-            active={activeTab === "connect-records"} 
+            id="care-gaps" 
+            icon={<AlertTriangle />} 
+            label="Care Gaps & HEDIS" 
+            active={activeTab === "care-gaps"} 
             onClick={onTabChange}
-            color="bg-emerald-50" 
+            color="bg-red-50" 
           />
+          <TabItem 
+            id="activity-feed" 
+            icon={<Activity />} 
+            label="Health Alerts" 
+            active={activeTab === "activity-feed"} 
+            onClick={onTabChange}
+            color="bg-amber-50" 
+          />
+          <TabItem 
+            id="advanced-analytics" 
+            icon={<Microscope />} 
+            label="Preventive Analytics" 
+            active={activeTab === "advanced-analytics"} 
+            onClick={onTabChange}
+            color="bg-orange-50" 
+          />
+        </TabGroup>
+        
+        <TabGroup label="HEALTH DATA">
           <TabItem 
             id="health" 
             icon={<FileText />} 
@@ -95,17 +114,6 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             color="bg-blue-50" 
           />
           <TabItem 
-            id="insurance" 
-            icon={<CreditCard />} 
-            label="Insurance" 
-            active={activeTab === "insurance"} 
-            onClick={onTabChange}
-            color="bg-blue-50" 
-          />
-        </TabGroup>
-        
-        <TabGroup label="HEALTH RECORDS">
-          <TabItem 
             id="ips" 
             icon={<FileSpreadsheet />} 
             label="Patient Summary" 
@@ -114,28 +122,9 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             color="bg-blue-50" 
           />
           <TabItem 
-            id="care-gaps" 
-            icon={<AlertTriangle />} 
-            label="Care Gaps" 
-            active={activeTab === "care-gaps"} 
-            onClick={onTabChange}
-            color="bg-amber-50" 
-          />
-          <TabItem 
-            id="activity-feed" 
-            icon={<Activity />} 
-            label="Health Feed" 
-            active={activeTab === "activity-feed"} 
-            onClick={onTabChange}
-            color="bg-pink-50" 
-          />
-        </TabGroup>
-        
-        <TabGroup label="INSIGHTS & ANALYSIS">
-          <TabItem 
             id="visualizations" 
             icon={<BarChart />} 
-            label="Visualizations" 
+            label="Health Visualizations" 
             active={activeTab === "visualizations"} 
             onClick={onTabChange}
             color="bg-indigo-50" 
@@ -148,38 +137,22 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             onClick={onTabChange}
             color="bg-purple-50" 
           />
-          <TabItem 
-            id="advanced-analytics" 
-            icon={<Microscope />} 
-            label="Advanced Analytics" 
-            active={activeTab === "advanced-analytics"} 
-            onClick={onTabChange}
-            color="bg-cyan-50" 
-          />
-          <TabItem 
-            id="medical-literature" 
-            icon={<BookOpen />} 
-            label="Medical Literature" 
-            active={activeTab === "medical-literature"} 
-            onClick={onTabChange}
-            color="bg-teal-50" 
-          />
         </TabGroup>
-
-        <TabGroup label="PROVIDERS & RESEARCH">
+        
+        <TabGroup label="CONNECTIONS">
+          <TabItem 
+            id="connect-records" 
+            icon={<Link />} 
+            label="Connect Records" 
+            active={activeTab === "connect-records"} 
+            onClick={onTabChange}
+            color="bg-emerald-50" 
+          />
           <TabItem 
             id="providers" 
             icon={<User />} 
             label="My Providers" 
             active={activeTab === "providers"} 
-            onClick={onTabChange}
-            color="bg-green-50" 
-          />
-          <TabItem 
-            id="organizations" 
-            icon={<Building />} 
-            label="My Organizations" 
-            active={activeTab === "organizations"} 
             onClick={onTabChange}
             color="bg-green-50" 
           />
@@ -192,6 +165,33 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             color="bg-green-50" 
           />
           <TabItem 
+            id="insurance" 
+            icon={<CreditCard />} 
+            label="Insurance" 
+            active={activeTab === "insurance"} 
+            onClick={onTabChange}
+            color="bg-blue-50" 
+          />
+        </TabGroup>
+
+        <TabGroup label="RESOURCES">
+          <TabItem 
+            id="medical-literature" 
+            icon={<BookOpen />} 
+            label="Medical Literature" 
+            active={activeTab === "medical-literature"} 
+            onClick={onTabChange}
+            color="bg-teal-50" 
+          />
+          <TabItem 
+            id="organizations" 
+            icon={<Building />} 
+            label="Organizations" 
+            active={activeTab === "organizations"} 
+            onClick={onTabChange}
+            color="bg-green-50" 
+          />
+          <TabItem 
             id="research" 
             icon={<Beaker />} 
             label="Research" 
@@ -199,9 +199,6 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             onClick={onTabChange}
             color="bg-purple-50" 
           />
-        </TabGroup>
-
-        <TabGroup label="TOOLS">
           <TabItem 
             id="chat" 
             icon={<MessageSquare />} 

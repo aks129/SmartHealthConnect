@@ -7,7 +7,8 @@ import {
   CardContent, 
   CardHeader, 
   CardTitle, 
-  CardDescription 
+  CardDescription, 
+  CardFooter
 } from '@/components/ui/card';
 import { 
   Tabs, 
@@ -26,7 +27,13 @@ import {
   AlertTriangle,
   CheckCircle2,
   XCircle,
-  ArrowRight
+  ArrowRight,
+  Stethoscope,
+  HeartPulse,
+  Shield,
+  Pill,
+  Syringe,
+  Microscope
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { 
@@ -35,6 +42,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Progress
+} from "@/components/ui/progress";
 
 export function CareGapsSection() {
   const [activeTab, setActiveTab] = useState<string>('due');
@@ -126,12 +136,45 @@ export function CareGapsSection() {
     }
   };
   
+  // Calculate completion stats
+  const calculateCompletionStats = () => {
+    if (!careGaps) return { total: 0, completed: 0, due: 0, percentage: 0 };
+    
+    const total = (careGaps as CareGap[]).length;
+    const completed = groupedGaps.satisfied.length;
+    const due = groupedGaps.due.length;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+    
+    return { total, completed, due, percentage };
+  };
+  
+  const stats = calculateCompletionStats();
+  
+  // Get icon for care gap category
+  const getCategoryIcon = (category: string) => {
+    switch(category) {
+      case 'preventive':
+        return <Shield className="h-5 w-5 mr-2 text-blue-500" />;
+      case 'chronic':
+        return <HeartPulse className="h-5 w-5 mr-2 text-purple-500" />;
+      case 'wellness':
+        return <Stethoscope className="h-5 w-5 mr-2 text-green-500" />;
+      default:
+        return <Microscope className="h-5 w-5 mr-2 text-gray-500" />;
+    }
+  };
+  
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Care Gaps</CardTitle>
-          <CardDescription>Loading care measures...</CardDescription>
+      <Card className="shadow-md border-red-100">
+        <CardHeader className="pb-3">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
+            <CardTitle>Preventive Care & HEDIS Measures</CardTitle>
+          </div>
+          <CardDescription>
+            Loading preventive healthcare opportunities...
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-6">
@@ -144,10 +187,13 @@ export function CareGapsSection() {
   
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Care Gaps</CardTitle>
-          <CardDescription>Error loading care measures</CardDescription>
+      <Card className="shadow-md border-red-100">
+        <CardHeader className="pb-3">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
+            <CardTitle>Preventive Care & HEDIS Measures</CardTitle>
+          </div>
+          <CardDescription>Error loading preventive care opportunities</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="bg-destructive/10 text-destructive p-4 rounded-md flex items-start">
@@ -163,12 +209,17 @@ export function CareGapsSection() {
   }
   
   return (
-    <Card className="shadow-md">
-      <CardHeader className="pb-3">
+    <Card className="shadow-md border-2 border-amber-200">
+      <CardHeader className="pb-3 bg-gradient-to-r from-amber-50 to-orange-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <AlertTriangle className="h-5 w-5 mr-2" />
-            <CardTitle>Care Gaps (HEDIS Measures)</CardTitle>
+            <AlertTriangle className="h-6 w-6 mr-2 text-amber-500" />
+            <div>
+              <CardTitle className="text-xl">Care Gaps & Preventive Health</CardTitle>
+              <CardDescription className="mt-1">
+                HEDIS quality measures and preventive healthcare opportunities
+              </CardDescription>
+            </div>
           </div>
           <TooltipProvider>
             <Tooltip>
@@ -178,14 +229,29 @@ export function CareGapsSection() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
-                <p>Care gaps are generated based on HEDIS Clinical Quality measures using CQL implementation guides.</p>
+                <p>Care gaps are generated based on HEDIS Clinical Quality measures and are designed to improve healthcare outcomes and reduce costs by identifying preventive care opportunities.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-        <CardDescription>
-          Clinical care opportunities based on HEDIS guidelines
-        </CardDescription>
+        
+        <div className="mt-4 p-3 bg-white rounded-lg shadow-sm border border-amber-100">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">Preventive Health Status</span>
+            <span className="text-sm font-semibold">{stats.completed} of {stats.total} measures satisfied</span>
+          </div>
+          <Progress value={stats.percentage} className="h-2" />
+          <div className="flex justify-between items-center mt-3 text-sm">
+            <div className="flex items-center">
+              <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>
+              <span>{stats.due} due ({stats.due > 0 ? "action needed" : "all clear"})</span>
+            </div>
+            <div className="flex items-center">
+              <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>
+              <span>{stats.completed} complete ({stats.percentage}%)</span>
+            </div>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="due" value={activeTab} onValueChange={setActiveTab}>
@@ -342,6 +408,35 @@ export function CareGapsSection() {
           </TabsContent>
         </Tabs>
       </CardContent>
+      <CardFooter className="bg-blue-50 border-t border-blue-100 flex flex-col space-y-3 text-sm">
+        <div className="flex items-start">
+          <Shield className="h-5 w-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+          <p>
+            <span className="font-semibold">HEDIS Measures:</span> The Healthcare Effectiveness Data and Information Set (HEDIS) is a widely used set of performance measures in the managed care industry, developed by the National Committee for Quality Assurance (NCQA).
+          </p>
+        </div>
+        <div className="flex items-start">
+          <HeartPulse className="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+          <p>
+            <span className="font-semibold">Value-Based Care:</span> Closing care gaps helps providers meet quality measures for value-based care programs, improving patient outcomes and reducing healthcare costs.
+          </p>
+        </div>
+        <div className="flex items-start">
+          <Stethoscope className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+          <p>
+            <span className="font-semibold">Preventive Focus:</span> Regular screenings, immunizations, and check-ups can detect health issues early, when they're most treatable, and prevent serious complications.
+          </p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-2 w-full" 
+          onClick={() => window.open('https://www.ncqa.org/hedis/measures/', '_blank')}
+        >
+          Learn more about HEDIS Measures
+          <ArrowRight className="h-4 w-4 ml-1" />
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
