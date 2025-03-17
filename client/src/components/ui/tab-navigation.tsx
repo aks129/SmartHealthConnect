@@ -15,7 +15,10 @@ import {
   Activity,
   LineChart,
   BookOpen,
-  Microscope
+  Microscope,
+  Plus,
+  Link,
+  PanelLeft
 } from 'lucide-react';
 
 interface TabGroupProps {
@@ -74,28 +77,20 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   return (
     <div className="flex flex-col space-y-4 md:space-y-6 mb-6 overflow-x-auto pb-2">
       <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-6">
-        <TabGroup label="HEALTH RECORDS">
+        <TabGroup label="CONNECTIONS">
+          <TabItem 
+            id="connect-records" 
+            icon={<Link />} 
+            label="Connect Records" 
+            active={activeTab === "connect-records"} 
+            onClick={onTabChange}
+            color="bg-emerald-50" 
+          />
           <TabItem 
             id="health" 
             icon={<FileText />} 
-            label="Health Records" 
+            label="Health Dashboard" 
             active={activeTab === "health"} 
-            onClick={onTabChange}
-            color="bg-blue-50" 
-          />
-          <TabItem 
-            id="ips" 
-            icon={<FileSpreadsheet />} 
-            label="Patient Summary (IPS)" 
-            active={activeTab === "ips"} 
-            onClick={onTabChange}
-            color="bg-blue-50" 
-          />
-          <TabItem 
-            id="care-gaps" 
-            icon={<AlertTriangle />} 
-            label="Care Gaps" 
-            active={activeTab === "care-gaps"} 
             onClick={onTabChange}
             color="bg-blue-50" 
           />
@@ -109,14 +104,22 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
           />
         </TabGroup>
         
-        <TabGroup label="HEALTH DATA & INSIGHTS">
+        <TabGroup label="HEALTH RECORDS">
           <TabItem 
-            id="visualizations" 
-            icon={<BarChart />} 
-            label="Visualizations" 
-            active={activeTab === "visualizations"} 
+            id="ips" 
+            icon={<FileSpreadsheet />} 
+            label="Patient Summary" 
+            active={activeTab === "ips"} 
             onClick={onTabChange}
-            color="bg-indigo-50" 
+            color="bg-blue-50" 
+          />
+          <TabItem 
+            id="care-gaps" 
+            icon={<AlertTriangle />} 
+            label="Care Gaps" 
+            active={activeTab === "care-gaps"} 
+            onClick={onTabChange}
+            color="bg-amber-50" 
           />
           <TabItem 
             id="activity-feed" 
@@ -125,6 +128,17 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             active={activeTab === "activity-feed"} 
             onClick={onTabChange}
             color="bg-pink-50" 
+          />
+        </TabGroup>
+        
+        <TabGroup label="INSIGHTS & ANALYSIS">
+          <TabItem 
+            id="visualizations" 
+            icon={<BarChart />} 
+            label="Visualizations" 
+            active={activeTab === "visualizations"} 
+            onClick={onTabChange}
+            color="bg-indigo-50" 
           />
           <TabItem 
             id="trends" 
@@ -135,20 +149,20 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             color="bg-purple-50" 
           />
           <TabItem 
-            id="medical-literature" 
-            icon={<BookOpen />} 
-            label="Medical Literature" 
-            active={activeTab === "medical-literature"} 
-            onClick={onTabChange}
-            color="bg-teal-50" 
-          />
-          <TabItem 
             id="advanced-analytics" 
             icon={<Microscope />} 
             label="Advanced Analytics" 
             active={activeTab === "advanced-analytics"} 
             onClick={onTabChange}
             color="bg-cyan-50" 
+          />
+          <TabItem 
+            id="medical-literature" 
+            icon={<BookOpen />} 
+            label="Medical Literature" 
+            active={activeTab === "medical-literature"} 
+            onClick={onTabChange}
+            color="bg-teal-50" 
           />
         </TabGroup>
 

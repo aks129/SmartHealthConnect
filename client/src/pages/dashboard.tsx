@@ -6,6 +6,7 @@ import { PatientSummaryIPS } from '@/components/health/PatientSummaryIPS';
 import { ConditionsSection } from '@/components/health/ConditionsSection';
 import { ObservationsSection } from '@/components/health/ObservationsSection';
 import { ConnectionDetails } from '@/components/health/ConnectionDetails';
+import { ConnectSelector } from '@/components/health/ConnectSelector';
 import { CareGapsSection } from '@/components/health/CareGapsSection';
 import { InsuranceSection } from '@/components/health/InsuranceSection';
 import { HealthFeed } from '@/components/health/HealthFeed';
@@ -261,6 +262,10 @@ export default function Dashboard() {
             
             <TabsContent value="research">
               <ResearchDashboard />
+            </TabsContent>
+            
+            <TabsContent value="connect-records">
+              <ConnectSelector />
             </TabsContent>
             
             <TabsContent value="chat">
