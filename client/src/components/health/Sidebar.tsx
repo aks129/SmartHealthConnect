@@ -58,6 +58,8 @@ export function Sidebar() {
     queryKey: ['/api/fhir/patient'],
   });
 
+  const { toast } = useToast();
+  
   const handleDisconnect = async () => {
     try {
       await endSession();
