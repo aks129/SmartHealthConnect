@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Settings - Health Records Connect</title>
+  <style>
+    /* Base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      line-height: 1.6;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+    }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eaeaea;
+    }
+    
+    h1, h2, h3 {
+      color: #0070f3;
+    }
+    
+    h1 {
+      margin-bottom: 10px;
+    }
+    
+    h2 {
+      margin: 30px 0 15px;
+    }
+    
+    p {
+      margin-bottom: 20px;
+      color: #555;
+    }
+    
+    .btn {
+      background-color: #0070f3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    .btn:hover {
+      background-color: #0051a8;
+    }
+    
+    .btn-secondary {
+      background-color: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #e5e5e5;
+    }
+    
+    .btn-danger {
+      background-color: #ff0033;
+    }
+    
+    .btn-danger:hover {
+      background-color: #cc0022;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+      margin-right: 15px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #0070f3;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    .description {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .section-header {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #eaeaea;
+    }
+    
+    .action-group {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .alert-box {
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+      color: #fff;
+    }
+    
+    .alert-info {
+      background-color: #0070f3;
+    }
+    
+    .alert-warning {
+      background-color: #f59e0b;
+    }
+    
+    .alert-danger {
+      background-color: #f43f5e;
+    }
+    
+    .privacy-policy {
+      padding: 20px;
+      background-color: #f9f9f9;
+      border: 1px solid #eaeaea;
+      border-radius: 5px;
+      margin-top: 30px;
+    }
+    
+    .privacy-policy h3 {
+      margin-bottom: 15px;
+    }
+    
+    .privacy-policy p {
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    
+    .privacy-policy ul {
+      margin-left: 20px;
+      margin-bottom: 15px;
+    }
+    
+    .privacy-policy li {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Privacy Settings</h1>
+        <p>Control how your health data is accessed, shared, and used.</p>
+      </div>
+      <button class="btn btn-secondary" id="backBtn">Back to Dashboard</button>
+    </header>
+    
+    <div class="form-group">
+      <div class="section-header">Data Encryption</div>
+      <label>
+        <span class="switch">
+          <input type="checkbox" id="enableEncryption" checked>
+          <span class="slider"></span>
+        </span>
+        <span>
+          Enable end-to-end encryption
+          <div class="description">Your data will be encrypted while stored and during transmission.</div>
+        </span>
+      </label>
+    </div>
+    
+    <div class="form-group">
+      <div class="section-header">Data Sharing Preferences</div>
+      <label>
+        <span class="switch">
+          <input type="checkbox" id="shareAnonymized">
+          <span class="slider"></span>
+        </span>
+        <span>
+          Share anonymized data for research
+          <div class="description">Allow your de-identified health data to be used for medical research and to improve healthcare.</div>
+        </span>
+      </label>
+    </div>
+    
+    <div class="form-group">
+      <div class="section-header">Notifications & Communication</div>
+      <label>
+        <span class="switch">
+          <input type="checkbox" id="enableNotifications" checked>
+          <span class="slider"></span>
+        </span>
+        <span>
+          Enable notifications
+          <div class="description">Receive updates about your health records, care gaps, and research opportunities.</div>
+        </span>
+      </label>
+    </div>
+    
+    <div class="form-group">
+      <div class="section-header">Usage Tracking</div>
+      <label>
+        <span class="switch">
+          <input type="checkbox" id="enableLogging" checked>
+          <span class="slider"></span>
+        </span>
+        <span>
+          Enable activity logging
+          <div class="description">Keep a record of actions taken in your account for security and support purposes.</div>
+        </span>
+      </label>
+    </div>
+    
+    <div class="form-group">
+      <div class="section-header">Third-Party Integrations</div>
+      <label>
+        <span class="switch">
+          <input type="checkbox" id="enableIntegrations">
+          <span class="slider"></span>
+        </span>
+        <span>
+          Enable third-party integrations
+          <div class="description">Allow connections to external services like fitness apps, wearables, or other health platforms.</div>
+        </span>
+      </label>
+    </div>
+    
+    <h2>Data Management</h2>
+    
+    <div class="form-group">
+      <div class="section-header">Export Your Data</div>
+      <p>Download a complete copy of your health records in standard FHIR format.</p>
+      <button class="btn" id="exportDataBtn">Export Data</button>
+    </div>
+    
+    <div class="form-group">
+      <div class="section-header">Delete Account</div>
+      <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
+      <button class="btn btn-danger" id="deleteAccountBtn">Delete Account</button>
+    </div>
+    
+    <div class="privacy-policy">
+      <h3>Privacy Policy Summary</h3>
+      <p>Health Records Connect is committed to protecting your privacy and ensuring your health information is secure:</p>
+      <ul>
+        <li>We comply with all applicable privacy laws, including HIPAA and GDPR.</li>
+        <li>We use industry-standard encryption to protect your data.</li>
+        <li>We never sell your personal information to third parties.</li>
+        <li>You control who has access to your health records.</li>
+        <li>You can request deletion of your data at any time.</li>
+      </ul>
+      <p>For the complete privacy policy, please <a href="#" id="fullPolicyLink">click here</a>.</p>
+    </div>
+    
+    <div class="actions">
+      <div class="action-group">
+        <button class="btn btn-secondary" id="resetBtn">Reset to Defaults</button>
+      </div>
+      <div class="action-group">
+        <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+        <button class="btn" id="saveBtn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Handle button clicks
+    document.getElementById('backBtn').addEventListener('click', function() {
+      window.location.href = '/dashboard.html';
+    });
+    
+    document.getElementById('cancelBtn').addEventListener('click', function() {
+      window.location.href = '/dashboard.html';
+    });
+    
+    document.getElementById('saveBtn').addEventListener('click', function() {
+      // Get current settings
+      const privacySettings = {
+        enableEncryption: document.getElementById('enableEncryption').checked,
+        shareAnonymized: document.getElementById('shareAnonymized').checked,
+        enableNotifications: document.getElementById('enableNotifications').checked,
+        enableLogging: document.getElementById('enableLogging').checked,
+        enableIntegrations: document.getElementById('enableIntegrations').checked
+      };
+      
+      // Save to localStorage (in a real app, would save to server)
+      localStorage.setItem('privacySettings', JSON.stringify(privacySettings));
+      
+      // Show success message and redirect
+      alert('Privacy settings saved successfully!');
+      window.location.href = '/dashboard.html';
+    });
+    
+    document.getElementById('exportDataBtn').addEventListener('click', function() {
+      alert('Your data export is being prepared. You will receive a download link shortly.');
+    });
+    
+    document.getElementById('deleteAccountBtn').addEventListener('click', function() {
+      if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        alert('Account deletion process initiated. You will receive a confirmation email.');
+        window.location.href = '/';
+      }
+    });
+    
+    document.getElementById('resetBtn').addEventListener('click', function() {
+      if (confirm('Reset all privacy settings to default values?')) {
+        // Reset checkboxes to defaults
+        document.getElementById('enableEncryption').checked = true;
+        document.getElementById('shareAnonymized').checked = false;
+        document.getElementById('enableNotifications').checked = true;
+        document.getElementById('enableLogging').checked = true;
+        document.getElementById('enableIntegrations').checked = false;
+      }
+    });
+    
+    document.getElementById('fullPolicyLink').addEventListener('click', function(e) {
+      e.preventDefault();
+      alert('Full privacy policy would be displayed here.');
+    });
+    
+    // Load saved settings on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const savedSettings = localStorage.getItem('privacySettings');
+      
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        
+        // Apply saved settings to form
+        document.getElementById('enableEncryption').checked = settings.enableEncryption;
+        document.getElementById('shareAnonymized').checked = settings.shareAnonymized;
+        document.getElementById('enableNotifications').checked = settings.enableNotifications;
+        document.getElementById('enableLogging').checked = settings.enableLogging;
+        document.getElementById('enableIntegrations').checked = settings.enableIntegrations;
+      }
+    });
+  </script>
+</body>
+</html>

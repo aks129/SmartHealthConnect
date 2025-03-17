@@ -97,17 +97,138 @@
   </div>
 
   <script>
-    // Simple vanilla JavaScript to handle button clicks
+    // Function to redirect to dashboard with a specific provider ID
+    function connectToProvider(providerId) {
+      // In a real app, this would trigger SMART on FHIR authentication
+      // For now, we'll simulate by just redirecting to the dashboard
+      window.location.href = `/dashboard.html?provider=${providerId}`;
+    }
+    
+    // Show provider selection modal
+    function showProviderModal() {
+      // Create modal elements
+      const modal = document.createElement('div');
+      modal.style.position = 'fixed';
+      modal.style.top = '0';
+      modal.style.left = '0';
+      modal.style.width = '100%';
+      modal.style.height = '100%';
+      modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+      modal.style.display = 'flex';
+      modal.style.justifyContent = 'center';
+      modal.style.alignItems = 'center';
+      modal.style.zIndex = '1000';
+      
+      const modalContent = document.createElement('div');
+      modalContent.style.backgroundColor = 'white';
+      modalContent.style.padding = '20px';
+      modalContent.style.borderRadius = '8px';
+      modalContent.style.maxWidth = '500px';
+      modalContent.style.width = '90%';
+      
+      const modalHeader = document.createElement('div');
+      modalHeader.style.display = 'flex';
+      modalHeader.style.justifyContent = 'space-between';
+      modalHeader.style.alignItems = 'center';
+      modalHeader.style.marginBottom = '20px';
+      
+      const modalTitle = document.createElement('h2');
+      modalTitle.textContent = 'Select Your Healthcare Provider';
+      modalTitle.style.margin = '0';
+      
+      const closeButton = document.createElement('button');
+      closeButton.textContent = '×';
+      closeButton.style.background = 'none';
+      closeButton.style.border = 'none';
+      closeButton.style.fontSize = '24px';
+      closeButton.style.cursor = 'pointer';
+      closeButton.addEventListener('click', function() {
+        document.body.removeChild(modal);
+      });
+      
+      modalHeader.appendChild(modalTitle);
+      modalHeader.appendChild(closeButton);
+      
+      // Provider list
+      const providers = [
+        { id: 'demo', name: 'Demo Health System', description: 'Access demonstration data without a real provider' },
+        { id: 'epic', name: 'Epic MyChart', description: 'Connect to organizations using Epic EHR' },
+        { id: 'cerner', name: 'Cerner Patient Portal', description: 'Connect to organizations using Cerner EHR' },
+        { id: 'athena', name: 'AthenaHealth Portal', description: 'Connect to clinics using AthenaHealth' },
+        { id: 'va', name: 'Veterans Affairs', description: 'For veterans enrolled in VA healthcare' },
+        { id: 'medicare', name: 'Medicare Blue Button', description: 'Access your Medicare claims and records' }
+      ];
+      
+      const providersList = document.createElement('div');
+      
+      providers.forEach(provider => {
+        const providerItem = document.createElement('div');
+        providerItem.style.padding = '15px';
+        providerItem.style.borderBottom = '1px solid #eaeaea';
+        providerItem.style.cursor = 'pointer';
+        providerItem.style.transition = 'background-color 0.2s';
+        
+        providerItem.addEventListener('mouseover', function() {
+          providerItem.style.backgroundColor = '#f5f5f5';
+        });
+        
+        providerItem.addEventListener('mouseout', function() {
+          providerItem.style.backgroundColor = 'white';
+        });
+        
+        providerItem.addEventListener('click', function() {
+          document.body.removeChild(modal);
+          connectToProvider(provider.id);
+        });
+        
+        const providerName = document.createElement('h3');
+        providerName.textContent = provider.name;
+        providerName.style.margin = '0 0 5px 0';
+        
+        const providerDesc = document.createElement('p');
+        providerDesc.textContent = provider.description;
+        providerDesc.style.margin = '0';
+        providerDesc.style.fontSize = '14px';
+        providerDesc.style.color = '#666';
+        
+        providerItem.appendChild(providerName);
+        providerItem.appendChild(providerDesc);
+        providersList.appendChild(providerItem);
+      });
+      
+      const modalFooter = document.createElement('div');
+      modalFooter.style.marginTop = '20px';
+      modalFooter.style.textAlign = 'center';
+      
+      const privacyText = document.createElement('p');
+      privacyText.textContent = 'Your data will be securely transmitted according to HIPAA standards';
+      privacyText.style.fontSize = '14px';
+      privacyText.style.color = '#666';
+      
+      modalFooter.appendChild(privacyText);
+      
+      modalContent.appendChild(modalHeader);
+      modalContent.appendChild(providersList);
+      modalContent.appendChild(modalFooter);
+      modal.appendChild(modalContent);
+      
+      document.body.appendChild(modal);
+    }
+    
+    // Handle button clicks
     document.getElementById('connectBtn').addEventListener('click', function() {
-      alert('Connect functionality will be implemented here');
+      showProviderModal();
     });
     
     document.getElementById('summaryBtn').addEventListener('click', function() {
-      alert('Patient Summary functionality will be implemented here');
+      // For now, use the demo provider
+      connectToProvider('demo');
     });
     
     document.getElementById('researchBtn').addEventListener('click', function() {
-      alert('Research functionality will be implemented here');
+      connectToProvider('demo');
+      // After connecting, navigate directly to the research tab
+      localStorage.setItem('initialTab', 'research');
     });
   </script>
 </body>
