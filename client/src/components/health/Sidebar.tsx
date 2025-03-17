@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useLocation, Link } from 'wouter';
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 import { 
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "../ui/collapsible";
 import { useQuery } from "@tanstack/react-query";
-import { formatFhirDate, getPatientName, endSession } from "@/lib/fhir-client";
+import { formatFhirDate, getPatientName, endSession } from "../../lib/fhir-client";
 import { 
   Activity, 
   Pill, 
@@ -39,7 +39,8 @@ import {
   Database,
   ServerCog
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "../../hooks/use-toast";
+import { ThemeToggle } from "../ui/theme-toggle";
 import type { Patient } from '@shared/schema';
 
 export function Sidebar() {
@@ -371,6 +372,10 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 mt-auto border-t border-gray-100">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-sm text-gray-500">Theme</span>
+          <ThemeToggle />
+        </div>
         <Button 
           variant="outline"
           className="w-full"
