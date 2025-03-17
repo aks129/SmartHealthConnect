@@ -7,7 +7,6 @@ import { generateHealthResponse, type HealthContext, type ChatHistoryItem } from
 import { careGapsService, type PatientHealthContext } from './care-gaps-service';
 import { z } from 'zod';
 import { insertChatMessageSchema, type Coverage, type Claim, type ExplanationOfBenefit } from '../shared/schema';
-import { isAuthenticated, isAdmin, apiRateLimit, securityAuditLogger } from './middleware/auth';
 
 // Sample FHIR data for demo purposes
 const samplePatient = {
@@ -1963,45 +1962,6 @@ class DemoFhirClient {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Apply security audit logging to all requests
-  app.use(securityAuditLogger);
-  
-  // Set up privacy headers for all responses
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    // Disable caching for privacy-sensitive data
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    
-    // Set security headers
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'");
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    
-    // Generate a unique request ID for tracking
-    const requestId = uuidv4();
-    res.setHeader('X-Request-ID', requestId);
-    
-    next();
-  });
-  
-  // Configure CORS for healthcare data
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5000');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
-    if (req.method === 'OPTIONS') {
-      return res.sendStatus(200);
-    }
-    
-    next();
-  });
-  
-  // Apply rate limiting to API routes
-  app.use('/api', apiRateLimit);
   const httpServer = createServer(app);
   
   // Demo connection endpoint
