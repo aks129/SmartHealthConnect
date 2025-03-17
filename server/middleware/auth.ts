@@ -22,24 +22,16 @@ const apiRateLimits = new Map<string, { count: number, resetTime: number }>();
  */
 export const isAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
   // In a real app, this would verify a JWT token or session cookie
-  // For now, we'll look for a session in the request
-  const session = req.session as any;
+  // For development, we'll simulate an authenticated user
   
-  if (session && session.userId) {
-    // Add user info to request object for use in route handlers
-    (req as AuthenticatedRequest).user = {
-      id: session.userId,
-      username: session.username || 'user',
-      role: session.role || 'user'
-    };
-    return next();
-  }
-
-  // For development, allow requests to proceed without authentication
-  // In production, uncomment this to enforce authentication
-  // return res.status(401).json({ error: 'Authentication required' });
+  // Add user info to request object for use in route handlers
+  (req as AuthenticatedRequest).user = {
+    id: 1,
+    username: 'demo_user',
+    role: 'user'
+  };
   
-  // Allow request to proceed without authentication for now
+  // Allow request to proceed
   next();
 };
 

@@ -6,6 +6,22 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Add Content Security Policy headers to allow necessary resources
+app.use((req, res, next) => {
+  // In development, we'll use a more permissive policy to allow Vite to work properly
+  if (app.get('env') === 'development') {
+    // Disable CSP in development mode to allow Vite to work properly
+    res.removeHeader('Content-Security-Policy');
+  } else {
+    // In production we'd use a stricter policy
+    res.setHeader(
+      "Content-Security-Policy", 
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws:; img-src 'self' data:; font-src 'self';"
+    );
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
