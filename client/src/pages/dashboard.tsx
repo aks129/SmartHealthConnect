@@ -144,8 +144,16 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-700">Loading your health records...</p>
+          <MedicalSpinner 
+            size="lg" 
+            text="Loading your health records..." 
+            multiIcon={true}
+            variant="primary"
+            speed="normal"
+          />
+          <p className="text-sm text-gray-500 mt-6 max-w-md">
+            Securely connecting to your health provider and retrieving your medical information...
+          </p>
         </div>
       </div>
     );

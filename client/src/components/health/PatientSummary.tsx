@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { formatFhirDate, getPatientName } from "@/lib/fhir-client";
 import { Activity, Pill, AlertTriangle, Syringe } from "lucide-react";
+import { MedicalLoadingOverlay } from "@/components/ui/medical-spinner";
 import type { Patient } from '@shared/schema';
 
 export function PatientSummary() {
@@ -60,109 +61,111 @@ export function PatientSummary() {
   };
 
   return (
-    <section id="summary" className="mb-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Health Summary</h2>
-      
-      <Card>
-        <CardHeader className="border-b pb-4">
-          <CardTitle>Patient Information</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-500">Full Name</p>
-              <p className="font-medium">{patientName}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Date of Birth</p>
-              <p className="font-medium">{patientDOB}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Gender</p>
-              <p className="font-medium">{patientGender}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">MRN</p>
-              <p className="font-medium">{getMRN()}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Phone</p>
-              <p className="font-medium">{getPhone()}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Email</p>
-              <p className="font-medium">{getEmail()}</p>
-            </div>
-          </div>
-        </CardContent>
+    <MedicalLoadingOverlay loading={isLoading} size="md" variant="primary" blur={true}>
+      <section id="summary" className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Health Summary</h2>
         
-        <CardHeader className="border-t border-b pb-4 mt-4">
-          <CardTitle>Health Overview</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Conditions count */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
-                  <Activity className="h-5 w-5" />
+        <Card>
+          <CardHeader className="border-b pb-4">
+            <CardTitle>Patient Information</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Full Name</p>
+                <p className="font-medium">{patientName}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Date of Birth</p>
+                <p className="font-medium">{patientDOB}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Gender</p>
+                <p className="font-medium">{patientGender}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">MRN</p>
+                <p className="font-medium">{getMRN()}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Phone</p>
+                <p className="font-medium">{getPhone()}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Email</p>
+                <p className="font-medium">{getEmail()}</p>
+              </div>
+            </div>
+          </CardContent>
+          
+          <CardHeader className="border-t border-b pb-4 mt-4">
+            <CardTitle>Health Overview</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Conditions count */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center">
+                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
+                    <Activity className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm">Conditions</p>
+                    <p className="text-xl font-semibold">
+                      {isLoadingConditions ? "..." : conditions?.length || 0}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-gray-500 text-sm">Conditions</p>
-                  <p className="text-xl font-semibold">
-                    {isLoadingConditions ? "..." : conditions?.length || 0}
-                  </p>
+              </div>
+              
+              {/* Medications count */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center">
+                  <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
+                    <Pill className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm">Medications</p>
+                    <p className="text-xl font-semibold">
+                      {isLoadingMedications ? "..." : medications?.length || 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Allergies count */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center">
+                  <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 mr-3">
+                    <AlertTriangle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm">Allergies</p>
+                    <p className="text-xl font-semibold">
+                      {isLoadingAllergies ? "..." : allergies?.length || 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Immunizations count */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center">
+                  <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mr-3">
+                    <Syringe className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm">Immunizations</p>
+                    <p className="text-xl font-semibold">
+                      {isLoadingImmunizations ? "..." : immunizations?.length || 0}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-            
-            {/* Medications count */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
-                  <Pill className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-gray-500 text-sm">Medications</p>
-                  <p className="text-xl font-semibold">
-                    {isLoadingMedications ? "..." : medications?.length || 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Allergies count */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 mr-3">
-                  <AlertTriangle className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-gray-500 text-sm">Allergies</p>
-                  <p className="text-xl font-semibold">
-                    {isLoadingAllergies ? "..." : allergies?.length || 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Immunizations count */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mr-3">
-                  <Syringe className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-gray-500 text-sm">Immunizations</p>
-                  <p className="text-xl font-semibold">
-                    {isLoadingImmunizations ? "..." : immunizations?.length || 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </section>
+          </CardContent>
+        </Card>
+      </section>
+    </MedicalLoadingOverlay>
   );
 }
