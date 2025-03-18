@@ -142,7 +142,10 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex flex-col md:flex-row">
-        <Sidebar />
+        <Sidebar 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
         
         <main className="flex-1 md:ml-64 p-4 md:p-8">
           <Tabs 

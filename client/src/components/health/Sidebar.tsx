@@ -37,13 +37,20 @@ import {
   Building2,
   DollarSign,
   Database,
-  ServerCog
+  ServerCog,
+  MessageSquare,
+  Settings,
 } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import { ThemeToggle } from "../ui/theme-toggle";
 import type { Patient } from '@shared/schema';
 
-export function Sidebar() {
+interface SidebarProps {
+  activeTab?: string;
+  onTabChange?: (tabId: string) => void;
+}
+
+export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
   const [location, setLocation] = useLocation();
   const [openCategories, setOpenCategories] = useState({
     medications: false,
@@ -109,22 +116,26 @@ export function Sidebar() {
         <ul className="space-y-2">
           {/* Summary */}
           <li>
-            <Link href="#summary">
-              <a className={`flex items-center px-3 py-2 rounded-lg ${location.includes('#summary') || !location.includes('#') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                <Activity className="mr-3 h-5 w-5" />
-                <span>Summary</span>
-              </a>
-            </Link>
+            <Button
+              variant="ghost"
+              className={`w-full justify-start px-3 py-2 ${activeTab === 'health' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              onClick={() => onTabChange?.('health')}
+            >
+              <Activity className="mr-3 h-5 w-5" />
+              <span>Summary</span>
+            </Button>
           </li>
           
           {/* Conditions */}
           <li>
-            <Link href="#conditions">
-              <a className={`flex items-center px-3 py-2 rounded-lg ${location.includes('#conditions') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                <Stethoscope className="mr-3 h-5 w-5" />
-                <span>Conditions</span>
-              </a>
-            </Link>
+            <Button
+              variant="ghost"
+              className={`w-full justify-start px-3 py-2 ${activeTab === 'conditions' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              onClick={() => onTabChange?.('conditions')}
+            >
+              <Stethoscope className="mr-3 h-5 w-5" />
+              <span>Conditions</span>
+            </Button>
           </li>
           
           {/* Laboratory & Diagnostics */}
@@ -278,12 +289,14 @@ export function Sidebar() {
           
           {/* Care Gaps */}
           <li>
-            <Link href="#care-gaps">
-              <a className={`flex items-center px-3 py-2 rounded-lg ${location.includes('#care-gaps') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                <AlertTriangle className="mr-3 h-5 w-5" />
-                <span>Care Gaps</span>
-              </a>
-            </Link>
+            <Button
+              variant="ghost"
+              className={`w-full justify-start px-3 py-2 ${activeTab === 'care-gaps' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              onClick={() => onTabChange?.('care-gaps')}
+            >
+              <AlertTriangle className="mr-3 h-5 w-5" />
+              <span>Care Gaps</span>
+            </Button>
           </li>
           
           {/* Health Insurance */}
