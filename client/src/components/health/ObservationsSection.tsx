@@ -93,8 +93,17 @@ export function ObservationsSection() {
                     
                     // Get category if available
                     let category = 'Unknown';
-                    if (observation.category && observation.category.length > 0 && observation.category[0].coding && observation.category[0].coding.length > 0) {
-                      category = observation.category[0].coding[0].display || observation.category[0].coding[0].code || 'Unknown';
+                    // Using type assertion to work around schema mismatch
+                    const obsWithCategory = observation as any;
+                    if (obsWithCategory.category && 
+                        Array.isArray(obsWithCategory.category) && 
+                        obsWithCategory.category.length > 0 && 
+                        obsWithCategory.category[0].coding && 
+                        Array.isArray(obsWithCategory.category[0].coding) && 
+                        obsWithCategory.category[0].coding.length > 0) {
+                      category = obsWithCategory.category[0].coding[0].display || 
+                                obsWithCategory.category[0].coding[0].code || 
+                                'Unknown';
                     }
                     
                     return (
@@ -115,7 +124,10 @@ export function ObservationsSection() {
                           <div className="text-gray-500">{date}</div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getBadgeVariant(status.color)}>
+                          <Badge 
+                            variant={getBadgeVariant(status.color)}
+                            className={getStatusColorClass(status.color)}
+                          >
                             {status.label}
                           </Badge>
                         </TableCell>
