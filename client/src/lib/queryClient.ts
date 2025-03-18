@@ -1,16 +1,35 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-async function throwIfResNotOk(res: Response) {
+/**
+ * HTTP method types for API requests
+ */
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+/**
+ * API Error interface
+ */
+export interface ApiError {
+  status: number;
+  message: string;
+}
+
+/**
+ * Throws an error if the response is not ok
+ */
+async function throwIfResNotOk(res: Response): Promise<void> {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
 }
 
-export async function apiRequest(
-  method: string,
+/**
+ * Generic API request function with improved type safety
+ */
+export async function apiRequest<TData = unknown>(
+  method: HttpMethod | string,
   url: string,
-  data?: unknown | undefined,
+  data?: TData,
 ): Promise<Response> {
   const res = await fetch(url, {
     method,
@@ -23,10 +42,17 @@ export async function apiRequest(
   return res;
 }
 
+/**
+ * Options for handling 401 Unauthorized responses
+ */
 type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
+
+/**
+ * Generic query function factory with improved type safety
+ */
+export const getQueryFn: <TResponse>(options: {
   on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
+}) => QueryFunction<TResponse> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const res = await fetch(queryKey[0] as string, {
@@ -34,11 +60,11 @@ export const getQueryFn: <T>(options: {
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      return null as any; // Type assertion necessary for null return in generic function
     }
 
     await throwIfResNotOk(res);
-    return await res.json();
+    return await res.json() as TResponse;
   };
 
 export const queryClient = new QueryClient({
