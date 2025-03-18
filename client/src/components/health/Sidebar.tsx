@@ -145,7 +145,7 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
               onOpenChange={(open) => setOpenCategories({...openCategories, laboratory: open})}
               className="w-full"
             >
-              <CollapsibleTrigger className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${location.includes('#lab') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+              <CollapsibleTrigger className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${activeTab === 'laboratory' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
                 <div className="flex items-center">
                   <FlaskConical className="mr-3 h-5 w-5" />
                   <span>Laboratory & Diagnostics</span>
@@ -157,30 +157,38 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
                 )}
               </CollapsibleTrigger>
               <CollapsibleContent className="pl-8 pr-2 mt-1 space-y-1">
-                <Link href="#lab-orders">
-                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#lab-orders') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                    <Clipboard className="mr-2 h-4 w-4" />
-                    <span>Lab Orders</span>
-                  </a>
-                </Link>
-                <Link href="#service-requests">
-                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#service-requests') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                    <ClipboardList className="mr-2 h-4 w-4" />
-                    <span>Service Requests</span>
-                  </a>
-                </Link>
-                <Link href="#diagnostic-reports">
-                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#diagnostic-reports') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    <span>Diagnostic Reports</span>
-                  </a>
-                </Link>
-                <Link href="#observations">
-                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#observations') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                    <TestTube className="mr-2 h-4 w-4" />
-                    <span>Lab Results</span>
-                  </a>
-                </Link>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start px-3 py-2 text-sm ${activeTab === 'lab-orders' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  onClick={() => onTabChange?.('lab-orders')}
+                >
+                  <Clipboard className="mr-2 h-4 w-4" />
+                  <span>Lab Orders</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start px-3 py-2 text-sm ${activeTab === 'service-requests' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  onClick={() => onTabChange?.('service-requests')}
+                >
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  <span>Service Requests</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start px-3 py-2 text-sm ${activeTab === 'diagnostic-reports' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  onClick={() => onTabChange?.('diagnostic-reports')}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>Diagnostic Reports</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start px-3 py-2 text-sm ${activeTab === 'lab-results' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  onClick={() => onTabChange?.('lab-results')}
+                >
+                  <TestTube className="mr-2 h-4 w-4" />
+                  <span>Lab Results</span>
+                </Button>
               </CollapsibleContent>
             </Collapsible>
           </li>
@@ -192,7 +200,7 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
               onOpenChange={(open) => setOpenCategories({...openCategories, vitals: open})}
               className="w-full"
             >
-              <CollapsibleTrigger className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${location.includes('#vitals') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+              <CollapsibleTrigger className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${activeTab === 'vitals' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
                 <div className="flex items-center">
                   <LineChart className="mr-3 h-5 w-5" />
                   <span>Vital Signs</span>
@@ -204,24 +212,30 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
                 )}
               </CollapsibleTrigger>
               <CollapsibleContent className="pl-8 pr-2 mt-1 space-y-1">
-                <Link href="#vital-signs">
-                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#vital-signs') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                    <Activity className="mr-2 h-4 w-4" />
-                    <span>All Vitals</span>
-                  </a>
-                </Link>
-                <Link href="#vital-blood-pressure">
-                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#vital-blood-pressure') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                    <BarChart className="mr-2 h-4 w-4" />
-                    <span>Blood Pressure</span>
-                  </a>
-                </Link>
-                <Link href="#vital-weight">
-                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#vital-weight') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                    <BarChart className="mr-2 h-4 w-4" />
-                    <span>Weight & BMI</span>
-                  </a>
-                </Link>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start px-3 py-2 text-sm ${activeTab === 'vital-signs' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  onClick={() => onTabChange?.('vital-signs')}
+                >
+                  <Activity className="mr-2 h-4 w-4" />
+                  <span>All Vitals</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start px-3 py-2 text-sm ${activeTab === 'blood-pressure' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  onClick={() => onTabChange?.('blood-pressure')}
+                >
+                  <BarChart className="mr-2 h-4 w-4" />
+                  <span>Blood Pressure</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start px-3 py-2 text-sm ${activeTab === 'weight-bmi' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  onClick={() => onTabChange?.('weight-bmi')}
+                >
+                  <BarChart className="mr-2 h-4 w-4" />
+                  <span>Weight & BMI</span>
+                </Button>
               </CollapsibleContent>
             </Collapsible>
           </li>
@@ -233,7 +247,7 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
               onOpenChange={(open) => setOpenCategories({...openCategories, medications: open})}
               className="w-full"
             >
-              <CollapsibleTrigger className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${location.includes('#medications') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+              <CollapsibleTrigger className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${activeTab === 'medications' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
                 <div className="flex items-center">
                   <Pill className="mr-3 h-5 w-5" />
                   <span>Medications</span>
@@ -245,24 +259,30 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
                 )}
               </CollapsibleTrigger>
               <CollapsibleContent className="pl-8 pr-2 mt-1 space-y-1">
-                <Link href="#medication-requests">
-                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#medication-requests') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                    <PenTool className="mr-2 h-4 w-4" />
-                    <span>Prescriptions</span>
-                  </a>
-                </Link>
-                <Link href="#medication-dispenses">
-                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#medication-dispenses') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                    <Package className="mr-2 h-4 w-4" />
-                    <span>Dispenses</span>
-                  </a>
-                </Link>
-                <Link href="#medication-statements">
-                  <a className={`flex items-center px-3 py-2 rounded-lg text-sm ${location.includes('#medication-statements') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                    <ClipboardList className="mr-2 h-4 w-4" />
-                    <span>Statements</span>
-                  </a>
-                </Link>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start px-3 py-2 text-sm ${activeTab === 'prescriptions' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  onClick={() => onTabChange?.('prescriptions')}
+                >
+                  <PenTool className="mr-2 h-4 w-4" />
+                  <span>Prescriptions</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start px-3 py-2 text-sm ${activeTab === 'dispenses' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  onClick={() => onTabChange?.('dispenses')}
+                >
+                  <Package className="mr-2 h-4 w-4" />
+                  <span>Dispenses</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start px-3 py-2 text-sm ${activeTab === 'statements' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  onClick={() => onTabChange?.('statements')}
+                >
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  <span>Statements</span>
+                </Button>
               </CollapsibleContent>
             </Collapsible>
           </li>
