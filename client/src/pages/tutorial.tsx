@@ -890,7 +890,7 @@ function getFeaturesContent(role: UserRole): Feature[] {
       {
         title: 'Medication Therapy Management',
         description: 'Tools to support comprehensive medication reviews and therapy optimization.',
-        icon: <Pills className="h-6 w-6 text-primary" />,
+        icon: <Pill className="h-6 w-6 text-primary" />,
         details: [
           'Comprehensive medication review documentation',
           'Therapy problem identification tools',
