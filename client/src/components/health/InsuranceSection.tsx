@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type Coverage, type Claim, type ExplanationOfBenefit } from "@shared/schema";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { MedicalSpinner } from "@/components/ui/medical-spinner";
 
 export function InsuranceSection() {
   const [activeTab, setActiveTab] = useState("coverage");
@@ -39,7 +40,13 @@ export function InsuranceSection() {
         </CardHeader>
         <CardContent>
           <div className="h-32 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <MedicalSpinner
+              size="md"
+              text="Loading insurance data..."
+              variant="info"
+              multiIcon={true}
+              speed="normal"
+            />
           </div>
         </CardContent>
       </Card>

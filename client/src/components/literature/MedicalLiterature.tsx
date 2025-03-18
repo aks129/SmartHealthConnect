@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ExternalLink, Info, BookOpen, FileText, AlertCircle, Check, Building, Globe, BookOpenText } from 'lucide-react';
+import { MedicalSpinner, MedicalLoadingOverlay } from '@/components/ui/medical-spinner';
 
 import type { 
   Condition, 
