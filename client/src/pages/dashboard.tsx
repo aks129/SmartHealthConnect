@@ -19,13 +19,14 @@ import { ResearchDashboard } from '@/components/research/ResearchDashboard';
 import { FhirVisualizations } from '@/components/visualizations/FhirVisualizations';
 import { AdvancedAnalytics } from '@/components/analytics/AdvancedAnalytics';
 import { MedicalLiterature } from '@/components/literature/MedicalLiterature';
-import { completeSmartAuth, checkAuth } from '@/lib/fhir-client';
+import { completeSmartAuth, checkAuth, formatFhirDate } from '@/lib/fhir-client';
 import { ErrorModal } from '@/components/auth/ErrorModal';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { useQuery } from '@tanstack/react-query';
 import { UserSettings } from '@/components/settings/UserSettings';
+import { AlertTriangle, Syringe } from 'lucide-react';
 import { 
   Patient,
   Observation, 
@@ -185,6 +186,100 @@ export default function Dashboard() {
 
             <TabsContent value="care-gaps">
               <CareGapsSection />
+            </TabsContent>
+            
+            <TabsContent value="allergies">
+              <div className="space-y-6">
+                <div className="bg-white rounded-lg border p-6">
+                  <h2 className="text-2xl font-semibold mb-4 flex items-center">
+                    <AlertTriangle className="mr-2 h-6 w-6 text-red-500" />
+                    Allergies & Intolerances
+                  </h2>
+                  
+                  <div className="space-y-4">
+                    {allergies.length === 0 ? (
+                      <p className="text-gray-500">No allergies or intolerances found in your records.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {allergies.map((allergy: AllergyIntolerance) => (
+                          <div key={allergy.id} className="border rounded-lg p-4 bg-red-50">
+                            <h3 className="font-medium text-red-700">
+                              {allergy.code?.coding?.[0]?.display || 'Unknown Allergen'}
+                            </h3>
+                            <div className="mt-2 text-sm text-gray-700">
+                              <div className="flex items-center">
+                                <span className="font-medium mr-2">Severity:</span>
+                                {allergy.reaction?.[0]?.severity === 'severe' ? (
+                                  <span className="text-red-600 font-medium">Severe</span>
+                                ) : allergy.reaction?.[0]?.severity === 'moderate' ? (
+                                  <span className="text-orange-600 font-medium">Moderate</span>
+                                ) : (
+                                  <span className="text-yellow-600 font-medium">Mild</span>
+                                )}
+                              </div>
+                              <div className="flex items-center mt-1">
+                                <span className="font-medium mr-2">Type:</span>
+                                <span>{allergy.type === 'allergy' ? 'Allergy' : 'Intolerance'}</span>
+                              </div>
+                              {allergy.reaction?.[0]?.manifestation?.[0]?.coding?.[0]?.display && (
+                                <div className="flex items-start mt-1">
+                                  <span className="font-medium mr-2">Manifestation:</span>
+                                  <span>{allergy.reaction?.[0]?.manifestation?.[0]?.coding?.[0]?.display}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="immunizations">
+              <div className="space-y-6">
+                <div className="bg-white rounded-lg border p-6">
+                  <h2 className="text-2xl font-semibold mb-4 flex items-center">
+                    <Syringe className="mr-2 h-6 w-6 text-blue-500" />
+                    Immunizations
+                  </h2>
+                  
+                  <div className="space-y-4">
+                    {immunizations.length === 0 ? (
+                      <p className="text-gray-500">No immunization records found.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {immunizations.map((immunization: Immunization) => (
+                          <div key={immunization.id} className="border rounded-lg p-4 bg-blue-50">
+                            <h3 className="font-medium text-blue-700">
+                              {immunization.vaccineCode?.coding?.[0]?.display || 'Unknown Vaccine'}
+                            </h3>
+                            <div className="mt-2 text-sm text-gray-700">
+                              <div className="flex items-center">
+                                <span className="font-medium mr-2">Date:</span>
+                                <span>{immunization.occurrenceDateTime ? formatFhirDate(immunization.occurrenceDateTime) : 'Unknown'}</span>
+                              </div>
+                              <div className="flex items-center mt-1">
+                                <span className="font-medium mr-2">Status:</span>
+                                <span className={`${
+                                  immunization.status === 'completed' ? 'text-green-600' : 
+                                  immunization.status === 'entered-in-error' ? 'text-red-600' : 'text-gray-600'
+                                }`}>
+                                  {immunization.status === 'completed' ? 'Completed' : 
+                                   immunization.status === 'not-done' ? 'Not Done' :
+                                   immunization.status === 'entered-in-error' ? 'Error' : 'Unknown'}
+                                </span>
+                              </div>
+                              {/* Note: Remove note section as it's not in our schema */}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </TabsContent>
             
             <TabsContent value="insurance">
