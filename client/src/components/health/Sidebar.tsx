@@ -415,6 +415,24 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
           <span className="text-sm text-gray-500">Theme</span>
           <ThemeToggle />
         </div>
+        <div className="flex gap-2 mb-3">
+          <Button 
+            variant="ghost"
+            className="w-1/2 text-sm"
+            onClick={() => setLocation('/about')}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            About
+          </Button>
+          <Button 
+            variant="ghost"
+            className="w-1/2 text-sm"
+            onClick={() => setLocation('/tutorial')}
+          >
+            <ClipboardList className="mr-2 h-4 w-4" />
+            Tutorial
+          </Button>
+        </div>
         <Button 
           variant="outline"
           className="w-full"

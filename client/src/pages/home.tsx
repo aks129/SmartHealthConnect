@@ -155,6 +155,10 @@ export default function Home() {
       <footer className="mt-8 text-center text-gray-500 text-sm">
         <p>SMART on FHIR Health Records Viewer</p>
         <p className="mt-1">Your data remains private and secure</p>
+        <div className="flex justify-center gap-4 mt-3">
+          <a href="/about" className="text-primary hover:underline hover:text-primary/80">About Health Connect</a>
+          <a href="/tutorial" className="text-primary hover:underline hover:text-primary/80">Tutorial</a>
+        </div>
       </footer>
     </div>
   );
