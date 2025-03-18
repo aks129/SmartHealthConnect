@@ -396,8 +396,14 @@ export function MedicalLiterature({ conditions, medications }: MedicalLiterature
               </div>
             ) : (
               <div className="text-center py-10">
-                <AlertCircle className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-                <h3 className="font-medium text-lg mb-2">No conditions found</h3>
+                <div className="w-full flex justify-center mb-4">
+                  <MedicalSpinner 
+                    size="md" 
+                    text="No conditions found"
+                    variant="secondary"
+                    speed="slow" 
+                  />
+                </div>
                 <p className="text-muted-foreground">
                   We couldn't find any conditions in your health record.
                 </p>
@@ -425,8 +431,14 @@ export function MedicalLiterature({ conditions, medications }: MedicalLiterature
               </div>
             ) : (
               <div className="text-center py-10">
-                <AlertCircle className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-                <h3 className="font-medium text-lg mb-2">No medications found</h3>
+                <div className="w-full flex justify-center mb-4">
+                  <MedicalSpinner 
+                    size="md" 
+                    text="No medications found"
+                    variant="secondary"
+                    speed="slow" 
+                  />
+                </div>
                 <p className="text-muted-foreground">
                   We couldn't find any medications in your health record.
                 </p>
@@ -610,8 +622,14 @@ export function MedicalLiterature({ conditions, medications }: MedicalLiterature
       {isLoading && (
         <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p>Loading medical information...</p>
+            <MedicalSpinner
+              size="md"
+              text="Loading medical information..."
+              variant="primary"
+              multiIcon={true}
+              speed="normal"
+              className="mx-auto mb-2"
+            />
           </div>
         </div>
       )}
