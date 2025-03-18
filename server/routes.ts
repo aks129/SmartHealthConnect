@@ -7,6 +7,7 @@ import { generateHealthResponse, type HealthContext, type ChatHistoryItem } from
 import { careGapsService, type PatientHealthContext } from './care-gaps-service';
 import { z } from 'zod';
 import { insertChatMessageSchema, type Coverage, type Claim, type ExplanationOfBenefit } from '../shared/schema';
+import { registerUserRoutes } from './user-routes';
 
 // Sample FHIR data for demo purposes
 const samplePatient = {
@@ -1963,6 +1964,9 @@ class DemoFhirClient {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
+  
+  // Register user profile and settings routes
+  await registerUserRoutes(app);
   
   // Demo connection endpoint
   app.post('/api/fhir/demo/connect', async (req: Request, res: Response) => {

@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { useQuery } from '@tanstack/react-query';
+import { UserSettings } from '@/components/settings/UserSettings';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -270,6 +271,10 @@ export default function Dashboard() {
             
             <TabsContent value="chat">
               <ChatInterface />
+            </TabsContent>
+            
+            <TabsContent value="settings">
+              <UserSettings />
             </TabsContent>
           </Tabs>
         </main>
