@@ -7,9 +7,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { User } from '@shared/schema';
 
-// Define interface for user response from API
+// Define interfaces for user response from API
 interface UserResponse {
   user: User;
+}
+
+// Define notification preferences interface to match the schema
+interface NotificationPreferences {
+  emailNotifications?: boolean;
+  pushNotifications?: boolean;
+  careGapAlerts?: boolean;
+  medicationReminders?: boolean;
+  appointmentReminders?: boolean;
+  healthSummaries?: boolean;
 }
 
 import { Button } from '@/components/ui/button';
@@ -136,6 +146,9 @@ export function UserSettings() {
     }
   });
 
+  // Extract notification preferences with type safety
+  const notificationPreferences = (user?.notificationPreferences as NotificationPreferences) || {} as NotificationPreferences;
+  
   // Setup forms with default values
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -157,18 +170,21 @@ export function UserSettings() {
   const notificationForm = useForm<NotificationFormValues>({
     resolver: zodResolver(notificationFormSchema),
     defaultValues: {
-      emailNotifications: user?.notificationPreferences?.emailNotifications ?? true,
-      pushNotifications: user?.notificationPreferences?.pushNotifications ?? true,
-      careGapAlerts: user?.notificationPreferences?.careGapAlerts ?? true,
-      medicationReminders: user?.notificationPreferences?.medicationReminders ?? true,
-      appointmentReminders: user?.notificationPreferences?.appointmentReminders ?? true,
-      healthSummaries: user?.notificationPreferences?.healthSummaries ?? true,
+      emailNotifications: notificationPreferences.emailNotifications ?? true,
+      pushNotifications: notificationPreferences.pushNotifications ?? true,
+      careGapAlerts: notificationPreferences.careGapAlerts ?? true,
+      medicationReminders: notificationPreferences.medicationReminders ?? true,
+      appointmentReminders: notificationPreferences.appointmentReminders ?? true,
+      healthSummaries: notificationPreferences.healthSummaries ?? true,
     }
   });
 
   // Update form defaults when user data loads
   useEffect(() => {
     if (user) {
+      // Extract notification preferences with type safety
+      const notificationPrefs = (user.notificationPreferences as NotificationPreferences) || {} as NotificationPreferences;
+      
       profileForm.reset({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
@@ -181,12 +197,12 @@ export function UserSettings() {
       });
       
       notificationForm.reset({
-        emailNotifications: user.notificationPreferences?.emailNotifications ?? true,
-        pushNotifications: user.notificationPreferences?.pushNotifications ?? true,
-        careGapAlerts: user.notificationPreferences?.careGapAlerts ?? true,
-        medicationReminders: user.notificationPreferences?.medicationReminders ?? true,
-        appointmentReminders: user.notificationPreferences?.appointmentReminders ?? true,
-        healthSummaries: user.notificationPreferences?.healthSummaries ?? true,
+        emailNotifications: notificationPrefs.emailNotifications ?? true,
+        pushNotifications: notificationPrefs.pushNotifications ?? true,
+        careGapAlerts: notificationPrefs.careGapAlerts ?? true,
+        medicationReminders: notificationPrefs.medicationReminders ?? true,
+        appointmentReminders: notificationPrefs.appointmentReminders ?? true,
+        healthSummaries: notificationPrefs.healthSummaries ?? true,
       });
       
       if (user.profilePicture) {
