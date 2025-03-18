@@ -650,22 +650,22 @@ export default function Dashboard() {
                                       {observation.effectiveDateTime ? formatFhirDate(observation.effectiveDateTime) : 'Unknown date'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                      {systolic?.valueQuantity ? 
-                                        `${systolic.valueQuantity.value} ${systolic.valueQuantity.unit || 'mmHg'}` : 
+                                      {systolicObs?.valueQuantity ? 
+                                        `${systolicObs.valueQuantity.value} ${systolicObs.valueQuantity.unit || 'mmHg'}` : 
                                         'N/A'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                      {diastolic?.valueQuantity ? 
-                                        `${diastolic.valueQuantity.value} ${diastolic.valueQuantity.unit || 'mmHg'}` : 
+                                      {diastolicObs?.valueQuantity ? 
+                                        `${diastolicObs.valueQuantity.value} ${diastolicObs.valueQuantity.unit || 'mmHg'}` : 
                                         'N/A'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                       <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                        (systolic?.valueQuantity?.value || 0) > 140 || (diastolic?.valueQuantity?.value || 0) > 90 ? 
+                                        (systolicObs?.valueQuantity?.value || 0) > 140 || (diastolicObs?.valueQuantity?.value || 0) > 90 ? 
                                           'bg-red-100 text-red-800' : 
                                           'bg-green-100 text-green-800'
                                       }`}>
-                                        {(systolic?.valueQuantity?.value || 0) > 140 || (diastolic?.valueQuantity?.value || 0) > 90 ? 
+                                        {(systolicObs?.valueQuantity?.value || 0) > 140 || (diastolicObs?.valueQuantity?.value || 0) > 90 ? 
                                           'Elevated' : 'Normal'}
                                       </span>
                                     </td>

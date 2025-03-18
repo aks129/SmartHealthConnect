@@ -774,172 +774,217 @@ export function ImmunizationsTimeline({ immunizations }: ImmunizationsTimelinePr
   const chartRef = useRef<SVGSVGElement>(null);
   
   useEffect(() => {
-    if (!chartRef.current || immunizations.length === 0) return;
+    if (!chartRef.current || !immunizations || immunizations.length === 0) return;
     
-    // Clear previous chart
-    d3.select(chartRef.current).selectAll('*').remove();
-    
-    const svg = d3.select(chartRef.current);
-    const margin = { top: 30, right: 30, bottom: 40, left: 180 };
-    const width = chartRef.current.clientWidth - margin.left - margin.right;
-    const height = 300;
-    
-    const g = svg.append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-    
-    // Sort immunizations by date
-    const sortedImmunizations = [...immunizations].sort((a, b) => {
-      const dateA = a.occurrenceDateTime ? new Date(a.occurrenceDateTime).getTime() : 0;
-      const dateB = b.occurrenceDateTime ? new Date(b.occurrenceDateTime).getTime() : 0;
-      return dateA - dateB;
-    });
-    
-    // Group immunizations by vaccine type
-    const vaccineGroups = sortedImmunizations.reduce((acc, immunization) => {
-      const vaccineName = immunization.vaccineCode?.coding?.[0]?.display || 'Unknown vaccine';
-      if (!acc[vaccineName]) {
-        acc[vaccineName] = [];
-      }
-      acc[vaccineName].push(immunization);
-      return acc;
-    }, {} as Record<string, Immunization[]>);
-    
-    // Get unique vaccine names and assign colors
-    const vaccineNames = Object.keys(vaccineGroups);
-    const colorScale = d3.scaleOrdinal<string>()
-      .domain(vaccineNames)
-      .range(d3.schemeTableau10);
-    
-    // Create scales
-    const xScale = d3.scaleTime()
-      .domain([
-        d3.min(sortedImmunizations, d => d.occurrenceDateTime ? new Date(d.occurrenceDateTime) : new Date()) || new Date(),
-        d3.max(sortedImmunizations, d => d.occurrenceDateTime ? new Date(d.occurrenceDateTime) : new Date()) || new Date()
-      ])
-      .range([0, width]);
-    
-    const yScale = d3.scaleBand()
-      .domain(vaccineNames)
-      .range([0, height - margin.top - margin.bottom])
-      .padding(0.4);
-    
-    // Add x-axis (timeline)
-    g.append('g')
-      .attr('transform', `translate(0,${height - margin.top - margin.bottom})`)
-      .call(d3.axisBottom(xScale).ticks(7).tickFormat(d => d3.timeFormat('%b %Y')(d as Date)));
-    
-    // Add y-axis (vaccine names)
-    g.append('g')
-      .call(d3.axisLeft(yScale))
-      .selectAll('text')
-      .style('text-anchor', 'end')
-      .attr('dx', '-0.5em')
-      .style('font-size', '11px');
-    
-    // Add grid lines
-    g.append('g')
-      .attr('class', 'grid')
-      .selectAll('line')
-      .data(xScale.ticks(7))
-      .enter()
-      .append('line')
-      .attr('x1', d => xScale(d))
-      .attr('x2', d => xScale(d))
-      .attr('y1', 0)
-      .attr('y2', height - margin.top - margin.bottom)
-      .attr('stroke', '#e5e7eb')
-      .attr('stroke-dasharray', '5,5');
-    
-    // Draw vaccine series as connected lines and points
-    Object.entries(vaccineGroups).forEach(([name, vaccines]) => {
-      const y = yScale(name) || 0;
-      const color = colorScale(name);
+    try {
+      // Clear previous chart
+      d3.select(chartRef.current).selectAll('*').remove();
       
-      // Draw line connecting vaccines in series
-      if (vaccines.length > 1) {
-        g.append('path')
-          .datum(vaccines)
-          .attr('fill', 'none')
-          .attr('stroke', color)
-          .attr('stroke-width', 2)
-          .attr('d', d3.line<Immunization>()
-            .x(d => xScale(d.occurrenceDateTime ? new Date(d.occurrenceDateTime) : new Date()))
-            .y(() => y + yScale.bandwidth() / 2)
-          );
-      }
+      const svg = d3.select(chartRef.current);
+      const margin = { top: 30, right: 80, bottom: 40, left: 180 };
+      const width = chartRef.current.clientWidth - margin.left - margin.right;
+      const height = 300;
       
-      // Draw points for each vaccine
-      g.selectAll(`.vaccine-point-${name.replace(/\s+/g, '-').replace(/[,.']/g, '')}`)
-        .data(vaccines)
-        .enter()
-        .append('circle')
-        .attr('class', `vaccine-point-${name.replace(/\s+/g, '-').replace(/[,.']/g, '')}`)
-        .attr('cx', d => xScale(d.occurrenceDateTime ? new Date(d.occurrenceDateTime) : new Date()))
-        .attr('cy', y + yScale.bandwidth() / 2)
-        .attr('r', 6)
-        .attr('fill', color)
-        .attr('stroke', 'white')
-        .attr('stroke-width', 1.5)
-        .on('mouseenter', function(event, d) {
-          // Highlight the point
-          d3.select(this)
-            .attr('r', 8)
-            .attr('stroke-width', 2);
-          
-          // Show tooltip
-          const tooltip = g.append('g')
-            .attr('class', 'tooltip')
-            .attr('transform', `translate(${xScale(d.occurrenceDateTime ? new Date(d.occurrenceDateTime) : new Date())},${y + yScale.bandwidth() / 2 - 10})`);
-          
-          tooltip.append('rect')
-            .attr('x', 10)
-            .attr('y', -35)
-            .attr('width', 200)
-            .attr('height', 70)
-            .attr('fill', 'white')
-            .attr('stroke', '#ccc')
-            .attr('rx', 5);
-          
-          tooltip.append('text')
-            .attr('x', 20)
-            .attr('y', -15)
-            .text(`${d.vaccineCode?.coding?.[0]?.display || 'Unknown vaccine'}`)
-            .style('font-size', '12px')
-            .style('font-weight', 'bold');
-          
-          tooltip.append('text')
-            .attr('x', 20)
-            .attr('y', 5)
-            .text(`Date: ${formatDate(d.occurrenceDateTime)}`)
-            .style('font-size', '12px');
-          
-          tooltip.append('text')
-            .attr('x', 20)
-            .attr('y', 25)
-            .text(`Status: ${d.status?.charAt(0).toUpperCase() + d.status?.slice(1) || 'Unknown'}`)
-            .style('font-size', '12px');
-        })
-        .on('mouseleave', function() {
-          // Restore the point
-          d3.select(this)
-            .attr('r', 6)
-            .attr('stroke-width', 1.5);
-          
-          // Remove tooltip
-          g.selectAll('.tooltip').remove();
-        });
+      const g = svg.append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
       
-      // Add labels showing how many doses
-      if (vaccines.length > 1) {
+      // Safely sort immunizations by date (defensive coding)
+      const sortedImmunizations = [...(immunizations || [])].sort((a, b) => {
+        const dateA = a?.occurrenceDateTime ? new Date(a.occurrenceDateTime).getTime() : 0;
+        const dateB = b?.occurrenceDateTime ? new Date(b.occurrenceDateTime).getTime() : 0;
+        return dateA - dateB;
+      });
+      
+      if (sortedImmunizations.length === 0) {
+        // Draw a "no data" message if there are no valid immunizations
         g.append('text')
-          .attr('x', width + 5)
-          .attr('y', y + yScale.bandwidth() / 2 + 4)
-          .text(`${vaccines.length} doses`)
-          .style('font-size', '10px')
-          .style('fill', color);
+          .attr('x', width / 2)
+          .attr('y', height / 2)
+          .attr('text-anchor', 'middle')
+          .style('font-size', '14px')
+          .text('No immunization data available');
+        return;
       }
-    });
-    
+      
+      // Group immunizations by vaccine type with safer access
+      const vaccineGroups = sortedImmunizations.reduce((acc, immunization) => {
+        if (!immunization) return acc;
+        
+        const vaccineName = immunization.vaccineCode?.coding?.[0]?.display || 'Unknown vaccine';
+        if (!acc[vaccineName]) {
+          acc[vaccineName] = [];
+        }
+        acc[vaccineName].push(immunization);
+        return acc;
+      }, {} as Record<string, Immunization[]>);
+      
+      // Get unique vaccine names and assign colors
+      const vaccineNames = Object.keys(vaccineGroups);
+      
+      if (vaccineNames.length === 0) {
+        g.append('text')
+          .attr('x', width / 2)
+          .attr('y', height / 2)
+          .attr('text-anchor', 'middle')
+          .style('font-size', '14px')
+          .text('No vaccine data available');
+        return;
+      }
+      
+      const colorScale = d3.scaleOrdinal<string>()
+        .domain(vaccineNames)
+        .range(d3.schemeTableau10);
+      
+      // Find the safe min and max dates
+      const dates = sortedImmunizations
+        .filter(d => d?.occurrenceDateTime)
+        .map(d => new Date(d.occurrenceDateTime!));
+      
+      const minDate = dates.length > 0 ? d3.min(dates) as Date : new Date();
+      const maxDate = dates.length > 0 ? d3.max(dates) as Date : new Date();
+      
+      // Create scales
+      const xScale = d3.scaleTime()
+        .domain([minDate, maxDate])
+        .range([0, width]);
+      
+      const yScale = d3.scaleBand()
+        .domain(vaccineNames)
+        .range([0, height - margin.top - margin.bottom])
+        .padding(0.4);
+      
+      // Add x-axis (timeline)
+      g.append('g')
+        .attr('transform', `translate(0,${height - margin.top - margin.bottom})`)
+        .call(d3.axisBottom(xScale).ticks(7).tickFormat(d => d3.timeFormat('%b %Y')(d as Date)));
+      
+      // Add y-axis (vaccine names)
+      g.append('g')
+        .call(d3.axisLeft(yScale))
+        .selectAll('text')
+        .style('text-anchor', 'end')
+        .attr('dx', '-0.5em')
+        .style('font-size', '11px');
+      
+      // Add grid lines
+      g.append('g')
+        .attr('class', 'grid')
+        .selectAll('line')
+        .data(xScale.ticks(7))
+        .enter()
+        .append('line')
+        .attr('x1', d => xScale(d))
+        .attr('x2', d => xScale(d))
+        .attr('y1', 0)
+        .attr('y2', height - margin.top - margin.bottom)
+        .attr('stroke', '#e5e7eb')
+        .attr('stroke-dasharray', '5,5');
+      
+      // Draw vaccine series as connected lines and points
+      Object.entries(vaccineGroups).forEach(([name, vaccines]) => {
+        const y = yScale(name) || 0;
+        const color = colorScale(name);
+        
+        // Draw line connecting vaccines in series
+        if (vaccines.length > 1) {
+          g.append('path')
+            .datum(vaccines)
+            .attr('fill', 'none')
+            .attr('stroke', color)
+            .attr('stroke-width', 2)
+            .attr('d', d3.line<Immunization>()
+              .x(d => xScale(d.occurrenceDateTime ? new Date(d.occurrenceDateTime) : new Date()))
+              .y(() => y + yScale.bandwidth() / 2)
+            );
+        }
+        
+        // Draw points for each vaccine
+        g.selectAll(`.vaccine-point-${name.replace(/\s+/g, '-').toLowerCase()}`)
+          .data(vaccines)
+          .enter()
+          .append('circle')
+          .attr('class', `vaccine-point-${name.replace(/\s+/g, '-').toLowerCase()}`)
+          .attr('cx', d => xScale(d.occurrenceDateTime ? new Date(d.occurrenceDateTime) : new Date()))
+          .attr('cy', y + yScale.bandwidth() / 2)
+          .attr('r', 6)
+          .attr('fill', color)
+          .attr('stroke', 'white')
+          .attr('stroke-width', 1.5)
+          .on('mouseenter', function(event, d) {
+            // Highlight the point
+            d3.select(this)
+              .attr('r', 8)
+              .attr('stroke-width', 2);
+            
+            // Show tooltip
+            const tooltip = g.append('g')
+              .attr('class', 'tooltip')
+              .attr('transform', `translate(${xScale(d.occurrenceDateTime ? new Date(d.occurrenceDateTime) : new Date())},${y + yScale.bandwidth() / 2 - 10})`);
+            
+            tooltip.append('rect')
+              .attr('x', 10)
+              .attr('y', -35)
+              .attr('width', 200)
+              .attr('height', 70)
+              .attr('fill', 'white')
+              .attr('stroke', '#ccc')
+              .attr('rx', 5);
+            
+            tooltip.append('text')
+              .attr('x', 20)
+              .attr('y', -15)
+              .text(`${d.vaccineCode?.coding?.[0]?.display || 'Unknown vaccine'}`)
+              .style('font-size', '12px')
+              .style('font-weight', 'bold');
+            
+            tooltip.append('text')
+              .attr('x', 20)
+              .attr('y', 5)
+              .text(`Date: ${formatDate(d.occurrenceDateTime)}`)
+              .style('font-size', '12px');
+            
+            tooltip.append('text')
+              .attr('x', 20)
+              .attr('y', 25)
+              .text(`Status: ${d.status ? (d.status.charAt(0).toUpperCase() + d.status.slice(1)) : 'Unknown'}`)
+              .style('font-size', '12px');
+          })
+          .on('mouseleave', function() {
+            // Restore the point
+            d3.select(this)
+              .attr('r', 6)
+              .attr('stroke-width', 1.5);
+            
+            // Remove tooltip
+            g.selectAll('.tooltip').remove();
+          });
+        
+        // Add labels showing how many doses
+        if (vaccines.length > 1) {
+          g.append('text')
+            .attr('x', width + 5)
+            .attr('y', y + yScale.bandwidth() / 2 + 4)
+            .text(`${vaccines.length} doses`)
+            .style('font-size', '10px')
+            .style('fill', color);
+        }
+      });
+    } catch (error) {
+      console.error('Error rendering immunization timeline:', error);
+      
+      // Display error message on chart
+      if (chartRef.current) {
+        d3.select(chartRef.current).selectAll('*').remove();
+        
+        const svg = d3.select(chartRef.current);
+        svg.append('text')
+          .attr('x', chartRef.current.clientWidth / 2)
+          .attr('y', 150)
+          .attr('text-anchor', 'middle')
+          .style('fill', 'red')
+          .text('Error rendering immunization chart');
+      }
+    }
   }, [immunizations]);
   
   return (
