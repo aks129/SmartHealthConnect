@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { FhirProvider } from '@/lib/providers';
 import { initializeSmartAuth } from '@/lib/fhir-client';
-import { Building, Database, Microscope, Pill, Server, Stethoscope, X } from 'lucide-react';
+import { Building, Database, Microscope, Pill, Server, Stethoscope, X, MapPin } from 'lucide-react';
 
 interface ConnectCardProps {
   provider: FhirProvider;
@@ -103,25 +103,42 @@ export function ConnectCard({ provider, className }: ConnectCardProps) {
     }
   };
 
-  // Get the appropriate icon based on provider type
+  // Get the appropriate icon or image logo based on provider type
   const getProviderIcon = () => {
+    // If provider has a logoUrl, use that
+    if (provider.logoUrl) {
+      return (
+        <div className="h-10 w-10 flex-shrink-0 bg-white rounded-md border p-1 flex items-center justify-center">
+          <img src={provider.logoUrl} alt={provider.name} className="max-h-full max-w-full" />
+        </div>
+      );
+    }
+    
+    // Otherwise use the icon based on type or logoIcon
     if (!provider || !provider.logoIcon) {
       return <Database className="h-8 w-8 text-gray-500" />;
     }
     
+    const iconSize = "h-8 w-8";
+    const iconColor = provider.type === 'provider' ? "text-blue-500" : 
+                      provider.type === 'insurance' ? "text-green-500" :
+                      provider.type === 'pharmacy' ? "text-red-500" :
+                      provider.type === 'lab' ? "text-yellow-500" :
+                      provider.type === 'tefca' ? "text-purple-500" : "text-gray-500";
+    
     switch (provider.logoIcon) {
       case 'server':
-        return <Server className="h-8 w-8 text-gray-500" />;
+        return <Server className={`${iconSize} ${iconColor}`} />;
       case 'building':
-        return <Building className="h-8 w-8 text-gray-500" />;
+        return <Building className={`${iconSize} ${iconColor}`} />;
       case 'microscope':
-        return <Microscope className="h-8 w-8 text-gray-500" />;
+        return <Microscope className={`${iconSize} ${iconColor}`} />;
       case 'pill':
-        return <Pill className="h-8 w-8 text-gray-500" />;
+        return <Pill className={`${iconSize} ${iconColor}`} />;
       case 'stethoscope':
-        return <Stethoscope className="h-8 w-8 text-gray-500" />;
+        return <Stethoscope className={`${iconSize} ${iconColor}`} />;
       default:
-        return <Database className="h-8 w-8 text-gray-500" />;
+        return <Database className={`${iconSize} ${iconColor}`} />;
     }
   };
 
@@ -212,7 +229,26 @@ export function ConnectCard({ provider, className }: ConnectCardProps) {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-medium text-base truncate">{provider.name || 'Unknown Provider'}</h3>
-            <p className="text-sm text-gray-500 truncate">{provider.description || 'No description available'}</p>
+            
+            {/* Show brand information if available */}
+            {provider.brand && (
+              <div className="mt-1 flex items-center text-xs text-primary-600">
+                <span className="truncate">{provider.brand}</span>
+              </div>
+            )}
+            
+            {/* Show description */}
+            <p className="text-sm text-gray-500 truncate mt-1">
+              {provider.description || 'No description available'}
+            </p>
+            
+            {/* Show location information if available */}
+            {(provider.type === 'provider' && provider.description?.includes(',')) && (
+              <div className="mt-1 flex items-center text-xs text-gray-500">
+                <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span className="truncate">{provider.description.split('in ')[1]}</span>
+              </div>
+            )}
           </div>
         </div>
         <div className="mt-4">

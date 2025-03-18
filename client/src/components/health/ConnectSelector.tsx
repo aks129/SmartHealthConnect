@@ -4,8 +4,7 @@ import {
   CardHeader, 
   CardTitle, 
   CardDescription, 
-  CardContent,
-  CardFooter 
+  CardContent
 } from '@/components/ui/card';
 import { 
   Tabs, 
@@ -16,6 +15,13 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { ConnectCard } from '@/components/health/ConnectCard';
 import { 
   Building, 
@@ -28,26 +34,20 @@ import {
   Search,
   CloudCog,
   MapPin,
+  Database,
   Loader2,
+  X,
   Compass as CompassIcon,
   Store,
-  Database,
   CheckCircle,
   ChevronRight,
   ChevronDown
 } from 'lucide-react';
 import { epicBrands, fhirProviders } from '@/lib/providers';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+import { 
+  Collapsible, 
+  CollapsibleContent, 
+  CollapsibleTrigger 
 } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
