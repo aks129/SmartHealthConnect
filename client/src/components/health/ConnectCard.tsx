@@ -1,11 +1,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { FhirProvider } from '@/lib/providers';
 import { initializeSmartAuth } from '@/lib/fhir-client';
-import { Building, Database, Microscope, Pill, Server, Stethoscope } from 'lucide-react';
+import { Building, Database, Microscope, Pill, Server, Stethoscope, X } from 'lucide-react';
 
 interface ConnectCardProps {
   provider: FhirProvider;
@@ -15,11 +16,48 @@ interface ConnectCardProps {
 export function ConnectCard({ provider, className }: ConnectCardProps) {
   const { toast } = useToast();
 
+  // State for patient ID input when connecting to HAPI
+  const [hapiPatientId, setHapiPatientId] = React.useState('');
+  const [showHapiInput, setShowHapiInput] = React.useState(false);
+
   // Handle connection to provider
   const handleConnect = async () => {
     try {
+      // For HAPI FHIR test server, we need to handle this specially
+      if (provider.id === 'hapi') {
+        if (showHapiInput) {
+          // Connect with the entered patient ID
+          const response = await fetch('/api/fhir/hapi/connect', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              patientId: hapiPatientId || '1905285' // Use default if empty
+            }),
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to connect to HAPI FHIR test server');
+          }
+          
+          const data = await response.json();
+          if (data.success) {
+            toast({
+              title: 'Connected Successfully',
+              description: `You're now connected to HAPI FHIR test server with Patient ID: ${data.patientId}`,
+            });
+            // Reload the page to show the connected state
+            window.location.reload();
+          }
+        } else {
+          // First click - show input form
+          setShowHapiInput(true);
+          return;
+        }
+      }
       // For demo provider, use the demo API route
-      if (provider.id === 'demo') {
+      else if (provider.id === 'demo') {
         const response = await fetch('/api/fhir/demo/connect', {
           method: 'POST',
         });
@@ -115,6 +153,56 @@ export function ConnectCard({ provider, className }: ConnectCardProps) {
     );
   }
 
+  // Special handling for HAPI FHIR input form
+  if (provider.id === 'hapi' && showHapiInput) {
+    return (
+      <Card className={cn("overflow-hidden", className)}>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0">
+              {getProviderIcon()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-base truncate">{provider.name}</h3>
+              <p className="text-sm text-gray-500 truncate">Enter patient ID to connect</p>
+            </div>
+            <button 
+              className="text-gray-400 hover:text-gray-600" 
+              onClick={() => setShowHapiInput(false)}
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="mt-4 space-y-3">
+            <div className="space-y-1">
+              <label htmlFor="patient-id" className="text-sm text-gray-500">
+                Patient ID (defaults to test patient if empty)
+              </label>
+              <Input
+                id="patient-id"
+                placeholder="e.g., 1905285" 
+                value={hapiPatientId}
+                onChange={(e) => setHapiPatientId(e.target.value)}
+              />
+              <p className="text-xs text-gray-500">
+                HAPI FHIR test server contains sample patients for testing
+              </p>
+            </div>
+            <Button 
+              className="w-full"
+              size="sm"
+              onClick={handleConnect}
+            >
+              Connect to HAPI FHIR
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Standard card for other providers
   return (
     <Card className={cn("overflow-hidden", className)}>
       <CardContent className="p-4">

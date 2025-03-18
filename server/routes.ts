@@ -1993,6 +1993,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // HAPI FHIR Test Server connection endpoint
+  app.post('/api/fhir/hapi/connect', async (req: Request, res: Response) => {
+    try {
+      // Get patient ID from request or use a test patient
+      const patientId = req.body.patientId || '1905285'; // Default to a test patient if none provided
+      
+      // Create a HAPI FHIR test server session
+      const sessionData = {
+        provider: 'hapi',
+        accessToken: 'hapi_access_token_' + uuidv4(), // Not needed for public server but kept for consistency
+        refreshToken: 'hapi_refresh_token_' + uuidv4(),
+        tokenExpiry: new Date(Date.now() + 86400 * 1000), // 24 hours from now
+        fhirServer: 'https://hapi.fhir.org/baseR4',
+        patientId: patientId,
+        scope: 'patient/*.read',
+        state: uuidv4(),
+        current: true // Set this as the current active session
+      };
+      
+      // Save to storage
+      const session = await storage.createFhirSession(sessionData);
+      
+      res.status(200).json({
+        success: true,
+        message: 'HAPI FHIR test server connection created successfully',
+        patientId: patientId
+      });
+    } catch (error) {
+      console.error('Error creating HAPI FHIR test session:', error);
+      res.status(500).json({ message: 'Failed to connect to HAPI FHIR test server' });
+    }
+  });
+  
   // Current FHIR session route
   app.get('/api/fhir/sessions/current', async (req: Request, res: Response) => {
     try {
@@ -2661,6 +2694,26 @@ async function createFhirClient(session: any) {
   // Special handling for demo provider
   if (session.provider === 'demo') {
     return new DemoFhirClient(session.patientId);
+  }
+  
+  // Special handling for HAPI FHIR test server (public server doesn't require auth)
+  if (session.provider === 'hapi') {
+    return {
+      request: async (resourceUrl: string) => {
+        try {
+          const url = `https://hapi.fhir.org/baseR4/${resourceUrl}`;
+          console.log(`[HAPI FHIR] Requesting: ${url}`);
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`HAPI FHIR server error: ${response.status} - ${response.statusText}`);
+          }
+          return response.json();
+        } catch (error) {
+          console.error('Error querying HAPI FHIR server:', error);
+          throw error;
+        }
+      }
+    };
   }
   
   // Create a client configuration based on the session
