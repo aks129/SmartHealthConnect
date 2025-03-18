@@ -6,6 +6,8 @@ import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 import MedicalSpinnerDemo from "@/pages/medical-spinner-demo";
+import About from "@/pages/about";
+import Tutorial from "@/pages/tutorial";
 
 function Router() {
   return (
@@ -13,6 +15,8 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/spinner-demo" component={MedicalSpinnerDemo} />
+      <Route path="/about" component={About} />
+      <Route path="/tutorial" component={Tutorial} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
