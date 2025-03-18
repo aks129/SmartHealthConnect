@@ -50,11 +50,12 @@ type UnauthorizedBehavior = "returnNull" | "throw";
 /**
  * Generic query function factory with improved type safety
  */
-export const getQueryFn: <TResponse>(options: {
+export function getQueryFn<TResponse>(options: {
   on401: UnauthorizedBehavior;
-}) => QueryFunction<TResponse> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
+}): QueryFunction<TResponse> {
+  const { on401: unauthorizedBehavior } = options;
+  
+  return async ({ queryKey }) => {
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
     });
@@ -64,13 +65,15 @@ export const getQueryFn: <TResponse>(options: {
     }
 
     await throwIfResNotOk(res);
-    return await res.json() as TResponse;
+    const data = await res.json();
+    return data as TResponse;
   };
+}
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
+      queryFn: getQueryFn<unknown>({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
