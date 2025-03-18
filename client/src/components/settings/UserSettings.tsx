@@ -5,6 +5,12 @@ import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { User } from '@shared/schema';
+
+// Define interface for user response from API
+interface UserResponse {
+  user: User;
+}
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Camera, User, BellRing, Moon, Sun, Laptop, Eye, EyeOff, ImagePlus } from 'lucide-react';
+import { Camera, User as UserIcon, BellRing, Moon, Sun, Laptop, Eye, EyeOff, ImagePlus } from 'lucide-react';
 
 // Extend schema from database with client validations
 const profileFormSchema = z.object({
@@ -62,9 +68,12 @@ export function UserSettings() {
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
 
   // Fetch current user profile
-  const { data: user, isLoading: userLoading } = useQuery({
+  const { data: userData, isLoading: userLoading } = useQuery<UserResponse>({
     queryKey: ['/api/user/profile'],
   });
+  
+  // Extract the user from the response
+  const user = userData?.user;
 
   // Update user profile
   const updateProfileMutation = useMutation({
@@ -257,7 +266,7 @@ export function UserSettings() {
                   <AvatarFallback>
                     {user?.firstName && user?.lastName 
                       ? `${user.firstName[0]}${user.lastName[0]}` 
-                      : <User className="h-12 w-12" />}
+                      : <UserIcon className="h-12 w-12" />}
                   </AvatarFallback>
                 </Avatar>
                 <div className="relative">
