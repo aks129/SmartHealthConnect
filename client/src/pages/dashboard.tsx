@@ -26,6 +26,15 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { useQuery } from '@tanstack/react-query';
 import { UserSettings } from '@/components/settings/UserSettings';
+import { 
+  Patient,
+  Observation, 
+  Condition, 
+  MedicationRequest, 
+  AllergyIntolerance, 
+  Immunization,
+  CareGap
+} from '@shared/schema';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -36,37 +45,37 @@ export default function Dashboard() {
   const { toast } = useToast();
   
   // Fetch patient data for visualizations and feed
-  const { data: patient } = useQuery({ 
+  const { data: patient } = useQuery<Patient>({ 
     queryKey: ['/api/fhir/patient'],
     enabled: !isLoading
   });
   
-  const { data: conditions = [] } = useQuery({
+  const { data: conditions = [] as Condition[] } = useQuery<Condition[]>({
     queryKey: ['/api/fhir/condition'],
     enabled: !isLoading
   });
   
-  const { data: observations = [] } = useQuery({
+  const { data: observations = [] as Observation[] } = useQuery<Observation[]>({
     queryKey: ['/api/fhir/observation'],
     enabled: !isLoading
   });
   
-  const { data: medications = [] } = useQuery({
+  const { data: medications = [] as MedicationRequest[] } = useQuery<MedicationRequest[]>({
     queryKey: ['/api/fhir/medicationrequest'],
     enabled: !isLoading
   });
   
-  const { data: allergies = [] } = useQuery({
+  const { data: allergies = [] as AllergyIntolerance[] } = useQuery<AllergyIntolerance[]>({
     queryKey: ['/api/fhir/allergyintolerance'],
     enabled: !isLoading
   });
   
-  const { data: immunizations = [] } = useQuery({
+  const { data: immunizations = [] as Immunization[] } = useQuery<Immunization[]>({
     queryKey: ['/api/fhir/immunization'],
     enabled: !isLoading
   });
   
-  const { data: careGaps = [] } = useQuery({
+  const { data: careGaps = [] as CareGap[] } = useQuery<CareGap[]>({
     queryKey: ['/api/fhir/care-gaps'],
     enabled: !isLoading
   });
@@ -148,19 +157,19 @@ export default function Dashboard() {
             <TabsContent value="health" className="space-y-6">
               <PatientSummary />
               <HealthFeed 
-                conditions={conditions}
-                medications={medications}
-                observations={observations}
-                allergies={allergies}
-                immunizations={immunizations}
-                careGaps={careGaps}
+                conditions={conditions as Condition[]}
+                medications={medications as MedicationRequest[]}
+                observations={observations as Observation[]}
+                allergies={allergies as AllergyIntolerance[]}
+                immunizations={immunizations as Immunization[]}
+                careGaps={careGaps as CareGap[]}
               />
               <FhirVisualizations 
-                observations={observations}
-                conditions={conditions}
-                medications={medications}
-                allergies={allergies}
-                immunizations={immunizations}
+                observations={observations as Observation[]}
+                conditions={conditions as Condition[]}
+                medications={medications as MedicationRequest[]}
+                allergies={allergies as AllergyIntolerance[]}
+                immunizations={immunizations as Immunization[]}
               />
               <ConditionsSection />
               <ObservationsSection />
@@ -181,22 +190,22 @@ export default function Dashboard() {
             
             <TabsContent value="visualizations" className="space-y-6">
               <FhirVisualizations 
-                observations={observations}
-                conditions={conditions}
-                medications={medications}
-                allergies={allergies}
-                immunizations={immunizations}
+                observations={observations as Observation[]}
+                conditions={conditions as Condition[]}
+                medications={medications as MedicationRequest[]}
+                allergies={allergies as AllergyIntolerance[]}
+                immunizations={immunizations as Immunization[]}
               />
             </TabsContent>
             
             <TabsContent value="activity-feed" className="space-y-6">
               <HealthFeed 
-                conditions={conditions}
-                medications={medications}
-                observations={observations}
-                allergies={allergies}
-                immunizations={immunizations}
-                careGaps={careGaps}
+                conditions={conditions as Condition[]}
+                medications={medications as MedicationRequest[]}
+                observations={observations as Observation[]}
+                allergies={allergies as AllergyIntolerance[]}
+                immunizations={immunizations as Immunization[]}
+                careGaps={careGaps as CareGap[]}
               />
             </TabsContent>
             
@@ -218,28 +227,28 @@ export default function Dashboard() {
                 </div>
               </div>
               <FhirVisualizations 
-                observations={observations}
-                conditions={conditions}
-                medications={medications}
-                allergies={allergies}
-                immunizations={immunizations}
+                observations={observations as Observation[]}
+                conditions={conditions as Condition[]}
+                medications={medications as MedicationRequest[]}
+                allergies={allergies as AllergyIntolerance[]}
+                immunizations={immunizations as Immunization[]}
               />
             </TabsContent>
             
             <TabsContent value="advanced-analytics" className="space-y-6">
               <AdvancedAnalytics
-                observations={observations}
-                conditions={conditions}
-                medications={medications}
-                allergies={allergies}
-                immunizations={immunizations}
+                observations={observations as Observation[]}
+                conditions={conditions as Condition[]}
+                medications={medications as MedicationRequest[]}
+                allergies={allergies as AllergyIntolerance[]}
+                immunizations={immunizations as Immunization[]}
               />
             </TabsContent>
             
             <TabsContent value="medical-literature" className="space-y-6">
               <MedicalLiterature
-                conditions={conditions}
-                medications={medications}
+                conditions={conditions as Condition[]}
+                medications={medications as MedicationRequest[]}
               />
             </TabsContent>
             
