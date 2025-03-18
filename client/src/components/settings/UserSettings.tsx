@@ -69,10 +69,7 @@ export function UserSettings() {
   // Update user profile
   const updateProfileMutation = useMutation({
     mutationFn: (data: ProfileFormValues) => {
-      return apiRequest('/api/user/profile', {
-        method: 'PATCH',
-        data
-      });
+      return apiRequest('PATCH', '/api/user/profile', data);
     },
     onSuccess: () => {
       toast({
@@ -93,12 +90,9 @@ export function UserSettings() {
   // Update theme settings
   const updateThemeMutation = useMutation({
     mutationFn: (data: ThemeFormValues) => {
-      return apiRequest('/api/user/theme', {
-        method: 'PATCH',
-        data
-      });
+      return apiRequest('PATCH', '/api/user/theme', data);
     },
-    onSuccess: (data) => {
+    onSuccess: async (response: Response) => {
       toast({
         title: "Theme Updated",
         description: "Your theme preference has been saved.",
@@ -106,7 +100,8 @@ export function UserSettings() {
       
       // Apply theme immediately
       const root = window.document.documentElement;
-      const theme = data.theme;
+      const data = await response.json();
+      const theme = data?.theme as "light" | "dark" | "system";
       
       if (theme === "dark" || (theme === "system" && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         root.classList.add("dark");
@@ -121,10 +116,7 @@ export function UserSettings() {
   // Update notification settings
   const updateNotificationsMutation = useMutation({
     mutationFn: (data: NotificationFormValues) => {
-      return apiRequest('/api/user/notifications', {
-        method: 'PATCH',
-        data
-      });
+      return apiRequest('PATCH', '/api/user/notifications', data);
     },
     onSuccess: () => {
       toast({
@@ -367,7 +359,6 @@ export function UserSettings() {
                                 value="light"
                                 id="theme-light"
                                 className="peer sr-only"
-                                {...field}
                                 checked={field.value === "light"}
                               />
                               <label
@@ -385,7 +376,6 @@ export function UserSettings() {
                                 value="dark"
                                 id="theme-dark"
                                 className="peer sr-only"
-                                {...field}
                                 checked={field.value === "dark"}
                               />
                               <label
@@ -403,7 +393,6 @@ export function UserSettings() {
                                 value="system"
                                 id="theme-system"
                                 className="peer sr-only"
-                                {...field}
                                 checked={field.value === "system"}
                               />
                               <label
