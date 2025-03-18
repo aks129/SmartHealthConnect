@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatFhirDateTime, getObservationValue, getObservationReferenceRange, getObservationStatusClass } from "@/lib/fhir-client";
 import { TestTube } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { MedicalSpinner } from "@/components/ui/medical-spinner";
 import {
   Table,
   TableBody,
@@ -19,13 +20,20 @@ export function ObservationsSection() {
     queryKey: ['/api/fhir/observation'],
   });
   
-  // Get badge variant based on status
-  const getBadgeVariant = (color: string) => {
+  // Get badge variant based on status, mapping to allowed variants in our UI
+  const getBadgeVariant = (color: string): "destructive" | "secondary" | "default" | "outline" | null | undefined => {
     switch (color) {
-      case 'green': return 'success';
-      case 'yellow': return 'warning';
       case 'red': return 'destructive';
       default: return 'secondary';
+    }
+  };
+  
+  // Get additional classes for status colors that aren't in our Badge variants
+  const getStatusColorClass = (color: string): string => {
+    switch (color) {
+      case 'green': return 'bg-green-100 text-green-800 hover:bg-green-100';
+      case 'yellow': return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
+      default: return '';
     }
   };
 
@@ -40,8 +48,13 @@ export function ObservationsSection() {
         <CardContent>
           {isLoading && (
             <div className="py-6 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-gray-500">Loading lab results...</p>
+              <MedicalSpinner 
+                size="md" 
+                text="Loading lab results..." 
+                variant="info"
+                multiIcon={true}
+                speed="normal"
+              />
             </div>
           )}
           

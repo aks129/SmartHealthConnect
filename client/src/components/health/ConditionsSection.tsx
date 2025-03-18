@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatFhirDateTime, getDisplayFromCodeableConcept } from "@/lib/fhir-client";
 import { Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { MedicalSpinner } from "@/components/ui/medical-spinner";
 import type { Condition } from '@shared/schema';
 
 export function ConditionsSection() {
@@ -110,14 +111,23 @@ export function ConditionsSection() {
     };
   };
   
-  // Get badge color based on category
+  // Map category colors to badge variants that exist in our Badge component
   const getBadgeVariant = (color: string) => {
     switch (color) {
-      case 'yellow': return 'warning';
-      case 'blue': return 'info';
-      case 'green': return 'success';
       case 'red': return 'destructive';
+      // For other colors, use secondary with custom styling
       default: return 'secondary';
+    }
+  };
+  
+  // Get CSS class based on category color
+  const getBadgeColorClass = (color: string) => {
+    switch (color) {
+      case 'yellow': return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
+      case 'blue': return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
+      case 'green': return 'bg-green-100 text-green-800 hover:bg-green-100';
+      case 'red': return ''; // Will use the destructive variant
+      default: return '';
     }
   };
 
@@ -132,8 +142,13 @@ export function ConditionsSection() {
         <CardContent>
           {isLoading && (
             <div className="py-6 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-gray-500">Loading conditions...</p>
+              <MedicalSpinner 
+                size="md" 
+                text="Loading conditions..." 
+                variant="primary"
+                multiIcon={true}
+                speed="normal"
+              />
             </div>
           )}
           
@@ -166,7 +181,10 @@ export function ConditionsSection() {
                         <p className="text-sm text-gray-500 mt-1">{status}</p>
                       </div>
                       <div className="mt-2 md:mt-0">
-                        <Badge variant={getBadgeVariant(category.color)}>
+                        <Badge 
+                          variant={getBadgeVariant(category.color)}
+                          className={getBadgeColorClass(category.color)}
+                        >
                           {category.label}
                         </Badge>
                         <span className="text-sm text-gray-500 ml-2">
