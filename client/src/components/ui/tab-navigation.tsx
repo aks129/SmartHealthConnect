@@ -18,7 +18,8 @@ import {
   Microscope,
   Plus,
   Link,
-  PanelLeft
+  PanelLeft,
+  Settings
 } from 'lucide-react';
 
 interface TabGroupProps {
@@ -214,6 +215,14 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             active={activeTab === "fhir-explorer"} 
             onClick={onTabChange}
             color="bg-gray-100" 
+          />
+          <TabItem 
+            id="settings" 
+            icon={<Settings />} 
+            label="Settings" 
+            active={activeTab === "settings"} 
+            onClick={onTabChange}
+            color="bg-slate-100" 
           />
         </TabGroup>
       </div>
