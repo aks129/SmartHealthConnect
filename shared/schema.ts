@@ -6,11 +6,25 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  email: text("email"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  profilePicture: text("profile_picture"),
+  theme: text("theme").default("system"),
+  notificationPreferences: jsonb("notification_preferences"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  profilePicture: true,
+  theme: true,
+  notificationPreferences: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
