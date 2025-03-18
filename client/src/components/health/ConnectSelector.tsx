@@ -29,11 +29,29 @@ import {
   CloudCog,
   MapPin,
   Loader2,
-  Compass as CompassIcon
+  Compass as CompassIcon,
+  Store,
+  Database,
+  CheckCircle,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
-import { fhirProviders } from '@/lib/providers';
+import { epicBrands, fhirProviders } from '@/lib/providers';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-// Extend the FHIR providers with additional connection types
+// Define connection types with icons and colors
 const connectionTypes = [
   {
     id: 'provider',
@@ -41,7 +59,7 @@ const connectionTypes = [
     description: 'Connect to hospitals, clinics, and doctors',
     icon: <Stethoscope className="h-6 w-6" />,
     color: 'bg-blue-500',
-    providers: fhirProviders.filter(p => p.id.includes('epic') || p.id.includes('cerner')),
+    providers: fhirProviders.filter(p => p.type === 'provider'),
   },
   {
     id: 'insurance',
@@ -49,67 +67,7 @@ const connectionTypes = [
     description: 'Connect to your insurance company',
     icon: <CreditCard className="h-6 w-6" />,
     color: 'bg-green-500',
-    providers: fhirProviders.filter(p => p.id.includes('insurance')),
-  },
-  {
-    id: 'tefca',
-    name: 'TEFCA QHIN',
-    description: 'Connect through a Qualified Health Information Network',
-    icon: <CloudCog className="h-6 w-6" />,
-    color: 'bg-purple-500',
-    providers: [
-      {
-        id: 'commonwell-qhin',
-        name: 'CommonWell Health Alliance',
-        url: 'https://commonwellalliance.org',
-        description: 'TEFCA Qualified Health Information Network',
-        logoIcon: 'building',
-      },
-      {
-        id: 'healthgorilla-qhin',
-        name: 'Health Gorilla',
-        url: 'https://healthgorilla.com',
-        description: 'TEFCA Qualified Health Information Network',
-        logoIcon: 'server',
-      },
-      {
-        id: 'epic-qhin',
-        name: 'Epic Care Everywhere',
-        url: 'https://epic.com',
-        description: 'TEFCA Qualified Health Information Network',
-        logoIcon: 'server',
-      },
-      {
-        id: 'konza-qhin',
-        name: 'Konza Health Information Exchange',
-        url: 'https://konza.org',
-        description: 'TEFCA Qualified Health Information Network',
-        logoIcon: 'server',
-      },
-    ],
-  },
-  {
-    id: 'lab',
-    name: 'Lab Diagnostics',
-    description: 'Connect to laboratories and diagnostic centers',
-    icon: <Microscope className="h-6 w-6" />,
-    color: 'bg-yellow-500',
-    providers: [
-      {
-        id: 'quest',
-        name: 'Quest Diagnostics',
-        url: 'https://questdiagnostics.com',
-        description: 'Laboratory and diagnostic services',
-        logoIcon: 'microscope',
-      },
-      {
-        id: 'labcorp',
-        name: 'Labcorp',
-        url: 'https://labcorp.com',
-        description: 'Laboratory and diagnostic services',
-        logoIcon: 'microscope',
-      },
-    ],
+    providers: fhirProviders.filter(p => p.type === 'insurance'),
   },
   {
     id: 'pharmacy',
@@ -117,22 +75,31 @@ const connectionTypes = [
     description: 'Connect to your pharmacy records',
     icon: <Pill className="h-6 w-6" />,
     color: 'bg-red-500',
-    providers: [
-      {
-        id: 'cvs',
-        name: 'CVS Pharmacy',
-        url: 'https://cvs.com',
-        description: 'Pharmacy and medication records',
-        logoIcon: 'pill',
-      },
-      {
-        id: 'walgreens',
-        name: 'Walgreens',
-        url: 'https://walgreens.com',
-        description: 'Pharmacy and medication records',
-        logoIcon: 'pill',
-      },
-    ],
+    providers: fhirProviders.filter(p => p.type === 'pharmacy'),
+  },
+  {
+    id: 'lab',
+    name: 'Lab Diagnostics',
+    description: 'Connect to laboratories and diagnostic centers',
+    icon: <Microscope className="h-6 w-6" />,
+    color: 'bg-yellow-500',
+    providers: fhirProviders.filter(p => p.type === 'lab'),
+  },
+  {
+    id: 'tefca',
+    name: 'TEFCA QHIN',
+    description: 'Connect through a Qualified Health Information Network',
+    icon: <CloudCog className="h-6 w-6" />,
+    color: 'bg-purple-500',
+    providers: fhirProviders.filter(p => p.type === 'tefca'),
+  },
+  {
+    id: 'vendor',
+    name: 'Test Systems',
+    description: 'Connect to development and testing systems',
+    icon: <Database className="h-6 w-6" />,
+    color: 'bg-gray-500',
+    providers: fhirProviders.filter(p => p.type === 'vendor'),
   },
 ];
 
@@ -174,6 +141,9 @@ export function ConnectSelector() {
   const [locationPermission, setLocationPermission] = useState<'granted' | 'denied' | 'pending'>('pending');
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [nearbyProviders, setNearbyProviders] = useState(SAMPLE_NEARBY_PROVIDERS);
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [expandedBrands, setExpandedBrands] = useState<Record<string, boolean>>({});
+  const [selectedState, setSelectedState] = useState<string | null>(null);
   
   // Request geolocation when component mounts
   useEffect(() => {
@@ -198,13 +168,63 @@ export function ConnectSelector() {
     }
   }, []);
   
-  const filteredProviders = connectionTypes.find(t => t.id === activeTab)?.providers.filter(provider => 
-    provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    provider.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  // Get providers by connection type with filtering
+  const getFilteredProviders = () => {
+    const providers = connectionTypes.find(t => t.id === activeTab)?.providers || [];
+    
+    if (activeTab === 'provider' && selectedBrand) {
+      return providers.filter(provider => 
+        provider.brandId === selectedBrand &&
+        (!selectedState || provider.description?.includes(selectedState)) &&
+        (searchQuery === '' || 
+          provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          provider.description?.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+    
+    return providers.filter(provider => 
+      searchQuery === '' || 
+      provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      provider.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
   
+  const filteredProviders = getFilteredProviders();
+  
+  // Toggle a brand's expanded state
+  const toggleBrandExpanded = (brandId: string) => {
+    setExpandedBrands(prev => ({
+      ...prev,
+      [brandId]: !prev[brandId]
+    }));
+  };
+  
+  // Clear selected brand filter
+  const clearBrandFilter = () => {
+    setSelectedBrand(null);
+    setSelectedState(null);
+  };
+  
+  // Handle TEFCA search toggle
   const handleTefcaSearch = () => {
     setShowTefcaSearch(true);
+  };
+  
+  // Get all available states for filtering
+  const getAvailableStates = () => {
+    if (!selectedBrand) return [];
+    
+    const states = new Set<string>();
+    connectionTypes.find(t => t.id === 'provider')?.providers
+      .filter(p => p.brandId === selectedBrand)
+      .forEach(provider => {
+        const stateMatch = provider.description?.match(/,\s([A-Z][a-z]+)$/);
+        if (stateMatch && stateMatch[1]) {
+          states.add(stateMatch[1]);
+        }
+      });
+      
+    return Array.from(states).sort();
   };
   
   return (
@@ -293,6 +313,124 @@ export function ConnectSelector() {
                   <p className="text-sm text-gray-600">{type.description}</p>
                 </div>
                 
+                {/* Provider selector with brand and organization selection */}
+                {type.id === 'provider' && (
+                  <div className="mb-6">
+                    {!selectedBrand ? (
+                      <div className="mb-4">
+                        <h4 className="font-medium mb-2">Select Healthcare System</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {epicBrands.map(brand => (
+                            <Card 
+                              key={brand.id} 
+                              className="overflow-hidden cursor-pointer hover:border-primary transition-colors"
+                              onClick={() => setSelectedBrand(brand.id)}
+                            >
+                              <CardContent className="p-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-12 w-12 flex-shrink-0 bg-white rounded-md border p-1 flex items-center justify-center">
+                                    {brand.logoUrl ? (
+                                      <img src={brand.logoUrl} alt={brand.name} className="max-h-full max-w-full" />
+                                    ) : (
+                                      <Building className="h-8 w-8 text-gray-500" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <h3 className="font-medium">{brand.name}</h3>
+                                    <p className="text-xs text-gray-500">
+                                      {brand.organizations.length} {brand.organizations.length === 1 ? 'location' : 'locations'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                          
+                          <Card 
+                            className="overflow-hidden cursor-pointer hover:border-primary transition-colors bg-gray-50"
+                            onClick={() => setActiveTab('vendor')}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-12 w-12 flex-shrink-0 rounded-md bg-gray-200 flex items-center justify-center">
+                                  <Database className="h-6 w-6 text-gray-500" />
+                                </div>
+                                <div className="flex-1">
+                                  <h3 className="font-medium">Other Systems</h3>
+                                  <p className="text-xs text-gray-500">
+                                    Non-Epic healthcare systems and test environments
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium flex items-center">
+                            {epicBrands.find(b => b.id === selectedBrand)?.name || 'Selected Brand'}
+                          </h4>
+                          <Button variant="ghost" size="sm" onClick={clearBrandFilter}>
+                            Clear Selection
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <Card className="overflow-hidden">
+                              <CardContent className="p-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-16 w-16 flex-shrink-0 bg-white rounded-md border p-1 flex items-center justify-center">
+                                    {epicBrands.find(b => b.id === selectedBrand)?.logoUrl ? (
+                                      <img 
+                                        src={epicBrands.find(b => b.id === selectedBrand)?.logoUrl} 
+                                        alt={epicBrands.find(b => b.id === selectedBrand)?.name} 
+                                        className="max-h-full max-w-full" 
+                                      />
+                                    ) : (
+                                      <Building className="h-8 w-8 text-gray-500" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <h3 className="font-medium">
+                                      {epicBrands.find(b => b.id === selectedBrand)?.name}
+                                    </h3>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      Select a healthcare organization below to connect
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                          
+                          {getAvailableStates().length > 0 && (
+                            <div>
+                              <div className="flex flex-col h-full justify-center">
+                                <label className="text-sm font-medium block mb-2">Filter by State</label>
+                                <Select value={selectedState || ''} onValueChange={(value) => setSelectedState(value || null)}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="All States" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="">All States</SelectItem>
+                                    {getAvailableStates().map(state => (
+                                      <SelectItem key={state} value={state}>{state}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* TEFCA specific interface */}
                 {type.id === 'tefca' && (
                   <div className="mb-6">
                     <div className="border rounded-lg p-4 bg-purple-50 mb-4">
@@ -343,15 +481,18 @@ export function ConnectSelector() {
                   </div>
                 )}
                 
-                <div className="relative mb-4">
-                  <Input
-                    placeholder={`Search ${type.name.toLowerCase()}...`}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
-                </div>
+                {/* Search bar - show for all types except provider when a brand is selected */}
+                {(type.id !== 'provider' || !selectedBrand) && (
+                  <div className="relative mb-4">
+                    <Input
+                      placeholder={`Search ${type.name.toLowerCase()}...`}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+                  </div>
+                )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredProviders.length > 0 ? (
