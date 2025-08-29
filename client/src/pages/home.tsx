@@ -19,24 +19,25 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { fhirProviders, epicBrands } from '@/lib/providers';
+import { LiaraLogo } from "@/components/ui/liara-logo";
 
 export default function Home() {
   // Get the demo provider for the home page
   const demoProvider = fhirProviders.find(p => p.id === 'demo');
-  
+
   return (
     <div className="flex flex-col items-center min-h-screen p-4 md:p-8 bg-gray-50">
       {/* Header */}
       <header className="w-full max-w-4xl mb-6 text-center">
         <div className="flex items-center justify-center mb-2">
-          <Heart className="h-10 w-10 text-primary mr-2" />
+          <LiaraLogo size="lg" className="mr-2" />
           <h1 className="text-4xl font-bold text-gray-800">Liara AI Health</h1>
         </div>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           Your secure gateway to comprehensive health records
         </p>
       </header>
-      
+
       {/* Main navigation */}
       <div className="w-full max-w-4xl mb-6">
         <div className="flex justify-center space-x-4">
@@ -54,7 +55,7 @@ export default function Home() {
           </Link>
         </div>
       </div>
-      
+
       {/* Main content */}
       <div className="w-full max-w-4xl mx-auto">
         <Card className="mb-8 shadow-sm border-primary/20">
@@ -62,7 +63,7 @@ export default function Home() {
             <CardTitle className="text-2xl">Get Started</CardTitle>
             <CardDescription>Connect to your health records or try a demo</CardDescription>
           </CardHeader>
-          
+
           <CardContent className="pt-6">
             <Tabs defaultValue="connect" className="w-full">
               <TabsList className="grid grid-cols-3 mb-6">
@@ -79,7 +80,7 @@ export default function Home() {
                   <span>Find Provider</span>
                 </TabsTrigger>
               </TabsList>
-              
+
               {/* Provider Connections Tab */}
               <TabsContent value="connect" className="space-y-4">
                 <h3 className="text-lg font-medium">Popular Healthcare Systems</h3>
@@ -110,7 +111,7 @@ export default function Home() {
                     </Card>
                   ))}
                 </div>
-                
+
                 <div className="flex justify-center mt-4">
                   <Button 
                     className="mt-2"
@@ -121,7 +122,7 @@ export default function Home() {
                   </Button>
                 </div>
               </TabsContent>
-              
+
               {/* Demo Tab */}
               <TabsContent value="demo" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
@@ -149,7 +150,7 @@ export default function Home() {
                       </li>
                     </ul>
                   </div>
-                  
+
                   <div className="flex justify-center">
                     <div className="max-w-xs w-full">
                       {demoProvider ? (
@@ -180,7 +181,7 @@ export default function Home() {
                   </div>
                 </div>
               </TabsContent>
-              
+
               {/* Search Tab */}
               <TabsContent value="search">
                 <div className="text-center p-6 space-y-6">
@@ -191,7 +192,7 @@ export default function Home() {
                       Search for your healthcare provider by name, location, or system
                     </p>
                   </div>
-                  
+
                   <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-xl mx-auto">
                     <Card className="flex-1 cursor-pointer hover:shadow-md transition-all" onClick={() => window.location.href = '/dashboard'}>
                       <CardContent className="p-6 flex flex-col items-center text-center">
@@ -200,7 +201,7 @@ export default function Home() {
                         <p className="text-sm text-gray-500">Major hospitals & networks</p>
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="flex-1 cursor-pointer hover:shadow-md transition-all" onClick={() => window.location.href = '/dashboard'}>
                       <CardContent className="p-6 flex flex-col items-center text-center">
                         <FilePlus2 className="h-8 w-8 text-primary mb-2" />
@@ -208,7 +209,7 @@ export default function Home() {
                         <p className="text-sm text-gray-500">Claims & coverage data</p>
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="flex-1 cursor-pointer hover:shadow-md transition-all" onClick={() => window.location.href = '/dashboard'}>
                       <CardContent className="p-6 flex flex-col items-center text-center">
                         <FolderOpen className="h-8 w-8 text-primary mb-2" />
@@ -217,7 +218,7 @@ export default function Home() {
                       </CardContent>
                     </Card>
                   </div>
-                  
+
                   <Button 
                     onClick={() => window.location.href = '/dashboard'}
                     className="mt-4"
@@ -228,7 +229,7 @@ export default function Home() {
               </TabsContent>
             </Tabs>
           </CardContent>
-          
+
           <CardFooter className="bg-gray-50 border-t flex flex-col sm:flex-row sm:justify-between items-center p-4 gap-4">
             <div className="text-sm text-gray-500">
               <Shield className="inline-block h-4 w-4 mr-1 text-green-500" />
@@ -248,7 +249,7 @@ export default function Home() {
             </div>
           </CardFooter>
         </Card>
-        
+
         {/* Feature highlights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card>
@@ -264,7 +265,7 @@ export default function Home() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -278,7 +279,7 @@ export default function Home() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -294,15 +295,15 @@ export default function Home() {
           </Card>
         </div>
       </div>
-      
+
       {/* Footer */}
       <footer className="mt-auto py-6 w-full border-t">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center px-4">
           <div className="flex items-center mb-4 sm:mb-0">
-            <Heart className="h-5 w-5 text-primary mr-2" />
+            <LiaraLogo size="sm" className="mr-2" />
             <span className="font-medium text-gray-700">Liara AI Health</span>
           </div>
-          
+
           <div className="flex gap-6">
             <Link href="/about" className="text-sm text-gray-600 hover:text-primary">
               About

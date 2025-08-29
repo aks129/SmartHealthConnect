@@ -44,6 +44,7 @@ import {
 import { useToast } from "../../hooks/use-toast";
 import { ThemeToggle } from "../ui/theme-toggle";
 import type { Patient } from '@shared/schema';
+import { LiaraLogo } from "@/components/ui/liara-logo";
 
 interface SidebarProps {
   activeTab?: string;
@@ -60,13 +61,13 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
     insurance: false,
     fhirServer: false
   });
-  
+
   const { data: patient } = useQuery<Patient>({
     queryKey: ['/api/fhir/patient'],
   });
 
   const { toast } = useToast();
-  
+
   const handleDisconnect = async () => {
     try {
       await endSession();
@@ -87,13 +88,11 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
 
   return (
     <aside className="bg-white shadow md:w-64 md:fixed md:h-screen md:overflow-y-auto">
-      <div className="p-4 border-b border-gray-100">
-        <div className="flex items-center">
-          <Heart className="h-5 w-5 text-primary mr-2" />
-          <h1 className="text-xl font-bold text-gray-800">Health Records</h1>
+      <div className="p-6 border-b border-sidebar-border">
+          <LiaraLogo size="md" className="text-sidebar-foreground" />
+          <p className="text-sm text-sidebar-foreground/70 mt-2">Healthcare Data Platform</p>
         </div>
-      </div>
-      
+
       {/* Patient info summary */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center mb-2">
@@ -125,7 +124,7 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
               <span>Summary</span>
             </Button>
           </li>
-          
+
           {/* Conditions */}
           <li>
             <Button
@@ -137,7 +136,7 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
               <span>Conditions</span>
             </Button>
           </li>
-          
+
           {/* Laboratory & Diagnostics */}
           <li>
             <Collapsible 
@@ -192,7 +191,7 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
               </CollapsibleContent>
             </Collapsible>
           </li>
-          
+
           {/* Vitals */}
           <li>
             <Collapsible 
@@ -239,7 +238,7 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
               </CollapsibleContent>
             </Collapsible>
           </li>
-          
+
           {/* Medications */}
           <li>
             <Collapsible 
@@ -286,7 +285,7 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
               </CollapsibleContent>
             </Collapsible>
           </li>
-          
+
           {/* Allergies */}
           <li>
             <Button
@@ -298,7 +297,7 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
               <span>Allergies</span>
             </Button>
           </li>
-          
+
           {/* Immunizations */}
           <li>
             <Button
@@ -310,7 +309,7 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
               <span>Immunizations</span>
             </Button>
           </li>
-          
+
           {/* Care Gaps */}
           <li>
             <Button
@@ -322,7 +321,7 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
               <span>Care Gaps</span>
             </Button>
           </li>
-          
+
           {/* Health Insurance */}
           <li>
             <Collapsible 
