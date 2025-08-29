@@ -180,26 +180,172 @@ export default function Dashboard() {
               onTabChange={(tabId) => setActiveTab(tabId)} 
             />
             
-            <TabsContent value="health" className="space-y-6">
-              <PatientSummary />
-              <HealthFeed 
-                conditions={conditions as Condition[]}
-                medications={medications as MedicationRequest[]}
-                observations={observations as Observation[]}
-                allergies={allergies as AllergyIntolerance[]}
-                immunizations={immunizations as Immunization[]}
-                careGaps={careGaps as CareGap[]}
-              />
-              <FhirVisualizations 
-                observations={observations as Observation[]}
-                conditions={conditions as Condition[]}
-                medications={medications as MedicationRequest[]}
-                allergies={allergies as AllergyIntolerance[]}
-                immunizations={immunizations as Immunization[]}
-              />
-              <ConditionsSection />
-              <ObservationsSection />
-              <ConnectionDetails />
+            <TabsContent value="health" className="space-y-8">
+              {/* Health Summary Cards */}
+              <div className="container-health">
+                <h2 className="text-health-title mb-6">Health Overview</h2>
+                <div className="grid-health-summary">
+                  {/* Latest Vitals Card */}
+                  <div className="health-card">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                          <Heart className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-800">Latest Vitals</h3>
+                          <p className="text-health-caption">Today</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {observations.filter(obs => 
+                        obs.code?.coding?.some(code => 
+                          code.code === '8480-6' || code.code === '8462-4' || code.code === '8867-4'
+                        )
+                      ).slice(0, 2).map((obs, index) => (
+                        <div key={obs.id} className="flex justify-between items-center">
+                          <span className="text-health-body">
+                            {obs.code?.coding?.[0]?.display?.replace('Blood pressure', 'BP') || 'Vital Sign'}
+                          </span>
+                          <span className="font-medium text-slate-800">
+                            {obs.valueQuantity ? `${obs.valueQuantity.value} ${obs.valueQuantity.unit || ''}` : 'N/A'}
+                          </span>
+                        </div>
+                      ))}
+                      {observations.filter(obs => 
+                        obs.code?.coding?.some(code => 
+                          code.code === '8480-6' || code.code === '8462-4' || code.code === '8867-4'
+                        )
+                      ).length === 0 && (
+                        <p className="text-health-caption">No recent vitals available</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Care Gaps Card */}
+                  <div className="health-card">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                          <AlertTriangle className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-800">Care Gaps</h3>
+                          <p className="text-health-caption">Action needed</p>
+                        </div>
+                      </div>
+                      {careGaps.length > 0 && (
+                        <span className="bg-amber-100 text-amber-700 text-xs font-medium px-2 py-1 rounded-full">
+                          {careGaps.length}
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {careGaps.slice(0, 3).map((gap) => (
+                        <div key={gap.id} className="text-health-body">
+                          {gap.category || 'Preventive care needed'}
+                        </div>
+                      ))}
+                      {careGaps.length === 0 && (
+                        <p className="text-health-caption">No care gaps identified</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Active Conditions Card */}
+                  <div className="health-card">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                          <Activity className="h-5 w-5 text-red-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-800">Conditions</h3>
+                          <p className="text-health-caption">Active</p>
+                        </div>
+                      </div>
+                      {conditions.length > 0 && (
+                        <span className="bg-slate-100 text-slate-700 text-xs font-medium px-2 py-1 rounded-full">
+                          {conditions.length}
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {conditions.slice(0, 3).map((condition) => (
+                        <div key={condition.id} className="text-health-body">
+                          {condition.code?.coding?.[0]?.display || 'Unknown condition'}
+                        </div>
+                      ))}
+                      {conditions.length === 0 && (
+                        <p className="text-health-caption">No active conditions</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Medications Card */}
+                  <div className="health-card">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                          <Pill className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-800">Medications</h3>
+                          <p className="text-health-caption">Active</p>
+                        </div>
+                      </div>
+                      {medications.length > 0 && (
+                        <span className="bg-slate-100 text-slate-700 text-xs font-medium px-2 py-1 rounded-full">
+                          {medications.length}
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {medications.slice(0, 3).map((med) => (
+                        <div key={med.id} className="text-health-body">
+                          {med.medicationCodeableConcept?.coding?.[0]?.display || 'Unknown medication'}
+                        </div>
+                      ))}
+                      {medications.length === 0 && (
+                        <p className="text-health-caption">No active medications</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Activity Feed */}
+              <div className="container-health">
+                <h2 className="text-health-subtitle">Recent Activity</h2>
+                <HealthFeed 
+                  conditions={conditions as Condition[]}
+                  medications={medications as MedicationRequest[]}
+                  observations={observations as Observation[]}
+                  allergies={allergies as AllergyIntolerance[]}
+                  immunizations={immunizations as Immunization[]}
+                  careGaps={careGaps as CareGap[]}
+                />
+              </div>
+
+              {/* Interactive Charts Section */}
+              <div className="container-health">
+                <h2 className="text-health-subtitle">Health Trends</h2>
+                <FhirVisualizations 
+                  observations={observations as Observation[]}
+                  conditions={conditions as Condition[]}
+                  medications={medications as MedicationRequest[]}
+                  allergies={allergies as AllergyIntolerance[]}
+                  immunizations={immunizations as Immunization[]}
+                />
+              </div>
+
+              {/* Additional Sections */}
+              <div className="container-health space-y-8">
+                <ConditionsSection />
+                <ObservationsSection />
+                <ConnectionDetails />
+              </div>
             </TabsContent>
             
             <TabsContent value="ips">

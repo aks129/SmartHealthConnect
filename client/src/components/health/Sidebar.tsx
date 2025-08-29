@@ -92,25 +92,25 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
 
   return (
     <aside className="bg-white shadow md:w-64 md:fixed md:h-screen md:overflow-y-auto">
-      <div className="p-6 border-b border-sidebar-border">
-          <LiaraLogo size="md" className="text-sidebar-foreground" />
-          <p className="text-sm text-sidebar-foreground/70 mt-2">Healthcare Data Platform</p>
+      <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <LiaraLogo size="md" className="text-slate-800" />
+          <p className="text-sm text-slate-600 mt-2 font-medium">Healthcare Data Platform</p>
         </div>
 
       {/* Patient info summary */}
-      <div className="p-4 border-b border-gray-100">
-        <div className="flex items-center mb-2">
-          <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mr-3">
-            <User className="h-5 w-5" />
+      <div className="m-4 p-4 bg-white rounded-2xl shadow-sm border border-slate-100">
+        <div className="flex items-center mb-3">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-600 mr-3">
+            <User className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="font-medium">{patient ? getPatientName(patient) : 'Loading...'}</h2>
-            <p className="text-sm text-gray-500">{patient?.birthDate ? formatFhirDate(patient.birthDate) : 'Unknown DOB'}</p>
+            <h2 className="font-semibold text-slate-800">{patient ? getPatientName(patient) : 'Loading...'}</h2>
+            <p className="text-sm text-slate-500">{patient?.birthDate ? formatFhirDate(patient.birthDate) : 'Unknown DOB'}</p>
           </div>
         </div>
-        <div className="flex items-center text-sm text-gray-600 mt-2">
-          <ShieldCheck className="mr-2 h-4 w-4 text-green-500" />
-          <span>Connected securely</span>
+        <div className="flex items-center text-sm text-green-600 mt-3 bg-green-50 rounded-lg px-3 py-2">
+          <ShieldCheck className="mr-2 h-4 w-4" />
+          <span className="font-medium">Connected securely</span>
         </div>
       </div>
 
@@ -121,7 +121,11 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
           <li>
             <Button
               variant="ghost"
-              className={`w-full justify-start px-3 py-2 ${activeTab === 'health' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`w-full justify-start px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                activeTab === 'health' 
+                  ? 'bg-blue-100 text-blue-700 shadow-sm' 
+                  : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+              }`}
               onClick={() => onTabChange?.('health')}
             >
               <Activity className="mr-3 h-5 w-5" />

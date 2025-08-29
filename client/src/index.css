@@ -1,93 +1,196 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 200 100% 50%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 190 100% 85%;
-    --secondary-foreground: 215 25% 25%;
-
-    --muted: 200 50% 96%;
-    --muted-foreground: 200 25% 45%;
-
-    --accent: 185 100% 80%;
-    --accent-foreground: 200 50% 15%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --sidebar-background: 200 100% 50%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 40% 98%;
-    --sidebar-primary-foreground: 200 50% 15%;
-    --sidebar-accent: 185 80% 35%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 190 60% 60%;
-    --sidebar-ring: 210 40% 98%;
-
-    --radius: 0.5rem;
+    /* Apple Health inspired color palette */
+    --background: 248 250 252; /* Very light blue-gray */
+    --foreground: 15 23 42; /* Slate 900 */
+    --card: 255 255 255; /* Pure white */
+    --card-foreground: 15 23 42;
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
+    --primary: 59 130 246; /* Blue 500 */
+    --primary-foreground: 255 255 255;
+    --secondary: 241 245 249; /* Slate 100 */
+    --secondary-foreground: 15 23 42;
+    --muted: 248 250 252; /* Slate 50 */
+    --muted-foreground: 100 116 139; /* Slate 500 */
+    --accent: 240 249 255; /* Sky 50 */
+    --accent-foreground: 12 74 110; /* Sky 900 */
+    --destructive: 239 68 68; /* Red 500 */
+    --destructive-foreground: 255 255 255;
+    --border: 226 232 240; /* Slate 200 */
+    --input: 226 232 240;
+    --ring: 59 130 246; /* Blue 500 */
+    --radius: 0.75rem; /* Increased border radius for modern look */
+    
+    /* Health-specific colors */
+    --health-success: 34 197 94; /* Green 500 */
+    --health-warning: 245 158 11; /* Amber 500 */
+    --health-error: 239 68 68; /* Red 500 */
+    --health-info: 59 130 246; /* Blue 500 */
+    --health-neutral: 148 163 184; /* Slate 400 */
+    
+    /* Pastel variants */
+    --health-success-light: 220 252 231; /* Green 50 */
+    --health-warning-light: 255 251 235; /* Amber 50 */
+    --health-error-light: 254 242 242; /* Red 50 */
+    --health-info-light: 239 246 255; /* Blue 50 */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 185 100% 60%;
-    --primary-foreground: 215 50% 10%;
-
-    --secondary: 200 30% 20%;
-    --secondary-foreground: 185 80% 85%;
-
-    --muted: 200 30% 18%;
-    --muted-foreground: 185 40% 70%;
-
-    --accent: 190 50% 25%;
-    --accent-foreground: 185 80% 85%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-
-    --sidebar-background: 222.2 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 100% 50%;
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 212.7 26.8% 83.9%;
+    --background: 2 6 23; /* Slate 950 */
+    --foreground: 248 250 252; /* Slate 50 */
+    --card: 15 23 42; /* Slate 900 */
+    --card-foreground: 248 250 252;
+    --popover: 15 23 42;
+    --popover-foreground: 248 250 252;
+    --primary: 147 197 253; /* Blue 300 */
+    --primary-foreground: 15 23 42;
+    --secondary: 30 41 59; /* Slate 800 */
+    --secondary-foreground: 248 250 252;
+    --muted: 30 41 59; /* Slate 800 */
+    --muted-foreground: 148 163 184; /* Slate 400 */
+    --accent: 30 41 59; /* Slate 800 */
+    --accent-foreground: 248 250 252;
+    --destructive: 220 38 38; /* Red 600 */
+    --destructive-foreground: 248 250 252;
+    --border: 30 41 59; /* Slate 800 */
+    --input: 30 41 59;
+    --ring: 147 197 253; /* Blue 300 */
   }
+}
 
+@layer base {
   * {
     @apply border-border;
   }
-
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   }
+  
+  /* Improved scrollbar styling */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-50;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+@layer components {
+  /* Health metric cards */
+  .health-card {
+    @apply bg-white rounded-2xl shadow-sm border border-slate-100 p-6 transition-all duration-200 hover:shadow-md hover:border-slate-200;
+  }
+  
+  .health-card-compact {
+    @apply bg-white rounded-xl shadow-sm border border-slate-100 p-4 transition-all duration-200 hover:shadow-md;
+  }
+  
+  /* Status indicators */
+  .status-normal {
+    @apply bg-green-50 text-green-700 border-green-200;
+  }
+  
+  .status-warning {
+    @apply bg-amber-50 text-amber-700 border-amber-200;
+  }
+  
+  .status-critical {
+    @apply bg-red-50 text-red-700 border-red-200;
+  }
+  
+  .status-info {
+    @apply bg-blue-50 text-blue-700 border-blue-200;
+  }
+  
+  /* Modern button styles */
+  .btn-health-primary {
+    @apply bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-6 py-3 font-medium transition-all duration-200 shadow-sm hover:shadow-md;
+  }
+  
+  .btn-health-secondary {
+    @apply bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl px-6 py-3 font-medium transition-all duration-200;
+  }
+  
+  /* Layout utilities */
+  .container-health {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .grid-health-summary {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6;
+  }
+  
+  .grid-health-detailed {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-8;
+  }
+  
+  /* Typography improvements */
+  .text-health-title {
+    @apply text-2xl font-bold text-slate-900 mb-2;
+  }
+  
+  .text-health-subtitle {
+    @apply text-lg font-semibold text-slate-800 mb-4;
+  }
+  
+  .text-health-body {
+    @apply text-sm text-slate-600 leading-relaxed;
+  }
+  
+  .text-health-caption {
+    @apply text-xs text-slate-500 font-medium;
+  }
+}
+
+/* Chart container styling */
+.chart-container {
+  @apply bg-white rounded-2xl p-6 shadow-sm border border-slate-100;
+}
+
+.chart-legend {
+  @apply flex flex-wrap gap-4 justify-center mt-4;
+}
+
+.chart-legend-item {
+  @apply flex items-center gap-2 text-sm text-slate-600;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .health-card {
+    @apply p-4 rounded-xl;
+  }
+  
+  .grid-health-summary {
+    @apply grid-cols-1 gap-4;
+  }
+  
+  .grid-health-detailed {
+    @apply grid-cols-1 gap-6;
+  }
+}
+
+/* Focus states for accessibility */
+.health-card:focus-within {
+  @apply ring-2 ring-blue-500 ring-opacity-20;
+}
+
+button:focus-visible {
+  @apply ring-2 ring-blue-500 ring-opacity-50 outline-none;
 }

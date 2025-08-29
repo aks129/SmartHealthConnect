@@ -1,998 +1,40 @@
-import React, { useEffect, useRef, useState } from 'react';
-import * as d3 from 'd3';
+import React, { useMemo, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
-} from '@/components/ui/card';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
-} from '@/components/ui/tooltip';
-import { 
-  Activity as ActivityIcon, 
-  HeartPulse, 
-  Pill, 
-  BarChart3, 
-  Thermometer, 
   LineChart, 
-  TrendingUp 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  ScatterChart,
+  Scatter,
+  BarChart,
+  Bar,
+  Area,
+  AreaChart,
+  ReferenceLine,
+  Legend
+} from 'recharts';
+import { format, parseISO, isValid } from 'date-fns';
+import { 
+  Activity, 
+  Heart, 
+  Droplets, 
+  Weight, 
+  Thermometer,
+  TrendingUp,
+  AlertTriangle,
+  Info,
+  Calendar
 } from 'lucide-react';
-import type { 
-  Observation, 
-  Condition, 
-  MedicationRequest, 
-  Immunization, 
-  AllergyIntolerance 
-} from '@shared/schema';
+import type { Observation, Condition, MedicationRequest, AllergyIntolerance, Immunization } from '@shared/schema';
 
-// Helpers and utility functions
-const formatDate = (dateString?: string): string => {
-  if (!dateString) return 'Unknown date';
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
-
-const getObservationValue = (observation: Observation): number | null => {
-  const valueQuantity = observation.valueQuantity;
-  if (valueQuantity && typeof valueQuantity.value === 'number') {
-    return valueQuantity.value;
-  }
-  return null;
-};
-
-const getObservationUnit = (observation: Observation): string => {
-  const valueQuantity = observation.valueQuantity;
-  if (valueQuantity && typeof valueQuantity.unit === 'string') {
-    return valueQuantity.unit;
-  }
-  return '';
-};
-
-// Color scales for different visualization types
-const conditionColorScale = d3.scaleOrdinal<string>()
-  .domain(['active', 'inactive', 'resolved', 'remission'])
-  .range(['#ef4444', '#f97316', '#10b981', '#3b82f6']);
-
-const vitalsColorScale = d3.scaleOrdinal<string>()
-  .domain(['8462-4', '8480-6', '8867-4', '9279-1', '29463-7'])
-  .range(['#ef4444', '#3b82f6', '#10b981', '#f97316', '#8b5cf6']);
-
-// Individual visualization components
-interface VitalsChartProps {
-  observations: Observation[];
-}
-
-export function VitalsChart({ observations }: VitalsChartProps) {
-  const chartRef = useRef<SVGSVGElement>(null);
-  const [tooltipData, setTooltipData] = useState<{x: number, y: number, observation: Observation} | null>(null);
-  
-  // Filter only vital sign observations with numeric values
-  const vitalSigns = observations.filter(obs => {
-    const loincCodes = ['8462-4', '8480-6', '8867-4', '9279-1', '29463-7'];
-    return obs.code?.coding?.some(c => loincCodes.includes(c.code ?? '')) && getObservationValue(obs) !== null;
-  }).sort((a, b) => {
-    const dateA = a.effectiveDateTime ? new Date(a.effectiveDateTime).getTime() : 0;
-    const dateB = b.effectiveDateTime ? new Date(b.effectiveDateTime).getTime() : 0;
-    return dateA - dateB;
-  });
-  
-  // Group observations by type (blood pressure, heart rate, etc.)
-  const observationsByType = vitalSigns.reduce((acc, obs) => {
-    const code = obs.code?.coding?.[0]?.code ?? 'unknown';
-    if (!acc[code]) {
-      acc[code] = [];
-    }
-    acc[code].push(obs);
-    return acc;
-  }, {} as Record<string, Observation[]>);
-  
-  // Map LOINC codes to display names
-  const codeToName: Record<string, string> = {
-    '8462-4': 'Diastolic BP',
-    '8480-6': 'Systolic BP',
-    '8867-4': 'Heart Rate',
-    '9279-1': 'Respiratory Rate',
-    '29463-7': 'Body Weight'
-  };
-  
-  useEffect(() => {
-    if (!chartRef.current || Object.keys(observationsByType).length === 0) return;
-    
-    // Clear previous chart
-    d3.select(chartRef.current).selectAll('*').remove();
-    
-    const svg = d3.select(chartRef.current);
-    const margin = { top: 20, right: 30, bottom: 40, left: 50 };
-    const width = chartRef.current.clientWidth - margin.left - margin.right;
-    const height = 350 - margin.top - margin.bottom;
-    
-    const g = svg.append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-    
-    // Find date range for x-axis
-    const allDates = vitalSigns
-      .map(o => o.effectiveDateTime ? new Date(o.effectiveDateTime) : null)
-      .filter(d => d !== null) as Date[];
-    
-    const xScale = d3.scaleTime()
-      .domain([
-        d3.min(allDates) ?? new Date(),
-        d3.max(allDates) ?? new Date()
-      ])
-      .range([0, width]);
-    
-    // Find value range for y-axis
-    const allValues = vitalSigns
-      .map(o => getObservationValue(o))
-      .filter(v => v !== null) as number[];
-    
-    const yScale = d3.scaleLinear()
-      .domain([0, d3.max(allValues) ?? 0])
-      .nice()
-      .range([height, 0]);
-    
-    // Add x-axis
-    g.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(xScale).ticks(5).tickFormat(d => d3.timeFormat('%b %d')(d as Date)))
-      .selectAll('text')
-      .attr('transform', 'rotate(-30)')
-      .style('text-anchor', 'end');
-    
-    // Add y-axis
-    g.append('g')
-      .call(d3.axisLeft(yScale));
-    
-    // Add grid lines
-    g.append('g')
-      .attr('class', 'grid')
-      .selectAll('line')
-      .data(yScale.ticks())
-      .enter()
-      .append('line')
-      .attr('x1', 0)
-      .attr('x2', width)
-      .attr('y1', d => yScale(d))
-      .attr('y2', d => yScale(d))
-      .attr('stroke', '#e5e7eb')
-      .attr('stroke-dasharray', '5,5');
-    
-    // Add lines for each vital sign type
-    const line = d3.line<Observation>()
-      .x(d => xScale(d.effectiveDateTime ? new Date(d.effectiveDateTime) : new Date()))
-      .y(d => {
-        const value = getObservationValue(d);
-        return yScale(value !== null ? value : 0);
-      })
-      .curve(d3.curveMonotoneX);
-    
-    Object.entries(observationsByType).forEach(([code, observations]) => {
-      if (observations.length < 2) return; // Need at least 2 points for a line
-      
-      const color = vitalsColorScale(code);
-      
-      // Add the line
-      g.append('path')
-        .datum(observations)
-        .attr('fill', 'none')
-        .attr('stroke', color)
-        .attr('stroke-width', 2)
-        .attr('d', line);
-      
-      // Add points on the line
-      g.selectAll(`.point-${code}`)
-        .data(observations)
-        .enter()
-        .append('circle')
-        .attr('class', `point-${code}`)
-        .attr('cx', d => xScale(d.effectiveDateTime ? new Date(d.effectiveDateTime) : new Date()))
-        .attr('cy', d => {
-          const value = getObservationValue(d);
-          return yScale(value !== null ? value : 0);
-        })
-        .attr('r', 5)
-        .attr('fill', color)
-        .on('mouseenter', (event, d) => {
-          const [x, y] = d3.pointer(event);
-          setTooltipData({ x, y, observation: d });
-        })
-        .on('mouseleave', () => {
-          setTooltipData(null);
-        });
-    });
-    
-    // Legend
-    const legend = g.append('g')
-      .attr('font-family', 'sans-serif')
-      .attr('font-size', 10)
-      .attr('text-anchor', 'start')
-      .selectAll('g')
-      .data(Object.keys(observationsByType).filter(code => codeToName[code]))
-      .enter().append('g')
-      .attr('transform', (d, i) => `translate(0,${i * 20})`);
-    
-    legend.append('rect')
-      .attr('x', width - 150)
-      .attr('width', 15)
-      .attr('height', 15)
-      .attr('fill', d => vitalsColorScale(d));
-    
-    legend.append('text')
-      .attr('x', width - 130)
-      .attr('y', 7.5)
-      .attr('dy', '0.32em')
-      .text(d => codeToName[d] || d);
-    
-  }, [vitalSigns, observationsByType]);
-  
-  return (
-    <div className="relative">
-      <svg ref={chartRef} width="100%" height="350" />
-      {tooltipData && (
-        <div
-          className="absolute bg-white shadow-lg p-3 rounded border text-sm"
-          style={{
-            left: tooltipData.x + 60,
-            top: tooltipData.y + 20,
-            zIndex: 10
-          }}
-        >
-          <div className="font-medium">
-            {tooltipData.observation.code?.coding?.[0]?.display || 'Observation'}
-          </div>
-          <div>
-            Value: {getObservationValue(tooltipData.observation)} {getObservationUnit(tooltipData.observation)}
-          </div>
-          <div>
-            Date: {formatDate(tooltipData.observation.effectiveDateTime)}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface ConditionsPieChartProps {
-  conditions: Condition[];
-}
-
-export function ConditionsPieChart({ conditions }: ConditionsPieChartProps) {
-  const chartRef = useRef<SVGSVGElement>(null);
-  
-  useEffect(() => {
-    if (!chartRef.current || conditions.length === 0) return;
-    
-    // Clear previous chart
-    d3.select(chartRef.current).selectAll('*').remove();
-    
-    const svg = d3.select(chartRef.current);
-    const width = chartRef.current.clientWidth;
-    const height = chartRef.current.clientHeight;
-    const radius = Math.min(width, height) / 2 - 40;
-    
-    const g = svg.append('g')
-      .attr('transform', `translate(${width / 2},${height / 2})`);
-    
-    // Group conditions by clinical status
-    const conditionsByStatus = conditions.reduce((acc, condition) => {
-      const status = condition.clinicalStatus?.coding?.[0]?.code || 'unknown';
-      if (!acc[status]) {
-        acc[status] = 0;
-      }
-      acc[status]++;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    // Convert to array for d3
-    const data = Object.entries(conditionsByStatus).map(([status, count]) => ({
-      status,
-      count
-    }));
-    
-    // Create the pie layout
-    const pie = d3.pie<{ status: string, count: number }>()
-      .value(d => d.count)
-      .sort(null);
-    
-    // Generate arc path data
-    const arc = d3.arc<d3.PieArcDatum<{ status: string, count: number }>>()
-      .innerRadius(radius * 0.6)
-      .outerRadius(radius);
-    
-    // Create the pie chart
-    const arcs = g.selectAll('.arc')
-      .data(pie(data))
-      .enter()
-      .append('g')
-      .attr('class', 'arc');
-    
-    // Add colored segments
-    arcs.append('path')
-      .attr('d', arc)
-      .attr('fill', d => conditionColorScale(d.data.status))
-      .attr('stroke', 'white')
-      .style('stroke-width', '2px')
-      .style('opacity', 0.8)
-      .on('mouseenter', function() {
-        d3.select(this).style('opacity', 1);
-      })
-      .on('mouseleave', function() {
-        d3.select(this).style('opacity', 0.8);
-      });
-    
-    // Add labels
-    arcs.append('text')
-      .attr('transform', d => `translate(${arc.centroid(d)})`)
-      .attr('dy', '.35em')
-      .style('text-anchor', 'middle')
-      .style('font-size', '12px')
-      .style('font-weight', 'bold')
-      .style('fill', 'white')
-      .text(d => d.data.count);
-    
-    // Add legend
-    const legend = svg.append('g')
-      .attr('font-family', 'sans-serif')
-      .attr('font-size', 10)
-      .attr('text-anchor', 'start')
-      .selectAll('g')
-      .data(data)
-      .enter().append('g')
-      .attr('transform', (d, i) => `translate(10,${i * 20 + 20})`);
-    
-    legend.append('rect')
-      .attr('width', 15)
-      .attr('height', 15)
-      .attr('fill', d => conditionColorScale(d.status));
-    
-    legend.append('text')
-      .attr('x', 24)
-      .attr('y', 9)
-      .attr('dy', '0.1em')
-      .text(d => {
-        const statusMap: Record<string, string> = {
-          'active': 'Active',
-          'inactive': 'Inactive',
-          'resolved': 'Resolved',
-          'remission': 'In Remission',
-          'unknown': 'Unknown'
-        };
-        return `${statusMap[d.status] || d.status} (${d.count})`;
-      });
-    
-  }, [conditions]);
-  
-  return (
-    <svg ref={chartRef} width="100%" height="300" />
-  );
-}
-
-interface MedicationBarChartProps {
-  medications: MedicationRequest[];
-}
-
-export function MedicationBarChart({ medications }: MedicationBarChartProps) {
-  const chartRef = useRef<SVGSVGElement>(null);
-  
-  useEffect(() => {
-    if (!chartRef.current || medications.length === 0) return;
-    
-    // Clear previous chart
-    d3.select(chartRef.current).selectAll('*').remove();
-    
-    const svg = d3.select(chartRef.current);
-    const margin = { top: 20, right: 30, bottom: 100, left: 40 };
-    const width = chartRef.current.clientWidth - margin.left - margin.right;
-    const height = 350 - margin.top - margin.bottom;
-    
-    const g = svg.append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-    
-    // Group medications by name and count
-    const medCounts = medications.reduce((acc, med) => {
-      const name = med.medicationCodeableConcept?.coding?.[0]?.display || 'Unknown';
-      if (!acc[name]) {
-        acc[name] = 0;
-      }
-      acc[name]++;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    // Convert to array and sort by count
-    const data = Object.entries(medCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10); // Take top 10 medications
-    
-    // X and Y scales
-    const xScale = d3.scaleBand()
-      .domain(data.map(d => d.name))
-      .range([0, width])
-      .padding(0.3);
-    
-    const yScale = d3.scaleLinear()
-      .domain([0, d3.max(data, d => d.count) || 0])
-      .nice()
-      .range([height, 0]);
-    
-    // Add x-axis
-    g.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(xScale))
-      .selectAll('text')
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end')
-      .style('font-size', '10px');
-    
-    // Add y-axis
-    g.append('g')
-      .call(d3.axisLeft(yScale).ticks(5).tickFormat(d => `${d}`));
-    
-    // Add bars
-    g.selectAll('.bar')
-      .data(data)
-      .enter().append('rect')
-      .attr('class', 'bar')
-      .attr('x', d => xScale(d.name) || 0)
-      .attr('y', d => yScale(d.count))
-      .attr('width', xScale.bandwidth())
-      .attr('height', d => height - yScale(d.count))
-      .attr('fill', '#3b82f6')
-      .on('mouseenter', function() {
-        d3.select(this).attr('fill', '#2563eb');
-      })
-      .on('mouseleave', function() {
-        d3.select(this).attr('fill', '#3b82f6');
-      });
-    
-    // Add value labels on top of bars
-    g.selectAll('.bar-label')
-      .data(data)
-      .enter().append('text')
-      .attr('class', 'bar-label')
-      .attr('x', d => (xScale(d.name) || 0) + xScale.bandwidth() / 2)
-      .attr('y', d => yScale(d.count) - 5)
-      .attr('text-anchor', 'middle')
-      .text(d => d.count)
-      .style('font-size', '12px')
-      .style('font-weight', 'bold');
-    
-  }, [medications]);
-  
-  return (
-    <svg ref={chartRef} width="100%" height="350" />
-  );
-}
-
-interface LabTestsTimelineProps {
-  observations: Observation[];
-}
-
-export function LabTestsTimeline({ observations }: LabTestsTimelineProps) {
-  const chartRef = useRef<SVGSVGElement>(null);
-  
-  // Filter only lab result observations
-  const labResults = observations.filter(obs => {
-    // Filter for laboratory observations (usually has a LOINC code and a numeric value)
-    return obs.category?.some(cat => 
-      cat.coding?.some(coding => coding.code === 'laboratory')
-    ) && getObservationValue(obs) !== null;
-  }).sort((a, b) => {
-    const dateA = a.effectiveDateTime ? new Date(a.effectiveDateTime).getTime() : 0;
-    const dateB = b.effectiveDateTime ? new Date(b.effectiveDateTime).getTime() : 0;
-    return dateB - dateA; // Most recent first
-  }).slice(0, 20); // Only show 20 most recent tests
-  
-  useEffect(() => {
-    if (!chartRef.current || labResults.length === 0) return;
-    
-    // Clear previous chart
-    d3.select(chartRef.current).selectAll('*').remove();
-    
-    const svg = d3.select(chartRef.current);
-    const margin = { top: 20, right: 130, bottom: 40, left: 200 };
-    const width = chartRef.current.clientWidth - margin.left - margin.right;
-    const height = labResults.length * 30;
-    
-    // Adjust SVG height based on the number of lab tests
-    d3.select(chartRef.current).attr('height', height + margin.top + margin.bottom);
-    
-    const g = svg.append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-    
-    // Define scales
-    const xScale = d3.scaleTime()
-      .domain([
-        d3.min(labResults, d => d.effectiveDateTime ? new Date(d.effectiveDateTime) : new Date()) || new Date(),
-        d3.max(labResults, d => d.effectiveDateTime ? new Date(d.effectiveDateTime) : new Date()) || new Date()
-      ])
-      .range([0, width]);
-    
-    const yScale = d3.scaleBand()
-      .domain(labResults.map(d => d.code?.coding?.[0]?.display || 'Unknown test'))
-      .range([0, height])
-      .padding(0.1);
-    
-    // Add x-axis (timeline)
-    g.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(xScale).ticks(5).tickFormat(d => d3.timeFormat('%b %d, %Y')(d as Date)));
-    
-    // Add y-axis (test names)
-    g.append('g')
-      .call(d3.axisLeft(yScale))
-      .selectAll('text')
-      .style('text-anchor', 'end')
-      .style('font-size', '12px');
-    
-    // Add the test dots on the timeline
-    g.selectAll('.test-dot')
-      .data(labResults)
-      .enter()
-      .append('circle')
-      .attr('class', 'test-dot')
-      .attr('cx', d => xScale(d.effectiveDateTime ? new Date(d.effectiveDateTime) : new Date()))
-      .attr('cy', d => (yScale(d.code?.coding?.[0]?.display || 'Unknown test') || 0) + yScale.bandwidth() / 2)
-      .attr('r', 7)
-      .attr('fill', d => {
-        // Color code based on if the result is abnormal
-        if (d.interpretation && d.interpretation.length > 0) {
-          const code = d.interpretation[0].coding?.[0]?.code;
-          if (code === 'H' || code === 'HH' || code === 'L' || code === 'LL') {
-            return '#ef4444'; // Red for abnormal
-          }
-        }
-        return '#10b981'; // Green for normal
-      })
-      .on('mouseenter', function(event, d) {
-        // Highlight the dot
-        d3.select(this)
-          .attr('r', 10)
-          .attr('stroke', '#000')
-          .attr('stroke-width', 1);
-        
-        // Show tooltip
-        const tooltip = g.append('g')
-          .attr('class', 'tooltip')
-          .attr('transform', `translate(${xScale(d.effectiveDateTime ? new Date(d.effectiveDateTime) : new Date())},${(yScale(d.code?.coding?.[0]?.display || 'Unknown test') || 0) + yScale.bandwidth() / 2 - 10})`);
-        
-        tooltip.append('rect')
-          .attr('x', 10)
-          .attr('y', -25)
-          .attr('width', 200)
-          .attr('height', 60)
-          .attr('fill', 'white')
-          .attr('stroke', '#ccc')
-          .attr('rx', 5);
-        
-        tooltip.append('text')
-          .attr('x', 20)
-          .attr('y', -5)
-          .text(`Value: ${getObservationValue(d)} ${getObservationUnit(d)}`)
-          .style('font-size', '12px');
-        
-        tooltip.append('text')
-          .attr('x', 20)
-          .attr('y', 15)
-          .text(`Date: ${formatDate(d.effectiveDateTime)}`)
-          .style('font-size', '12px');
-      })
-      .on('mouseleave', function() {
-        // Restore the dot
-        d3.select(this)
-          .attr('r', 7)
-          .attr('stroke', 'none');
-        
-        // Remove tooltip
-        g.selectAll('.tooltip').remove();
-      });
-    
-    // Add value labels on the right side
-    g.selectAll('.value-label')
-      .data(labResults)
-      .enter()
-      .append('text')
-      .attr('class', 'value-label')
-      .attr('x', width + 10)
-      .attr('y', d => (yScale(d.code?.coding?.[0]?.display || 'Unknown test') || 0) + yScale.bandwidth() / 2 + 4)
-      .text(d => {
-        const value = getObservationValue(d);
-        const unit = getObservationUnit(d);
-        return value !== null ? `${value} ${unit}` : 'No value';
-      })
-      .style('font-size', '12px')
-      .style('fill', d => {
-        if (d.interpretation && d.interpretation.length > 0) {
-          const code = d.interpretation[0].coding?.[0]?.code;
-          if (code === 'H' || code === 'HH' || code === 'L' || code === 'LL') {
-            return '#ef4444'; // Red for abnormal
-          }
-        }
-        return '#10b981'; // Green for normal
-      });
-    
-  }, [labResults]);
-  
-  return (
-    <div className="overflow-y-auto max-h-96">
-      <svg ref={chartRef} width="100%" height="400" />
-    </div>
-  );
-}
-
-interface AllergiesChartProps {
-  allergies: AllergyIntolerance[];
-}
-
-export function AllergiesChart({ allergies }: AllergiesChartProps) {
-  const chartRef = useRef<SVGSVGElement>(null);
-  
-  useEffect(() => {
-    if (!chartRef.current || allergies.length === 0) return;
-    
-    // Clear previous chart
-    d3.select(chartRef.current).selectAll('*').remove();
-    
-    const svg = d3.select(chartRef.current);
-    const margin = { top: 20, right: 30, bottom: 30, left: 150 };
-    const width = chartRef.current.clientWidth - margin.left - margin.right;
-    const height = allergies.length * 30 + margin.top + margin.bottom;
-    
-    // Adjust SVG height based on the number of allergies
-    d3.select(chartRef.current).attr('height', height);
-    
-    const g = svg.append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-    
-    // Get categories of allergies
-    const allergyCategories = allergies.reduce((acc, allergy) => {
-      const category = allergy.category?.[0] || 'unknown';
-      if (!acc.includes(category)) {
-        acc.push(category);
-      }
-      return acc;
-    }, [] as string[]);
-    
-    // Color scale for categories
-    const categoryColorScale = d3.scaleOrdinal<string>()
-      .domain(allergyCategories)
-      .range(d3.schemeCategory10);
-    
-    // Define scales
-    const xScale = d3.scaleLinear()
-      .domain([0, 1])
-      .range([0, width]);
-    
-    const yScale = d3.scaleBand()
-      .domain(allergies.map(a => a.code?.coding?.[0]?.display || 'Unknown allergy'))
-      .range([0, allergies.length * 30])
-      .padding(0.3);
-    
-    // Add bars
-    g.selectAll('.allergy-bar')
-      .data(allergies)
-      .enter()
-      .append('rect')
-      .attr('class', 'allergy-bar')
-      .attr('x', 0)
-      .attr('y', d => yScale(d.code?.coding?.[0]?.display || 'Unknown allergy') || 0)
-      .attr('width', xScale(1))
-      .attr('height', yScale.bandwidth())
-      .attr('fill', d => categoryColorScale(d.category?.[0] || 'unknown'))
-      .attr('rx', 5)
-      .attr('ry', 5)
-      .on('mouseenter', function() {
-        d3.select(this).attr('opacity', 0.8);
-      })
-      .on('mouseleave', function() {
-        d3.select(this).attr('opacity', 1);
-      });
-    
-    // Add y-axis (allergy names)
-    g.append('g')
-      .call(d3.axisLeft(yScale))
-      .selectAll('text')
-      .style('text-anchor', 'end')
-      .style('font-size', '11px');
-    
-    // Add severity or reaction text on the bars
-    g.selectAll('.reaction-text')
-      .data(allergies)
-      .enter()
-      .append('text')
-      .attr('class', 'reaction-text')
-      .attr('x', 10)
-      .attr('y', d => (yScale(d.code?.coding?.[0]?.display || 'Unknown allergy') || 0) + yScale.bandwidth() / 2 + 4)
-      .text(d => {
-        if (d.reaction && d.reaction.length > 0 && d.reaction[0].manifestation && d.reaction[0].manifestation.length > 0) {
-          return d.reaction[0].manifestation[0].coding?.[0]?.display || '';
-        }
-        return d.criticality === 'high' ? 'High risk' : '';
-      })
-      .style('fill', 'white')
-      .style('font-size', '10px')
-      .style('font-weight', d => d.criticality === 'high' ? 'bold' : 'normal');
-    
-    // Add legend
-    const legend = svg.append('g')
-      .attr('font-family', 'sans-serif')
-      .attr('font-size', 10)
-      .attr('text-anchor', 'start')
-      .selectAll('g')
-      .data(allergyCategories)
-      .enter().append('g')
-      .attr('transform', (d, i) => `translate(${width + margin.left - 120},${i * 20 + 20})`);
-    
-    legend.append('rect')
-      .attr('width', 15)
-      .attr('height', 15)
-      .attr('fill', d => categoryColorScale(d));
-    
-    legend.append('text')
-      .attr('x', 24)
-      .attr('y', 9)
-      .attr('dy', '0.1em')
-      .text(d => {
-        const categoryMap: Record<string, string> = {
-          'food': 'Food',
-          'medication': 'Medication',
-          'environment': 'Environmental',
-          'biologic': 'Biologic',
-          'unknown': 'Unknown'
-        };
-        return categoryMap[d] || d;
-      });
-    
-  }, [allergies]);
-  
-  return (
-    <div className="overflow-y-auto max-h-96">
-      <svg ref={chartRef} width="100%" height="200" />
-    </div>
-  );
-}
-
-interface ImmunizationsTimelineProps {
-  immunizations: Immunization[];
-}
-
-export function ImmunizationsTimeline({ immunizations }: ImmunizationsTimelineProps) {
-  const chartRef = useRef<SVGSVGElement>(null);
-  
-  useEffect(() => {
-    if (!chartRef.current || !immunizations || immunizations.length === 0) return;
-    
-    try {
-      // Clear previous chart
-      d3.select(chartRef.current).selectAll('*').remove();
-      
-      const svg = d3.select(chartRef.current);
-      const margin = { top: 30, right: 80, bottom: 40, left: 180 };
-      const width = chartRef.current.clientWidth - margin.left - margin.right;
-      const height = 300;
-      
-      const g = svg.append('g')
-        .attr('transform', `translate(${margin.left},${margin.top})`);
-      
-      // Safely sort immunizations by date (defensive coding)
-      const sortedImmunizations = [...(immunizations || [])].sort((a, b) => {
-        const dateA = a?.occurrenceDateTime ? new Date(a.occurrenceDateTime).getTime() : 0;
-        const dateB = b?.occurrenceDateTime ? new Date(b.occurrenceDateTime).getTime() : 0;
-        return dateA - dateB;
-      });
-      
-      if (sortedImmunizations.length === 0) {
-        // Draw a "no data" message if there are no valid immunizations
-        g.append('text')
-          .attr('x', width / 2)
-          .attr('y', height / 2)
-          .attr('text-anchor', 'middle')
-          .style('font-size', '14px')
-          .text('No immunization data available');
-        return;
-      }
-      
-      // Group immunizations by vaccine type with safer access
-      const vaccineGroups = sortedImmunizations.reduce((acc, immunization) => {
-        if (!immunization) return acc;
-        
-        const vaccineName = immunization.vaccineCode?.coding?.[0]?.display || 'Unknown vaccine';
-        if (!acc[vaccineName]) {
-          acc[vaccineName] = [];
-        }
-        acc[vaccineName].push(immunization);
-        return acc;
-      }, {} as Record<string, Immunization[]>);
-      
-      // Get unique vaccine names and assign colors
-      const vaccineNames = Object.keys(vaccineGroups);
-      
-      if (vaccineNames.length === 0) {
-        g.append('text')
-          .attr('x', width / 2)
-          .attr('y', height / 2)
-          .attr('text-anchor', 'middle')
-          .style('font-size', '14px')
-          .text('No vaccine data available');
-        return;
-      }
-      
-      const colorScale = d3.scaleOrdinal<string>()
-        .domain(vaccineNames)
-        .range(d3.schemeTableau10);
-      
-      // Find the safe min and max dates
-      const dates = sortedImmunizations
-        .filter(d => d?.occurrenceDateTime)
-        .map(d => new Date(d.occurrenceDateTime!));
-      
-      const minDate = dates.length > 0 ? d3.min(dates) as Date : new Date();
-      const maxDate = dates.length > 0 ? d3.max(dates) as Date : new Date();
-      
-      // Create scales
-      const xScale = d3.scaleTime()
-        .domain([minDate, maxDate])
-        .range([0, width]);
-      
-      const yScale = d3.scaleBand()
-        .domain(vaccineNames)
-        .range([0, height - margin.top - margin.bottom])
-        .padding(0.4);
-      
-      // Add x-axis (timeline)
-      g.append('g')
-        .attr('transform', `translate(0,${height - margin.top - margin.bottom})`)
-        .call(d3.axisBottom(xScale).ticks(7).tickFormat(d => d3.timeFormat('%b %Y')(d as Date)));
-      
-      // Add y-axis (vaccine names)
-      g.append('g')
-        .call(d3.axisLeft(yScale))
-        .selectAll('text')
-        .style('text-anchor', 'end')
-        .attr('dx', '-0.5em')
-        .style('font-size', '11px');
-      
-      // Add grid lines
-      g.append('g')
-        .attr('class', 'grid')
-        .selectAll('line')
-        .data(xScale.ticks(7))
-        .enter()
-        .append('line')
-        .attr('x1', d => xScale(d))
-        .attr('x2', d => xScale(d))
-        .attr('y1', 0)
-        .attr('y2', height - margin.top - margin.bottom)
-        .attr('stroke', '#e5e7eb')
-        .attr('stroke-dasharray', '5,5');
-      
-      // Draw vaccine series as connected lines and points
-      Object.entries(vaccineGroups).forEach(([name, vaccines]) => {
-        const y = yScale(name) || 0;
-        const color = colorScale(name);
-        
-        // Draw line connecting vaccines in series
-        if (vaccines.length > 1) {
-          g.append('path')
-            .datum(vaccines)
-            .attr('fill', 'none')
-            .attr('stroke', color)
-            .attr('stroke-width', 2)
-            .attr('d', d3.line<Immunization>()
-              .x(d => xScale(d.occurrenceDateTime ? new Date(d.occurrenceDateTime) : new Date()))
-              .y(() => y + yScale.bandwidth() / 2)
-            );
-        }
-        
-        // Draw points for each vaccine
-        g.selectAll(`.vaccine-point-${name.replace(/\s+/g, '-').toLowerCase()}`)
-          .data(vaccines)
-          .enter()
-          .append('circle')
-          .attr('class', `vaccine-point-${name.replace(/\s+/g, '-').toLowerCase()}`)
-          .attr('cx', d => xScale(d.occurrenceDateTime ? new Date(d.occurrenceDateTime) : new Date()))
-          .attr('cy', y + yScale.bandwidth() / 2)
-          .attr('r', 6)
-          .attr('fill', color)
-          .attr('stroke', 'white')
-          .attr('stroke-width', 1.5)
-          .on('mouseenter', function(event, d) {
-            // Highlight the point
-            d3.select(this)
-              .attr('r', 8)
-              .attr('stroke-width', 2);
-            
-            // Show tooltip
-            const tooltip = g.append('g')
-              .attr('class', 'tooltip')
-              .attr('transform', `translate(${xScale(d.occurrenceDateTime ? new Date(d.occurrenceDateTime) : new Date())},${y + yScale.bandwidth() / 2 - 10})`);
-            
-            tooltip.append('rect')
-              .attr('x', 10)
-              .attr('y', -35)
-              .attr('width', 200)
-              .attr('height', 70)
-              .attr('fill', 'white')
-              .attr('stroke', '#ccc')
-              .attr('rx', 5);
-            
-            tooltip.append('text')
-              .attr('x', 20)
-              .attr('y', -15)
-              .text(`${d.vaccineCode?.coding?.[0]?.display || 'Unknown vaccine'}`)
-              .style('font-size', '12px')
-              .style('font-weight', 'bold');
-            
-            tooltip.append('text')
-              .attr('x', 20)
-              .attr('y', 5)
-              .text(`Date: ${formatDate(d.occurrenceDateTime)}`)
-              .style('font-size', '12px');
-            
-            tooltip.append('text')
-              .attr('x', 20)
-              .attr('y', 25)
-              .text(`Status: ${d.status ? (d.status.charAt(0).toUpperCase() + d.status.slice(1)) : 'Unknown'}`)
-              .style('font-size', '12px');
-          })
-          .on('mouseleave', function() {
-            // Restore the point
-            d3.select(this)
-              .attr('r', 6)
-              .attr('stroke-width', 1.5);
-            
-            // Remove tooltip
-            g.selectAll('.tooltip').remove();
-          });
-        
-        // Add labels showing how many doses
-        if (vaccines.length > 1) {
-          g.append('text')
-            .attr('x', width + 5)
-            .attr('y', y + yScale.bandwidth() / 2 + 4)
-            .text(`${vaccines.length} doses`)
-            .style('font-size', '10px')
-            .style('fill', color);
-        }
-      });
-    } catch (error) {
-      console.error('Error rendering immunization timeline:', error);
-      
-      // Display error message on chart
-      if (chartRef.current) {
-        d3.select(chartRef.current).selectAll('*').remove();
-        
-        const svg = d3.select(chartRef.current);
-        svg.append('text')
-          .attr('x', chartRef.current.clientWidth / 2)
-          .attr('y', 150)
-          .attr('text-anchor', 'middle')
-          .style('fill', 'red')
-          .text('Error rendering immunization chart');
-      }
-    }
-  }, [immunizations]);
-  
-  return (
-    <svg ref={chartRef} width="100%" height="300" />
-  );
-}
-
-// Main component that combines all visualizations
 interface FhirVisualizationsProps {
   observations: Observation[];
   conditions: Condition[];
@@ -1001,105 +43,776 @@ interface FhirVisualizationsProps {
   immunizations: Immunization[];
 }
 
-export function FhirVisualizations({
-  observations,
-  conditions,
-  medications,
-  allergies,
-  immunizations
-}: FhirVisualizationsProps) {
-  const [activeTab, setActiveTab] = useState('vitals');
-  
+// Health thresholds for color coding
+const HEALTH_THRESHOLDS = {
+  bloodPressureSystolic: { low: 90, normal: 120, high: 140, critical: 180 },
+  bloodPressureDiastolic: { low: 60, normal: 80, high: 90, critical: 110 },
+  heartRate: { low: 60, normal: 100, high: 120, critical: 150 },
+  cholesterol: { optimal: 200, borderline: 240, high: 300 },
+  glucose: { low: 70, normal: 100, prediabetic: 126, diabetic: 200 },
+  bmi: { underweight: 18.5, normal: 25, overweight: 30, obese: 35 },
+  temperature: { low: 97, normal: 99, fever: 100.4, highFever: 103 }
+};
+
+// Color schemes for different health metrics
+const getThresholdColor = (value: number, metric: keyof typeof HEALTH_THRESHOLDS) => {
+  const thresholds = HEALTH_THRESHOLDS[metric];
+
+  switch (metric) {
+    case 'bloodPressureSystolic':
+    case 'bloodPressureDiastolic':
+      if (value < thresholds.low) return '#EF4444'; // red
+      if (value <= thresholds.normal) return '#10B981'; // green
+      if (value <= thresholds.high) return '#F59E0B'; // amber
+      return '#DC2626'; // dark red
+
+    case 'heartRate':
+      if (value < thresholds.low || value > thresholds.critical) return '#EF4444';
+      if (value <= thresholds.normal) return '#10B981';
+      if (value <= thresholds.high) return '#F59E0B';
+      return '#DC2626';
+
+    case 'cholesterol':
+      if (value <= thresholds.optimal) return '#10B981';
+      if (value <= thresholds.borderline) return '#F59E0B';
+      return '#EF4444';
+
+    case 'glucose':
+      if (value < thresholds.low) return '#EF4444';
+      if (value <= thresholds.normal) return '#10B981';
+      if (value <= thresholds.prediabetic) return '#F59E0B';
+      return '#EF4444';
+
+    case 'bmi':
+      if (value < thresholds.underweight) return '#F59E0B';
+      if (value <= thresholds.normal) return '#10B981';
+      if (value <= thresholds.overweight) return '#F59E0B';
+      return '#EF4444';
+
+    case 'temperature':
+      if (value < thresholds.low) return '#3B82F6';
+      if (value <= thresholds.normal) return '#10B981';
+      if (value <= thresholds.fever) return '#F59E0B';
+      return '#EF4444';
+
+    default:
+      return '#6B7280';
+  }
+};
+
+const getStatusText = (value: number, metric: keyof typeof HEALTH_THRESHOLDS) => {
+  const thresholds = HEALTH_THRESHOLDS[metric];
+
+  switch (metric) {
+    case 'bloodPressureSystolic':
+    case 'bloodPressureDiastolic':
+      if (value < thresholds.low) return 'Low';
+      if (value <= thresholds.normal) return 'Normal';
+      if (value <= thresholds.high) return 'Elevated';
+      return 'High';
+
+    case 'cholesterol':
+      if (value <= thresholds.optimal) return 'Optimal';
+      if (value <= thresholds.borderline) return 'Borderline';
+      return 'High';
+
+    case 'glucose':
+      if (value < thresholds.low) return 'Low';
+      if (value <= thresholds.normal) return 'Normal';
+      if (value <= thresholds.prediabetic) return 'Prediabetic';
+      return 'Diabetic';
+
+    default:
+      return 'Normal';
+  }
+};
+
+// Custom tooltip component with enhanced styling
+const CustomTooltip = ({ active, payload, label, metric }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    const value = data.value;
+    const status = getStatusText(value, metric);
+    const color = getThresholdColor(value, metric);
+
+    return (
+      <div className="bg-white p-4 rounded-xl shadow-lg border border-slate-200">
+        <p className="text-sm font-medium text-slate-800 mb-2">
+          {format(new Date(label), 'MMM dd, yyyy')}
+        </p>
+        <div className="flex items-center space-x-2">
+          <div 
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: color }}
+          />
+          <span className="text-sm text-slate-600">
+            {data.name}: <span className="font-semibold">{value}</span>
+            {data.unit && ` ${data.unit}`}
+          </span>
+        </div>
+        <p className="text-xs mt-1" style={{ color }}>
+          Status: {status}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+export function FhirVisualizations({ observations, conditions, medications, allergies, immunizations }: FhirVisualizationsProps) {
+  const [selectedTimeRange, setSelectedTimeRange] = useState('6months');
+  const [selectedMetric, setSelectedMetric] = useState('all');
+
+  // Process observations into chart data
+  const chartData = useMemo(() => {
+    const processedData: { [key: string]: any[] } = {};
+
+    // Group observations by type
+    const observationGroups = {
+      bloodPressure: observations.filter(obs => 
+        obs.code?.coding?.some(code => 
+          code.code === '85354-9' || // Blood pressure panel
+          code.code === '8480-6' ||  // Systolic
+          code.code === '8462-4'     // Diastolic
+        )
+      ),
+      heartRate: observations.filter(obs => 
+        obs.code?.coding?.some(code => code.code === '8867-4')
+      ),
+      weight: observations.filter(obs => 
+        obs.code?.coding?.some(code => code.code === '29463-7')
+      ),
+      height: observations.filter(obs => 
+        obs.code?.coding?.some(code => code.code === '8302-2')
+      ),
+      bmi: observations.filter(obs => 
+        obs.code?.coding?.some(code => code.code === '39156-5')
+      ),
+      cholesterol: observations.filter(obs => 
+        obs.code?.coding?.some(code => code.code === '2093-3')
+      ),
+      glucose: observations.filter(obs => 
+        obs.code?.coding?.some(code => code.code === '33743-4' || code.code === '2339-0')
+      ),
+      temperature: observations.filter(obs => 
+        obs.code?.coding?.some(code => code.code === '8310-5')
+      )
+    };
+
+    // Process each group
+    Object.entries(observationGroups).forEach(([type, obs]) => {
+      processedData[type] = obs
+        .filter(o => o.effectiveDateTime && o.valueQuantity?.value)
+        .map(o => {
+          const date = o.effectiveDateTime;
+          const value = o.valueQuantity?.value;
+          const unit = o.valueQuantity?.unit;
+
+          if (!date || !value) return null;
+
+          try {
+            const parsedDate = typeof date === 'string' ? parseISO(date) : date;
+            if (!isValid(parsedDate)) return null;
+
+            return {
+              date: parsedDate.toISOString(),
+              value: Number(value),
+              unit,
+              name: type,
+              color: getThresholdColor(Number(value), type as keyof typeof HEALTH_THRESHOLDS)
+            };
+          } catch (error) {
+            return null;
+          }
+        })
+        .filter(Boolean)
+        .sort((a, b) => new Date(a!.date).getTime() - new Date(b!.date).getTime());
+    });
+
+    // Special handling for blood pressure (combine systolic and diastolic)
+    const bpSystolic = observations.filter(obs => 
+      obs.code?.coding?.some(code => code.code === '8480-6')
+    );
+    const bpDiastolic = observations.filter(obs => 
+      obs.code?.coding?.some(code => code.code === '8462-4')
+    );
+
+    if (bpSystolic.length > 0 && bpDiastolic.length > 0) {
+      const combinedBP = bpSystolic.map(sysObs => {
+        const matchingDias = bpDiastolic.find(diasObs => 
+          diasObs.effectiveDateTime === sysObs.effectiveDateTime
+        );
+
+        if (matchingDias && sysObs.valueQuantity?.value && matchingDias.valueQuantity?.value) {
+          const systolic = Number(sysObs.valueQuantity.value);
+          const diastolic = Number(matchingDias.valueQuantity.value);
+
+          return {
+            date: sysObs.effectiveDateTime,
+            systolic,
+            diastolic,
+            systolicColor: getThresholdColor(systolic, 'bloodPressureSystolic'),
+            diastolicColor: getThresholdColor(diastolic, 'bloodPressureDiastolic')
+          };
+        }
+        return null;
+      }).filter(Boolean);
+
+      processedData.bloodPressureCombined = combinedBP;
+    }
+
+    return processedData;
+  }, [observations]);
+
+  // Filter data by time range
+  const filteredData = useMemo(() => {
+    const now = new Date();
+    const timeRanges = {
+      '1month': 30,
+      '3months': 90,
+      '6months': 180,
+      '1year': 365,
+      'all': Infinity
+    };
+
+    const daysBack = timeRanges[selectedTimeRange as keyof typeof timeRanges];
+    const cutoffDate = new Date(now.getTime() - (daysBack * 24 * 60 * 60 * 1000));
+
+    const filtered: { [key: string]: any[] } = {};
+
+    Object.entries(chartData).forEach(([key, data]) => {
+      filtered[key] = data.filter(point => 
+        new Date(point.date) >= cutoffDate
+      );
+    });
+
+    return filtered;
+  }, [chartData, selectedTimeRange]);
+
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          Health Visualizations
-        </CardTitle>
-        <CardDescription>
-          Interactive visual representations of your health data
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-5 mb-6">
-            <TabsTrigger value="vitals" className="flex items-center gap-2">
-              <HeartPulse className="h-4 w-4" />
-              <span>Vital Signs</span>
-            </TabsTrigger>
-            <TabsTrigger value="conditions" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              <span>Conditions</span>
-            </TabsTrigger>
-            <TabsTrigger value="medications" className="flex items-center gap-2">
-              <Pill className="h-4 w-4" />
-              <span>Medications</span>
-            </TabsTrigger>
-            <TabsTrigger value="labs" className="flex items-center gap-2">
-              <Thermometer className="h-4 w-4" />
-              <span>Lab Results</span>
-            </TabsTrigger>
-            <TabsTrigger value="immunizations" className="flex items-center gap-2">
-              <ActivityIcon className="h-4 w-4" />
-              <span>Immunizations</span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="vitals">
-            <div className="mb-2">
-              <h3 className="text-lg font-medium mb-1">Vital Signs Trends</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Tracking your vital signs over time helps monitor your overall health status
-              </p>
-              <VitalsChart observations={observations} />
+    <div className="space-y-8">
+      {/* Controls */}
+      <Card className="health-card">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+            <div>
+              <CardTitle className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+                <span>Health Trends & Analytics</span>
+              </CardTitle>
+              <CardDescription>
+                Interactive charts with color-coded health thresholds
+              </CardDescription>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="conditions">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-medium mb-1">Condition Status</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Breakdown of your health conditions by clinical status
-                </p>
-                <ConditionsPieChart conditions={conditions} />
-              </div>
-              <div>
-                <h3 className="text-lg font-medium mb-1">Allergies and Intolerances</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Summary of your allergies and sensitivities
-                </p>
-                <AllergiesChart allergies={allergies} />
-              </div>
+
+            <div className="flex space-x-3">
+              <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1month">Last Month</SelectItem>
+                  <SelectItem value="3months">Last 3 Months</SelectItem>
+                  <SelectItem value="6months">Last 6 Months</SelectItem>
+                  <SelectItem value="1year">Last Year</SelectItem>
+                  <SelectItem value="all">All Time</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="medications">
-            <h3 className="text-lg font-medium mb-1">Medication Distribution</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Overview of your prescribed medications
-            </p>
-            <MedicationBarChart medications={medications} />
-          </TabsContent>
-          
-          <TabsContent value="labs">
-            <h3 className="text-lg font-medium mb-1">Laboratory Test Results</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Timeline of your laboratory test results
-            </p>
-            <LabTestsTimeline observations={observations} />
-          </TabsContent>
-          
-          <TabsContent value="immunizations">
-            <h3 className="text-lg font-medium mb-1">Immunization Timeline</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              History of your vaccinations and immunizations
-            </p>
-            <ImmunizationsTimeline immunizations={immunizations} />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <Tabs defaultValue="vitals" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="vitals">Vital Signs</TabsTrigger>
+          <TabsTrigger value="labs">Lab Results</TabsTrigger>
+          <TabsTrigger value="physical">Physical Metrics</TabsTrigger>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+        </TabsList>
+
+        {/* Vital Signs Tab */}
+        <TabsContent value="vitals" className="space-y-6">
+          {/* Blood Pressure Chart */}
+          {filteredData.bloodPressureCombined && filteredData.bloodPressureCombined.length > 0 && (
+            <Card className="chart-container">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Heart className="h-5 w-5 text-red-500" />
+                  <span>Blood Pressure Trends</span>
+                </CardTitle>
+                <CardDescription>
+                  Systolic and diastolic pressure over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={filteredData.bloodPressureCombined}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                      <XAxis 
+                        dataKey="date"
+                        tickFormatter={(value) => format(new Date(value), 'MMM dd')}
+                        stroke="#64748B"
+                        fontSize={12}
+                      />
+                      <YAxis 
+                        domain={[60, 180]}
+                        stroke="#64748B"
+                        fontSize={12}
+                      />
+                      <Tooltip 
+                        content={<CustomTooltip metric="bloodPressureSystolic" />}
+                        labelFormatter={(value) => format(new Date(value), 'MMM dd, yyyy')}
+                      />
+
+                      {/* Reference lines for normal ranges */}
+                      <ReferenceLine y={120} stroke="#10B981" strokeDasharray="5 5" strokeOpacity={0.6} />
+                      <ReferenceLine y={140} stroke="#F59E0B" strokeDasharray="5 5" strokeOpacity={0.6} />
+                      <ReferenceLine y={80} stroke="#10B981" strokeDasharray="5 5" strokeOpacity={0.6} />
+                      <ReferenceLine y={90} stroke="#F59E0B" strokeDasharray="5 5" strokeOpacity={0.6} />
+
+                      <Line 
+                        type="monotone" 
+                        dataKey="systolic" 
+                        stroke="#EF4444" 
+                        strokeWidth={3}
+                        dot={{ fill: '#EF4444', strokeWidth: 2, r: 4 }}
+                        name="Systolic"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="diastolic" 
+                        stroke="#3B82F6" 
+                        strokeWidth={3}
+                        dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                        name="Diastolic"
+                      />
+                      <Legend />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Chart legend with threshold info */}
+                <div className="chart-legend mt-4">
+                  <div className="chart-legend-item">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span>Normal (&lt;120/80)</span>
+                  </div>
+                  <div className="chart-legend-item">
+                    <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                    <span>Elevated (120-139/80-89)</span>
+                  </div>
+                  <div className="chart-legend-item">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span>High (≥140/90)</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Heart Rate Chart */}
+          {filteredData.heartRate && filteredData.heartRate.length > 0 && (
+            <Card className="chart-container">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Activity className="h-5 w-5 text-pink-500" />
+                  <span>Heart Rate</span>
+                </CardTitle>
+                <CardDescription>
+                  Heart rate measurements over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={filteredData.heartRate}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                      <XAxis 
+                        dataKey="date"
+                        tickFormatter={(value) => format(new Date(value), 'MMM dd')}
+                        stroke="#64748B"
+                        fontSize={12}
+                      />
+                      <YAxis 
+                        domain={[40, 160]}
+                        stroke="#64748B"
+                        fontSize={12}
+                      />
+                      <Tooltip 
+                        content={<CustomTooltip metric="heartRate" />}
+                      />
+
+                      {/* Normal range references */}
+                      <ReferenceLine y={60} stroke="#10B981" strokeDasharray="5 5" strokeOpacity={0.6} />
+                      <ReferenceLine y={100} stroke="#10B981" strokeDasharray="5 5" strokeOpacity={0.6} />
+
+                      <Area 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="#EC4899" 
+                        fill="url(#heartRateGradient)"
+                        strokeWidth={2}
+                      />
+
+                      <defs>
+                        <linearGradient id="heartRateGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#EC4899" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#EC4899" stopOpacity={0.05}/>
+                        </linearGradient>
+                      </defs>
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="chart-legend">
+                  <div className="chart-legend-item">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span>Normal (60-100 bpm)</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Lab Results Tab */}
+        <TabsContent value="labs" className="space-y-6">
+          {/* Cholesterol Chart */}
+          {filteredData.cholesterol && filteredData.cholesterol.length > 0 && (
+            <Card className="chart-container">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Droplets className="h-5 w-5 text-blue-500" />
+                  <span>Cholesterol Levels</span>
+                </CardTitle>
+                <CardDescription>
+                  Total cholesterol over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={filteredData.cholesterol}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                      <XAxis 
+                        dataKey="date"
+                        tickFormatter={(value) => format(new Date(value), 'MMM dd')}
+                        stroke="#64748B"
+                        fontSize={12}
+                      />
+                      <YAxis 
+                        domain={[100, 350]}
+                        stroke="#64748B"
+                        fontSize={12}
+                      />
+                      <Tooltip 
+                        content={<CustomTooltip metric="cholesterol" />}
+                      />
+
+                      {/* Threshold reference lines */}
+                      <ReferenceLine y={200} stroke="#10B981" strokeDasharray="5 5" strokeOpacity={0.8} />
+                      <ReferenceLine y={240} stroke="#F59E0B" strokeDasharray="5 5" strokeOpacity={0.8} />
+
+                      <Bar 
+                        dataKey="value" 
+                        fill={(entry: any) => entry.color || '#6B7280'}
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="chart-legend">
+                  <div className="chart-legend-item">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span>Optimal (&lt;200 mg/dL)</span>
+                  </div>
+                  <div className="chart-legend-item">
+                    <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                    <span>Borderline (200-239)</span>
+                  </div>
+                  <div className="chart-legend-item">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span>High (≥240)</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Glucose Chart */}
+          {filteredData.glucose && filteredData.glucose.length > 0 && (
+            <Card className="chart-container">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Droplets className="h-5 w-5 text-orange-500" />
+                  <span>Blood Glucose</span>
+                </CardTitle>
+                <CardDescription>
+                  Blood glucose levels over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ScatterChart data={filteredData.glucose}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                      <XAxis 
+                        dataKey="date"
+                        tickFormatter={(value) => format(new Date(value), 'MMM dd')}
+                        stroke="#64748B"
+                        fontSize={12}
+                        type="category"
+                      />
+                      <YAxis 
+                        domain={[60, 250]}
+                        stroke="#64748B"
+                        fontSize={12}
+                      />
+                      <Tooltip 
+                        content={<CustomTooltip metric="glucose" />}
+                      />
+
+                      {/* Reference lines for glucose levels */}
+                      <ReferenceLine y={70} stroke="#EF4444" strokeDasharray="5 5" strokeOpacity={0.6} />
+                      <ReferenceLine y={100} stroke="#10B981" strokeDasharray="5 5" strokeOpacity={0.8} />
+                      <ReferenceLine y={126} stroke="#F59E0B" strokeDasharray="5 5" strokeOpacity={0.8} />
+
+                      <Scatter 
+                        dataKey="value" 
+                        fill="#F97316"
+                      />
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="chart-legend">
+                  <div className="chart-legend-item">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span>Low (&lt;70 mg/dL)</span>
+                  </div>
+                  <div className="chart-legend-item">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span>Normal (70-100)</span>
+                  </div>
+                  <div className="chart-legend-item">
+                    <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                    <span>Prediabetic (100-126)</span>
+                  </div>
+                  <div className="chart-legend-item">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span>Diabetic (≥126)</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Physical Metrics Tab */}
+        <TabsContent value="physical" className="space-y-6">
+          {/* Weight/BMI Chart */}
+          {(filteredData.weight?.length > 0 || filteredData.bmi?.length > 0) && (
+            <div className="grid-health-detailed">
+              {filteredData.weight && filteredData.weight.length > 0 && (
+                <Card className="chart-container">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Weight className="h-5 w-5 text-purple-500" />
+                      <span>Weight Trends</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={filteredData.weight}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                          <XAxis 
+                            dataKey="date"
+                            tickFormatter={(value) => format(new Date(value), 'MMM dd')}
+                            stroke="#64748B"
+                            fontSize={12}
+                          />
+                          <YAxis stroke="#64748B" fontSize={12} />
+                          <Tooltip 
+                            formatter={(value: any, name: any) => [`${value} ${filteredData.weight[0]?.unit || 'kg'}`, 'Weight']}
+                            labelFormatter={(value) => format(new Date(value), 'MMM dd, yyyy')}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="value" 
+                            stroke="#8B5CF6" 
+                            strokeWidth={3}
+                            dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {filteredData.bmi && filteredData.bmi.length > 0 && (
+                <Card className="chart-container">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Activity className="h-5 w-5 text-indigo-500" />
+                      <span>BMI Trends</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={filteredData.bmi}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                          <XAxis 
+                            dataKey="date"
+                            tickFormatter={(value) => format(new Date(value), 'MMM dd')}
+                            stroke="#64748B"
+                            fontSize={12}
+                          />
+                          <YAxis 
+                            domain={[15, 40]}
+                            stroke="#64748B"
+                            fontSize={12}
+                          />
+                          <Tooltip 
+                            content={<CustomTooltip metric="bmi" />}
+                          />
+
+                          {/* BMI category references */}
+                          <ReferenceLine y={18.5} stroke="#F59E0B" strokeDasharray="5 5" strokeOpacity={0.6} />
+                          <ReferenceLine y={25} stroke="#10B981" strokeDasharray="5 5" strokeOpacity={0.8} />
+                          <ReferenceLine y={30} stroke="#F59E0B" strokeDasharray="5 5" strokeOpacity={0.8} />
+
+                          <Area 
+                            type="monotone" 
+                            dataKey="value" 
+                            stroke="#6366F1" 
+                            fill="url(#bmiGradient)"
+                            strokeWidth={2}
+                          />
+
+                          <defs>
+                            <linearGradient id="bmiGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#6366F1" stopOpacity={0.05}/>
+                            </linearGradient>
+                          </defs>
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="chart-legend">
+                      <div className="chart-legend-item">
+                        <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                        <span>Underweight (&lt;18.5)</span>
+                      </div>
+                      <div className="chart-legend-item">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span>Normal (18.5-25)</span>
+                      </div>
+                      <div className="chart-legend-item">
+                        <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                        <span>Overweight (25-30)</span>
+                      </div>
+                      <div className="chart-legend-item">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <span>Obese (≥30)</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid-health-summary">
+            {/* Quick Stats Cards */}
+            {Object.entries(filteredData).map(([key, data]) => {
+              if (!data || data.length === 0) return null;
+
+              const latest = data[data.length - 1];
+              const previous = data.length > 1 ? data[data.length - 2] : null;
+              const trend = previous ? (latest.value > previous.value ? 'up' : 'down') : 'stable';
+
+              const iconMap: { [key: string]: JSX.Element } = {
+                heartRate: <Heart className="h-5 w-5" />,
+                weight: <Weight className="h-5 w-5" />,
+                cholesterol: <Droplets className="h-5 w-5" />,
+                glucose: <Droplets className="h-5 w-5" />,
+                temperature: <Thermometer className="h-5 w-5" />,
+                bmi: <Activity className="h-5 w-5" />
+              };
+
+              return (
+                <div key={key} className="health-card-compact">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+                        {iconMap[key] || <Activity className="h-5 w-5" />}
+                      </div>
+                      <h3 className="font-medium text-slate-800 capitalize">
+                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                      </h3>
+                    </div>
+                    <Badge variant="outline" className={`text-xs ${
+                      trend === 'up' ? 'text-green-600' : 
+                      trend === 'down' ? 'text-red-600' : 'text-gray-600'
+                    }`}>
+                      {trend === 'up' ? '↗' : trend === 'down' ? '↘' : '→'}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="text-2xl font-bold text-slate-800">
+                      {latest.value} {latest.unit || ''}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {format(new Date(latest.date), 'MMM dd')}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Data Availability Info */}
+          <Card className="health-card">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Info className="h-5 w-5 text-blue-500" />
+                <span>Data Summary</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-slate-800">{observations.length}</div>
+                  <div className="text-sm text-slate-600">Total Observations</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-slate-800">{conditions.length}</div>
+                  <div className="text-sm text-slate-600">Conditions</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-slate-800">{medications.length}</div>
+                  <div className="text-sm text-slate-600">Medications</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-slate-800">{allergies.length}</div>
+                  <div className="text-sm text-slate-600">Allergies</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
