@@ -246,8 +246,10 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
           </ul>
         </div>
 
-          {/* Laboratory & Diagnostics */}
-          <li>
+        {/* Laboratory & Diagnostics */}
+        <div className="mb-8">
+          <ul className="space-y-2">
+            <li>
             <Collapsible 
               open={openCategories.laboratory} 
               onOpenChange={(open) => setOpenCategories({...openCategories, laboratory: open})}
@@ -564,6 +566,7 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
             </Button>
           </li>
         </ul>
+        </div>
       </nav>
 
       <div className="p-4 mt-auto border-t border-gray-100">

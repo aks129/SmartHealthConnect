@@ -12,6 +12,7 @@ import {
   Building,
   Beaker,
   BarChart,
+  BarChart3,
   Activity,
   LineChart,
   BookOpen,
@@ -44,9 +45,10 @@ interface TabItemProps {
   active: boolean;
   onClick: (id: string) => void;
   color?: string;
+  className?: string;
 }
 
-export function TabItem({ id, icon, label, active, onClick, color = "bg-gray-100" }: TabItemProps) {
+export function TabItem({ id, icon, label, active, onClick, color = "bg-gray-100", className }: TabItemProps) {
   return (
     <button
       onClick={() => onClick(id)}
@@ -258,6 +260,7 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             color="bg-slate-100" 
           />
         </TabGroup>
+        </div>
       </div>
     </div>
   );

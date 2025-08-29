@@ -111,28 +111,28 @@
 
   /* Status indicators using health-specific colors */
   .status-normal {
-    @apply bg-[--health-vitals]/10 text-[--health-vitals] border-[--health-vitals]/30;
+    @apply bg-green-50 text-green-600 border border-green-200 px-3 py-1 rounded-full text-sm font-medium;
   }
 
   .status-warning {
-    @apply bg-[--health-warning]/10 text-[--health-warning] border-[--health-warning]/30;
+    @apply bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1 rounded-full text-sm font-medium;
   }
 
   .status-critical {
-    @apply bg-[--health-critical]/10 text-[--health-critical] border-[--health-critical]/30;
+    @apply bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-full text-sm font-medium;
   }
 
   .status-info {
-    @apply bg-[--health-primary]/10 text-[--health-primary] border-[--health-primary]/30;
+    @apply bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 rounded-full text-sm font-medium;
   }
 
   /* Modern button styles using health palette */
   .btn-health-primary {
-    @apply bg-health-primary hover:bg-health-primary/90 text-primary-foreground rounded-xl px-6 py-3 font-medium transition-all duration-200 shadow-sm hover:shadow-md;
+    @apply bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 py-3 font-medium transition-all duration-200 shadow-sm hover:shadow-md;
   }
 
   .btn-health-secondary {
-    @apply bg-secondary hover:bg-secondary-foreground/80 text-secondary-foreground rounded-xl px-6 py-3 font-medium transition-all duration-200;
+    @apply bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl px-6 py-3 font-medium transition-all duration-200;
   }
 
   /* Layout utilities with modern spacing and grid */
@@ -163,6 +163,49 @@
 
   .text-health-caption {
     @apply text-sm text-muted-foreground font-medium;
+  }
+
+  .text-health-metric {
+    @apply text-2xl font-bold text-slate-800;
+  }
+
+  .text-health-metric-unit {
+    @apply text-sm font-medium text-slate-500;
+  }
+
+  /* Health summary cards */
+  .health-card-summary {
+    @apply bg-white rounded-2xl shadow-sm border border-slate-100 p-6 transition-all duration-200 hover:shadow-md hover:border-slate-200;
+  }
+
+  /* Icon containers */
+  .icon-vitals {
+    @apply w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600;
+  }
+
+  .icon-preventive {
+    @apply w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-600;
+  }
+
+  .icon-warnings {
+    @apply w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600;
+  }
+
+  .icon-medications {
+    @apply w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600;
+  }
+
+  .icon-labs {
+    @apply w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600;
+  }
+
+  /* Section headers */
+  .section-header {
+    @apply flex items-center justify-between mb-6;
+  }
+
+  .section-title {
+    @apply flex items-center gap-3 text-2xl font-bold text-slate-800;
   }
 }
 
