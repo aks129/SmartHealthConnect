@@ -38,7 +38,8 @@ import {
   ClipboardList, 
   TestTube, 
   Activity, 
-  BarChart
+  BarChart,
+  Heart
 } from 'lucide-react';
 import { MedicalSpinner, MedicalLoadingOverlay } from '@/components/ui/medical-spinner';
 import { 
