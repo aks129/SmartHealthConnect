@@ -460,7 +460,7 @@ function getRoleOverview(role: UserRole): React.ReactNode {
           different providers to ensure coordinated care.
         </p>
         <p>
-          Health Connect also provides resources and support specific to caregivers, helping you
+          Liara AI Health also provides resources and support specific to caregivers, helping you
           navigate the healthcare system more effectively.
         </p>
       </div>
@@ -468,7 +468,7 @@ function getRoleOverview(role: UserRole): React.ReactNode {
     'provider': (
       <div className="space-y-3">
         <p>
-          For healthcare providers, Health Connect offers a comprehensive view of patient health data
+          For healthcare providers, Liara AI Health offers a comprehensive view of patient health data
           from multiple sources, helping you make more informed clinical decisions.
         </p>
         <p>
@@ -476,7 +476,7 @@ function getRoleOverview(role: UserRole): React.ReactNode {
           providing seamless access to patient data without replacing your primary clinical systems.
         </p>
         <p>
-          Health Connect also identifies potential care gaps based on clinical guidelines,
+          Liara AI Health also identifies potential care gaps based on clinical guidelines,
           supports quality measure reporting, and provides analytics to help improve care delivery
           and patient outcomes.
         </p>
@@ -485,7 +485,7 @@ function getRoleOverview(role: UserRole): React.ReactNode {
     'payer': (
       <div className="space-y-3">
         <p>
-          Health Connect helps payers and insurance organizations track claims processing,
+          Liara AI Health helps payers and insurance organizations track claims processing,
           monitor care quality, and identify opportunities for improved health outcomes.
         </p>
         <p>
@@ -994,7 +994,7 @@ function getGettingStartedSteps(role: UserRole): Step[] {
     'provider': [
       {
         title: 'Request Organizational Access',
-        description: 'Contact Health Connect\'s provider services team to set up organizational access for your practice or health system.',
+        description: 'Contact Liara AI Health\'s provider services team to set up organizational access for your practice or health system.',
         note: 'You\'ll need to provide information about your organization, EHR system, and complete a business associate agreement.'
       },
       {
@@ -1201,21 +1201,21 @@ function getFAQs(role: UserRole): FAQ[] {
         additionalInfo: 'Members always maintain control over who can access their health information.'
       },
       {
-        question: 'Can Health Connect support our value-based care initiatives?',
-        answer: 'Yes, Health Connect includes analytics and reporting tools specifically designed to support value-based care programs. The platform can track quality metrics, utilization patterns, and outcome measures relevant to value-based contracts.',
+        question: 'Can Liara AI Health support our value-based care initiatives?',
+        answer: 'Yes, Liara AI Health includes analytics and reporting tools specifically designed to support value-based care programs. The platform can track quality metrics, utilization patterns, and outcome measures relevant to value-based contracts.',
       },
       {
-        question: 'How does Health Connect support care management programs?',
-        answer: 'Health Connect provides care managers with a comprehensive view of member health information, identifies members who may benefit from care management based on risk factors, and offers tools to track interventions and monitor outcomes.',
+        question: 'How does Liara AI Health support care management programs?',
+        answer: 'Liara AI Health provides care managers with a comprehensive view of member health information, identifies members who may benefit from care management based on risk factors, and offers tools to track interventions and monitor outcomes.',
       }
     ],
     'employer': [
       {
-        question: 'How does Health Connect maintain employee privacy while providing useful analytics?',
-        answer: 'Health Connect provides employers with only aggregated, de-identified data about employee health trends. Individual health information is never shared with employers. All analytics are presented at a population level with privacy thresholds to prevent identification of individuals.',
+        question: 'How does Liara AI Health maintain employee privacy while providing useful analytics?',
+        answer: 'Liara AI Health provides employers with only aggregated, de-identified data about employee health trends. Individual health information is never shared with employers. All analytics are presented at a population level with privacy thresholds to prevent identification of individuals.',
       },
       {
-        question: 'How can we integrate Health Connect with our existing wellness programs?',
+        question: 'How can we integrate Liara AI Health with our existing wellness programs?',
         answer: 'Health Connect offers several integration options for existing wellness platforms and benefits administration systems. Our implementation team works with your wellness program vendors to establish appropriate data sharing while maintaining privacy protections.',
       },
       {
@@ -1312,7 +1312,7 @@ export default function Tutorial() {
                 </Button>
                 <RouterLink href="/about">
                   <Button variant="outline">
-                    About Health Connect
+                    About Liara AI Health
                   </Button>
                 </RouterLink>
               </div>

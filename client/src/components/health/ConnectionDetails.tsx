@@ -275,7 +275,7 @@ export function ConnectionDetails() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <Database className="h-6 w-6 text-primary" />
-            Connected Health Records
+            Connected to Liara AI Health
           </CardTitle>
           <CardDescription>
             You're currently connected to a health data source. Here are the details of your connection.

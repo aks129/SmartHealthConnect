@@ -43,7 +43,7 @@ import type {
   AllergyIntolerance
 } from '@shared/schema';
 
-// Health Insight interfaces
+// Liara AI Health Insight interfaces
 interface HealthInsight {
   id: string;
   title: string;
