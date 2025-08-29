@@ -143,7 +143,7 @@ export function DiabetesDashboard() {
                 <div className="text-sm text-gray-500">3-month avg</div>
               </div>
               <Badge className="bg-green-50 text-green-600 border-0">
-                Target: <7%
+                Target: &lt;7%
               </Badge>
             </div>
           </CardContent>
@@ -254,7 +254,7 @@ export function DiabetesDashboard() {
                   labelFormatter={(value) => format(new Date(value), 'MMM dd, yyyy')}
                   formatter={(value, name) => [
                     `${value} mg/dL`,
-                    name.charAt(0).toUpperCase() + name.slice(1)
+                    typeof name === 'string' ? name.charAt(0).toUpperCase() + name.slice(1) : name
                   ]}
                 />
                 <Line 
