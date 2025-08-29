@@ -76,8 +76,41 @@ interface TabNavigationProps {
 
 export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   return (
-    <div className="flex flex-col space-y-4 md:space-y-6 mb-6 overflow-x-auto pb-2">
-      <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-6">
+    <div className="bg-slate-100/50 rounded-2xl p-2 mb-8 backdrop-blur-sm">
+      <div className="flex flex-col space-y-3 md:space-y-4">
+        {/* Primary Navigation - Summary Style */}
+        <div className="flex flex-wrap gap-2">
+          <TabItem 
+            id="health" 
+            icon={<Activity />} 
+            label="Summary" 
+            active={activeTab === "health"} 
+            onClick={onTabChange}
+            color="bg-blue-50 text-blue-700" 
+            className="flex-1 min-w-[120px] justify-center"
+          />
+          <TabItem 
+            id="care-gaps" 
+            icon={<AlertTriangle />} 
+            label="Care Gaps" 
+            active={activeTab === "care-gaps"} 
+            onClick={onTabChange}
+            color="bg-emerald-50 text-emerald-700" 
+            className="flex-1 min-w-[120px] justify-center"
+          />
+          <TabItem 
+            id="visualizations" 
+            icon={<BarChart3 />} 
+            label="Trends" 
+            active={activeTab === "visualizations"} 
+            onClick={onTabChange}
+            color="bg-purple-50 text-purple-700" 
+            className="flex-1 min-w-[120px] justify-center"
+          />
+        </div>
+        
+        {/* Category Groups */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <TabGroup label="PREVENTIVE HEALTH">
           <TabItem 
             id="care-gaps" 

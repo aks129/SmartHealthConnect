@@ -115,35 +115,136 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="p-4">
-        <ul className="space-y-2">
-          {/* Summary */}
-          <li>
-            <Button
-              variant="ghost"
-              className={`w-full justify-start px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                activeTab === 'health' 
-                  ? 'bg-blue-100 text-blue-700 shadow-sm' 
-                  : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-              onClick={() => onTabChange?.('health')}
-            >
-              <Activity className="mr-3 h-5 w-5" />
-              <span>Summary</span>
-            </Button>
-          </li>
+      <nav className="p-6">
+        {/* Primary Navigation */}
+        <div className="mb-8">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 px-4">
+            Overview
+          </h3>
+          <ul className="space-y-2">
+            <li>
+              <Button
+                variant="ghost"
+                className={`nav-tab w-full justify-start ${
+                  activeTab === 'health' ? 'nav-tab-active' : 'nav-tab-inactive'
+                }`}
+                onClick={() => onTabChange?.('health')}
+              >
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                  activeTab === 'health' ? 'bg-blue-100' : 'bg-slate-100'
+                }`}>
+                  <Activity className="h-4 w-4" />
+                </div>
+                <span>Health Summary</span>
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className={`nav-tab w-full justify-start ${
+                  activeTab === 'care-gaps' ? 'nav-tab-active' : 'nav-tab-inactive'
+                }`}
+                onClick={() => onTabChange?.('care-gaps')}
+              >
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                  activeTab === 'care-gaps' ? 'bg-emerald-100' : 'bg-slate-100'
+                }`}>
+                  <AlertTriangle className="h-4 w-4" />
+                </div>
+                <span>Preventive Care</span>
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className={`nav-tab w-full justify-start ${
+                  activeTab === 'visualizations' ? 'nav-tab-active' : 'nav-tab-inactive'
+                }`}
+                onClick={() => onTabChange?.('visualizations')}
+              >
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                  activeTab === 'visualizations' ? 'bg-purple-100' : 'bg-slate-100'
+                }`}>
+                  <BarChart className="h-4 w-4" />
+                </div>
+                <span>Health Trends</span>
+              </Button>
+            </li>
+          </ul>
+        </div>
 
-          {/* Conditions */}
-          <li>
-            <Button
-              variant="ghost"
-              className={`w-full justify-start px-3 py-2 ${activeTab === 'conditions' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
-              onClick={() => onTabChange?.('conditions')}
-            >
-              <Stethoscope className="mr-3 h-5 w-5" />
-              <span>Conditions</span>
-            </Button>
-          </li>
+          {/* Health Records Category */}
+        <div className="mb-8">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 px-4">
+            Health Records
+          </h3>
+          <ul className="space-y-2">
+            <li>
+              <Button
+                variant="ghost"
+                className={`nav-tab w-full justify-start ${
+                  activeTab === 'vital-signs' ? 'nav-tab-active' : 'nav-tab-inactive'
+                }`}
+                onClick={() => onTabChange?.('vital-signs')}
+              >
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                  activeTab === 'vital-signs' ? 'bg-green-100' : 'bg-slate-100'
+                }`}>
+                  <Heart className="h-4 w-4" />
+                </div>
+                <span>Vital Signs</span>
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className={`nav-tab w-full justify-start ${
+                  activeTab === 'lab-results' ? 'nav-tab-active' : 'nav-tab-inactive'
+                }`}
+                onClick={() => onTabChange?.('lab-results')}
+              >
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                  activeTab === 'lab-results' ? 'bg-purple-100' : 'bg-slate-100'
+                }`}>
+                  <TestTube className="h-4 w-4" />
+                </div>
+                <span>Lab Results</span>
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className={`nav-tab w-full justify-start ${
+                  activeTab === 'medications' ? 'nav-tab-active' : 'nav-tab-inactive'
+                }`}
+                onClick={() => onTabChange?.('medications')}
+              >
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                  activeTab === 'medications' ? 'bg-blue-100' : 'bg-slate-100'
+                }`}>
+                  <Pill className="h-4 w-4" />
+                </div>
+                <span>Medications</span>
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className={`nav-tab w-full justify-start ${
+                  activeTab === 'allergies' ? 'nav-tab-active' : 'nav-tab-inactive'
+                }`}
+                onClick={() => onTabChange?.('allergies')}
+              >
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                  activeTab === 'allergies' ? 'bg-red-100' : 'bg-slate-100'
+                }`}>
+                  <AlertTriangle className="h-4 w-4" />
+                </div>
+                <span>Allergies</span>
+              </Button>
+            </li>
+          </ul>
+        </div>
 
           {/* Laboratory & Diagnostics */}
           <li>

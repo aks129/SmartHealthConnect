@@ -239,34 +239,49 @@ export default function Dashboard() {
                   </Button>
                 </div>
 
-                {/* Quick Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {/* Health Summary Cards - Apple Health inspired */}
+                <div className="grid-health-summary mb-8">
                   {/* Latest Vitals Card */}
-                  <div className="health-card">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                          <Heart className="h-5 w-5 text-blue-600" />
+                  <div className="health-card-summary">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <div className="icon-vitals">
+                          <Heart className="h-6 w-6" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-slate-800">Latest Vitals</h3>
-                          <p className="text-health-caption">Today</p>
+                          <h3 className="font-bold text-slate-900 text-lg">Vital Signs</h3>
+                          <p className="text-health-caption">Latest readings</p>
                         </div>
                       </div>
-                    </div>
-                    <div className="space-y-3">
                       {observations.filter(obs => 
                         obs.code?.coding?.some(code => 
                           code.code === '8480-6' || code.code === '8462-4' || code.code === '8867-4'
                         )
-                      ).slice(0, 2).map((obs, index) => (
-                        <div key={obs.id} className="flex justify-between items-center">
-                          <span className="text-health-body">
-                            {obs.code?.coding?.[0]?.display?.replace('Blood pressure', 'BP') || 'Vital Sign'}
+                      ).length > 0 && (
+                        <div className="status-normal">
+                          Recent
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {observations.filter(obs => 
+                        obs.code?.coding?.some(code => 
+                          code.code === '8480-6' || code.code === '8462-4' || code.code === '8867-4'
+                        )
+                      ).slice(0, 3).map((obs, index) => (
+                        <div key={obs.id} className="flex justify-between items-center py-2">
+                          <span className="text-health-body font-medium">
+                            {obs.code?.coding?.[0]?.display?.replace('Blood pressure', 'Blood Pressure') || 'Vital Sign'}
                           </span>
-                          <span className="font-medium text-slate-800">
-                            {obs.valueQuantity ? `${obs.valueQuantity.value} ${obs.valueQuantity.unit || ''}` : 'N/A'}
-                          </span>
+                          <div className="text-right">
+                            <span className="text-health-metric text-lg">
+                              {obs.valueQuantity ? obs.valueQuantity.value : 'N/A'}
+                            </span>
+                            <span className="text-health-metric-unit ml-1">
+                              {obs.valueQuantity?.unit || ''}
+                            </span>
+                          </div>
                         </div>
                       ))}
                       {observations.filter(obs => 
@@ -274,125 +289,229 @@ export default function Dashboard() {
                           code.code === '8480-6' || code.code === '8462-4' || code.code === '8867-4'
                         )
                       ).length === 0 && (
-                        <p className="text-health-caption">No recent vitals available</p>
+                        <div className="text-center py-8">
+                          <Heart className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                          <p className="text-health-caption">No recent vitals available</p>
+                          <p className="text-xs text-slate-400 mt-1">Connect providers to see your vital signs</p>
+                        </div>
                       )}
                     </div>
                   </div>
 
                   {/* Care Gaps Card */}
-                  <div className="health-card">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                          <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  <div className="health-card-summary">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <div className="icon-preventive">
+                          <AlertTriangle className="h-6 w-6" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-slate-800">Care Gaps</h3>
-                          <p className="text-health-caption">Action needed</p>
+                          <h3 className="font-bold text-slate-900 text-lg">Preventive Care</h3>
+                          <p className="text-health-caption">Care gap reminders</p>
                         </div>
                       </div>
-                      {careGaps.length > 0 && (
-                        <span className="bg-amber-100 text-amber-700 text-xs font-medium px-2 py-1 rounded-full">
-                          {careGaps.length}
-                        </span>
+                      {careGaps.length > 0 ? (
+                        <div className="status-warning">
+                          {careGaps.length} {careGaps.length === 1 ? 'gap' : 'gaps'}
+                        </div>
+                      ) : (
+                        <div className="status-normal">
+                          Up to date
+                        </div>
                       )}
                     </div>
-                    <div className="space-y-2">
-                      {careGaps.slice(0, 3).map((gap) => (
-                        <div key={gap.id} className="text-health-body">
-                          {gap.category || 'Preventive care needed'}
+                    
+                    <div className="space-y-3">
+                      {careGaps.length > 0 ? (
+                        careGaps.slice(0, 2).map((gap) => (
+                          <div key={gap.id} className="p-3 bg-amber-50 rounded-xl border-l-4 border-amber-400">
+                            <p className="text-health-body font-medium text-amber-800">
+                              {gap.category || 'Preventive care recommended'}
+                            </p>
+                            <p className="text-xs text-amber-600 mt-1">
+                              {gap.description || 'Schedule appointment soon'}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-6">
+                          <AlertTriangle className="h-10 w-10 text-green-400 mx-auto mb-2" />
+                          <p className="text-health-body font-medium text-green-700">All caught up!</p>
+                          <p className="text-xs text-green-600 mt-1">No preventive care gaps found</p>
                         </div>
-                      ))}
-                      {careGaps.length === 0 && (
-                        <p className="text-health-caption">No care gaps identified</p>
                       )}
                     </div>
                   </div>
 
                   {/* Active Conditions Card */}
-                  <div className="health-card">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
-                          <Activity className="h-5 w-5 text-red-600" />
+                  <div className="health-card-summary">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <div className="icon-warnings">
+                          <Activity className="h-6 w-6" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-slate-800">Conditions</h3>
-                          <p className="text-health-caption">Active</p>
+                          <h3 className="font-bold text-slate-900 text-lg">Health Conditions</h3>
+                          <p className="text-health-caption">Active diagnoses</p>
                         </div>
                       </div>
                       {conditions.length > 0 && (
-                        <span className="bg-slate-100 text-slate-700 text-xs font-medium px-2 py-1 rounded-full">
-                          {conditions.length}
-                        </span>
+                        <div className="status-info">
+                          {conditions.length} active
+                        </div>
                       )}
                     </div>
-                    <div className="space-y-2">
-                      {conditions.slice(0, 3).map((condition) => (
-                        <div key={condition.id} className="text-health-body">
-                          {condition.code?.coding?.[0]?.display || 'Unknown condition'}
+                    
+                    <div className="space-y-3">
+                      {conditions.length > 0 ? (
+                        conditions.slice(0, 2).map((condition) => (
+                          <div key={condition.id} className="p-3 bg-slate-50 rounded-xl">
+                            <p className="text-health-body font-medium">
+                              {condition.code?.coding?.[0]?.display || 'Unknown condition'}
+                            </p>
+                            {condition.recordedDate && (
+                              <p className="text-xs text-slate-500 mt-1">
+                                Since {formatFhirDate(condition.recordedDate)}
+                              </p>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-6">
+                          <Activity className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                          <p className="text-health-caption">No active conditions</p>
                         </div>
-                      ))}
-                      {conditions.length === 0 && (
-                        <p className="text-health-caption">No active conditions</p>
                       )}
                     </div>
                   </div>
 
                   {/* Medications Card */}
-                  <div className="health-card">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                          <Pill className="h-5 w-5 text-green-600" />
+                  <div className="health-card-summary">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <div className="icon-medications">
+                          <Pill className="h-6 w-6" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-slate-800">Medications</h3>
-                          <p className="text-health-caption">Active</p>
+                          <h3 className="font-bold text-slate-900 text-lg">Medications</h3>
+                          <p className="text-health-caption">Current prescriptions</p>
                         </div>
                       </div>
                       {medications.length > 0 && (
-                        <span className="bg-slate-100 text-slate-700 text-xs font-medium px-2 py-1 rounded-full">
-                          {medications.length}
-                        </span>
+                        <div className="status-normal">
+                          {medications.length} active
+                        </div>
                       )}
                     </div>
-                    <div className="space-y-2">
-                      {medications.slice(0, 3).map((med) => (
-                        <div key={med.id} className="text-health-body">
-                          {med.medicationCodeableConcept?.coding?.[0]?.display || 'Unknown medication'}
+                    
+                    <div className="space-y-3">
+                      {medications.length > 0 ? (
+                        medications.slice(0, 2).map((med) => (
+                          <div key={med.id} className="p-3 bg-blue-50 rounded-xl">
+                            <p className="text-health-body font-medium">
+                              {med.medicationCodeableConcept?.coding?.[0]?.display || 'Unknown medication'}
+                            </p>
+                            {med.dosageInstruction?.[0]?.text && (
+                              <p className="text-xs text-blue-600 mt-1">
+                                {med.dosageInstruction[0].text}
+                              </p>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-6">
+                          <Pill className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                          <p className="text-health-caption">No active medications</p>
                         </div>
-                      ))}
-                      {medications.length === 0 && (
-                        <p className="text-health-caption">No active medications</p>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Recent Activity Feed */}
-                <div className="container-health">
-                  <h2 className="text-health-subtitle">Recent Activity</h2>
-                  <HealthFeed 
-                    conditions={conditions as Condition[]}
-                    medications={medications as MedicationRequest[]}
-                    observations={observations as Observation[]}
-                    allergies={allergies as AllergyIntolerance[]}
-                    immunizations={immunizations as Immunization[]}
-                    careGaps={careGaps as CareGap[]}
-                  />
-                </div>
+                {/* Health Highlights Section */}
+                <div className="space-y-8">
+                  {/* Quick Health Snapshot */}
+                  <div className="health-card">
+                    <div className="section-header">
+                      <h2 className="section-title">
+                        <BarChart className="h-6 w-6 text-purple-600" />
+                        <span>Health Highlights</span>
+                      </h2>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Latest Lab Results */}
+                      <div className="text-center p-4">
+                        <div className="icon-labs mx-auto mb-3">
+                          <TestTube className="h-6 w-6" />
+                        </div>
+                        <h4 className="font-semibold text-slate-800 mb-2">Latest Labs</h4>
+                        <p className="text-health-metric">
+                          {observations.filter(obs => 
+                            obs.code?.coding?.some(code => 
+                              code.code === '2093-3' || code.code === '4548-4'
+                            )
+                          ).length}
+                        </p>
+                        <p className="text-health-caption">Recent results</p>
+                      </div>
+                      
+                      {/* Upcoming Care */}
+                      <div className="text-center p-4">
+                        <div className="icon-preventive mx-auto mb-3">
+                          <Calendar className="h-6 w-6" />
+                        </div>
+                        <h4 className="font-semibold text-slate-800 mb-2">Care Schedule</h4>
+                        <p className="text-health-metric">{careGaps.length}</p>
+                        <p className="text-health-caption">Items to schedule</p>
+                      </div>
+                      
+                      {/* Health Score */}
+                      <div className="text-center p-4">
+                        <div className="icon-vitals mx-auto mb-3">
+                          <Heart className="h-6 w-6" />
+                        </div>
+                        <h4 className="font-semibold text-slate-800 mb-2">Health Score</h4>
+                        <p className="text-health-metric">85</p>
+                        <p className="text-health-caption">Good standing</p>
+                      </div>
+                    </div>
+                  </div>
 
-                {/* Interactive Charts Section */}
-                <div className="container-health">
-                  <h2 className="text-health-subtitle">Health Trends</h2>
-                  <FhirVisualizations 
-                    observations={observations as Observation[]}
-                    conditions={conditions as Condition[]}
-                    medications={medications as MedicationRequest[]}
-                    allergies={allergies as AllergyIntolerance[]}
-                    immunizations={immunizations as Immunization[]}
-                  />
+                  {/* Recent Activity Feed */}
+                  <div className="health-card">
+                    <div className="section-header">
+                      <h2 className="section-title">
+                        <Activity className="h-6 w-6 text-green-600" />
+                        <span>Recent Activity</span>
+                      </h2>
+                    </div>
+                    <HealthFeed 
+                      conditions={conditions as Condition[]}
+                      medications={medications as MedicationRequest[]}
+                      observations={observations as Observation[]}
+                      allergies={allergies as AllergyIntolerance[]}
+                      immunizations={immunizations as Immunization[]}
+                      careGaps={careGaps as CareGap[]}
+                    />
+                  </div>
+
+                  {/* Interactive Charts Section */}
+                  <div className="health-card">
+                    <div className="section-header">
+                      <h2 className="section-title">
+                        <BarChart className="h-6 w-6 text-purple-600" />
+                        <span>Health Trends & Analytics</span>
+                      </h2>
+                    </div>
+                    <FhirVisualizations 
+                      observations={observations as Observation[]}
+                      conditions={conditions as Condition[]}
+                      medications={medications as MedicationRequest[]}
+                      allergies={allergies as AllergyIntolerance[]}
+                      immunizations={immunizations as Immunization[]}
+                    />
+                  </div>
                 </div>
 
                 {/* Additional Sections */}
