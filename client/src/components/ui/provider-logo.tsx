@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building, Stethoscope, CreditCard, Pill, Microscope, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +21,15 @@ export function ProviderLogo({
   fallbackText 
 }: ProviderLogoProps) {
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  // Reset image error state when logoUrl changes
+  useEffect(() => {
+    if (logoUrl) {
+      setImageError(false);
+      setImageLoaded(false);
+    }
+  }, [logoUrl]);
   
   const sizeClasses = {
     sm: 'h-8 w-8',
@@ -82,12 +91,22 @@ export function ProviderLogo({
       .toUpperCase();
   };
   
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+  
+  const handleImageError = () => {
+    console.warn(`Failed to load logo for ${name}: ${logoUrl}`);
+    setImageError(true);
+  };
+  
+  // Show fallback if no logo URL, image failed to load, or hasn't loaded yet
   if (!logoUrl || imageError) {
     return (
       <div className={cn(
         sizeClasses[size],
         'flex-shrink-0 bg-white rounded-md border flex items-center justify-center',
-        'bg-gradient-to-br from-gray-50 to-gray-100',
+        'bg-gradient-to-br from-gray-50 to-gray-100 shadow-sm',
         className
       )}>
         {fallbackText ? (
@@ -108,14 +127,29 @@ export function ProviderLogo({
   return (
     <div className={cn(
       sizeClasses[size],
-      'flex-shrink-0 bg-white rounded-md border p-1 flex items-center justify-center',
+      'flex-shrink-0 bg-white rounded-md border flex items-center justify-center overflow-hidden shadow-sm',
       className
     )}>
+      {/* Show loading placeholder while image loads */}
+      {!imageLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 animate-pulse">
+          <span className={cn(
+            'font-semibold text-gray-400',
+            size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : 'text-base'
+          )}>
+            {getFallbackInitials()}
+          </span>
+        </div>
+      )}
       <img
         src={logoUrl}
-        alt={name}
-        className="max-h-full max-w-full object-contain"
-        onError={() => setImageError(true)}
+        alt={`${name} logo`}
+        className={cn(
+          "max-h-full max-w-full object-contain transition-opacity duration-200",
+          imageLoaded ? 'opacity-100' : 'opacity-0'
+        )}
+        onLoad={handleImageLoad}
+        onError={handleImageError}
         loading="lazy"
       />
     </div>

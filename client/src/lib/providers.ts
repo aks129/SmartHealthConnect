@@ -27,12 +27,12 @@ export interface EpicOrganization {
   city?: string;
 }
 
-// Epic brands and organizations based on https://open.epic.com/Endpoints/Brands
+// Epic brands and organizations with working logo URLs
 export const epicBrands: EpicBrand[] = [
   {
     id: 'epic-mychart',
     name: 'Epic MyChart',
-    logoUrl: 'https://provider-assets.epic.com/prod/Logos/Epic.png',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Epic_Systems_logo.svg/320px-Epic_Systems_logo.svg.png',
     fallbackText: 'Epic',
     organizations: [
       {
@@ -47,8 +47,8 @@ export const epicBrands: EpicBrand[] = [
   {
     id: 'mayo-clinic',
     name: 'Mayo Clinic',
-    logoUrl: 'https://provider-assets.epic.com/prod/Logos/MC.png',
-    fallbackText: 'Mayo Clinic',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Mayo_Clinic_logo.svg/320px-Mayo_Clinic_logo.svg.png',
+    fallbackText: 'Mayo',
     organizations: [
       {
         id: 'mayo-clinic-arizona',
@@ -76,8 +76,8 @@ export const epicBrands: EpicBrand[] = [
   {
     id: 'kaiser-permanente',
     name: 'Kaiser Permanente',
-    logoUrl: 'https://provider-assets.epic.com/prod/Logos/KP.png',
-    fallbackText: 'Kaiser Permanente',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Kaiser_Permanente_logo.svg/320px-Kaiser_Permanente_logo.svg.png',
+    fallbackText: 'Kaiser',
     organizations: [
       {
         id: 'kaiser-permanente-norcal',
@@ -105,8 +105,8 @@ export const epicBrands: EpicBrand[] = [
   {
     id: 'cleveland-clinic',
     name: 'Cleveland Clinic',
-    logoUrl: 'https://provider-assets.epic.com/prod/Logos/CC.png',
-    fallbackText: 'Cleveland Clinic',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Cleveland_Clinic_logo.svg/320px-Cleveland_Clinic_logo.svg.png',
+    fallbackText: 'Cleveland',
     organizations: [
       {
         id: 'cleveland-clinic-main',
@@ -127,8 +127,8 @@ export const epicBrands: EpicBrand[] = [
   {
     id: 'ucsf',
     name: 'UCSF Health',
-    logoUrl: 'https://provider-assets.epic.com/prod/Logos/UCSF.png',
-    fallbackText: 'UCSF Health',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/UCSF_logo.svg/320px-UCSF_logo.svg.png',
+    fallbackText: 'UCSF',
     organizations: [
       {
         id: 'ucsf-main',
@@ -142,8 +142,8 @@ export const epicBrands: EpicBrand[] = [
   {
     id: 'uw-medicine',
     name: 'UW Medicine',
-    logoUrl: 'https://provider-assets.epic.com/prod/Logos/UW.png',
-    fallbackText: 'UW Medicine',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/University_of_Washington_seal.svg/320px-University_of_Washington_seal.svg.png',
+    fallbackText: 'UW',
     organizations: [
       {
         id: 'uw-medicine-main',
