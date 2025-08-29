@@ -9,10 +9,10 @@ export default function About() {
     <div className="container mx-auto py-8 px-4 max-w-5xl">
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-3">About Health Connect</h1>
+          <h1 className="text-3xl font-bold mb-3">About Liara AI Health</h1>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            An advanced healthcare platform that securely connects your health records and 
-            provides comprehensive medical data management with clinical insights.
+            An advanced AI-powered healthcare platform that securely connects your health records and 
+            provides comprehensive medical data management with intelligent clinical insights.
           </p>
         </div>
         
@@ -41,9 +41,9 @@ export default function About() {
           <TabsContent value="overview">
             <Card>
               <CardHeader>
-                <CardTitle>What is Health Connect?</CardTitle>
+                <CardTitle>What is Liara AI Health?</CardTitle>
                 <CardDescription>
-                  A comprehensive healthcare records platform
+                  An AI-powered comprehensive healthcare records platform
                 </CardDescription>
               </CardHeader>
               
@@ -145,9 +145,9 @@ export default function About() {
               
               <CardContent className="space-y-6">
                 <div className="border-l-4 border-primary pl-6 py-2 italic text-lg">
-                  "To transform healthcare by connecting patients with their health data, 
-                  enabling better decisions and improving outcomes through accessible, 
-                  personalized health information."
+                  "To transform healthcare through AI-powered insights, connecting patients with their health data, 
+                  enabling smarter decisions and improving outcomes through accessible, 
+                  personalized health intelligence."
                 </div>
                 
                 <div className="space-y-4">
@@ -200,21 +200,21 @@ export default function About() {
                   </h3>
                   
                   <p>
-                    Health Connect was founded by healthcare professionals and technology experts who
+                    Liara AI Health was founded by healthcare professionals, AI researchers, and technology experts who
                     recognized the challenges patients face in accessing and understanding their health information.
                     Our team experienced firsthand the fragmentation of healthcare data across different systems,
                     making it difficult for patients to have a complete view of their health history.
                   </p>
                   
                   <p>
-                    Inspired by the potential of emerging healthcare interoperability standards like FHIR,
-                    we set out to build a platform that could securely connect to various healthcare systems
-                    and present information in a way that's meaningful to patients, families, and caregivers.
+                    Inspired by the potential of AI and emerging healthcare interoperability standards like FHIR,
+                    we set out to build an intelligent platform that could securely connect to various healthcare systems
+                    and present information with AI-powered insights that are meaningful to patients, families, and caregivers.
                   </p>
                   
                   <p>
-                    Today, Health Connect is helping thousands of users access their health information,
-                    identify care gaps, and make more informed health decisions.
+                    Today, Liara AI Health is helping thousands of users access their health information,
+                    identify care gaps with AI assistance, and make more informed health decisions through intelligent analytics.
                   </p>
                 </div>
               </CardContent>

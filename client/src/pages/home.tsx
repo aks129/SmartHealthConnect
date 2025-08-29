@@ -30,7 +30,7 @@ export default function Home() {
       <header className="w-full max-w-4xl mb-6 text-center">
         <div className="flex items-center justify-center mb-2">
           <Heart className="h-10 w-10 text-primary mr-2" />
-          <h1 className="text-4xl font-bold text-gray-800">Health Connect</h1>
+          <h1 className="text-4xl font-bold text-gray-800">Liara AI Health</h1>
         </div>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           Your secure gateway to comprehensive health records
@@ -300,7 +300,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center px-4">
           <div className="flex items-center mb-4 sm:mb-0">
             <Heart className="h-5 w-5 text-primary mr-2" />
-            <span className="font-medium text-gray-700">Health Connect</span>
+            <span className="font-medium text-gray-700">Liara AI Health</span>
           </div>
           
           <div className="flex gap-6">
