@@ -19,6 +19,9 @@ import { ResearchDashboard } from '@/components/research/ResearchDashboard';
 import { FhirVisualizations } from '@/components/visualizations/FhirVisualizations';
 import { AdvancedAnalytics } from '@/components/analytics/AdvancedAnalytics';
 import { MedicalLiterature } from '@/components/literature/MedicalLiterature';
+import { DiabetesDashboard } from '@/components/health/DiabetesDashboard';
+import { CommunityChallenge } from '@/components/community/CommunityChallenge';
+import { ReadinessScore } from '@/components/analytics/ReadinessScore';
 import { completeSmartAuth, checkAuth, formatFhirDate } from '@/lib/fhir-client';
 import { ErrorModal } from '@/components/auth/ErrorModal';
 import { useToast } from '@/hooks/use-toast';
@@ -875,6 +878,18 @@ export default function Dashboard() {
             
             <TabsContent value="settings">
               <UserSettings />
+            </TabsContent>
+            
+            <TabsContent value="diabetes-dashboard">
+              <DiabetesDashboard />
+            </TabsContent>
+            
+            <TabsContent value="community-challenges">
+              <CommunityChallenge />
+            </TabsContent>
+            
+            <TabsContent value="readiness-score">
+              <ReadinessScore />
             </TabsContent>
           </Tabs>
         </main>

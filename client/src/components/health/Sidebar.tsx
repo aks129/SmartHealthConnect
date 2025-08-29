@@ -40,6 +40,10 @@ import {
   ServerCog,
   MessageSquare,
   Settings,
+  BarChart3, // Added for Advanced Analytics
+  Target,   // Added for Diabetes Dashboard
+  Users,    // Added for Community Challenges
+  Brain     // Added for Readiness Score
 } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import { ThemeToggle } from "../ui/theme-toggle";
@@ -405,6 +409,54 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
                 </Link>
               </CollapsibleContent>
             </Collapsible>
+          </li>
+
+          {/* Advanced Analytics */}
+          <li>
+            <Button
+              variant="ghost"
+              className={`w-full justify-start px-3 py-2 ${activeTab === 'advanced-analytics' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              onClick={() => onTabChange?.('advanced-analytics')}
+            >
+              <BarChart3 className="mr-3 h-5 w-5" />
+              <span>Advanced Analytics</span>
+            </Button>
+          </li>
+          
+          {/* Diabetes Dashboard */}
+          <li>
+            <Button
+              variant="ghost"
+              className={`w-full justify-start px-3 py-2 ${activeTab === 'diabetes-dashboard' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              onClick={() => onTabChange?.('diabetes-dashboard')}
+            >
+              <Target className="mr-3 h-5 w-5" />
+              <span>Diabetes Dashboard</span>
+            </Button>
+          </li>
+
+          {/* Community Challenges */}
+          <li>
+            <Button
+              variant="ghost"
+              className={`w-full justify-start px-3 py-2 ${activeTab === 'community-challenges' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              onClick={() => onTabChange?.('community-challenges')}
+            >
+              <Users className="mr-3 h-5 w-5" />
+              <span>Community Challenges</span>
+            </Button>
+          </li>
+
+          {/* Readiness Score */}
+          <li>
+            <Button
+              variant="ghost"
+              className={`w-full justify-start px-3 py-2 ${activeTab === 'readiness-score' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              onClick={() => onTabChange?.('readiness-score')}
+            >
+              <Brain className="mr-3 h-5 w-5" />
+              <span>Readiness Score</span>
+            </Button>
           </li>
         </ul>
       </nav>
