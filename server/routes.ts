@@ -2695,6 +2695,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 // Helper function to create an authenticated FHIR client
 async function createFhirClient(session: any) {
+  if (!session) {
+    throw new Error('Session is required to create FHIR client');
+  }
+
   // Special handling for demo provider
   if (session.provider === 'demo') {
     return new DemoFhirClient(session.patientId);
@@ -2707,14 +2711,17 @@ async function createFhirClient(session: any) {
         try {
           const url = `https://hapi.fhir.org/baseR4/${resourceUrl}`;
           console.log(`[HAPI FHIR] Requesting: ${url}`);
-          const response = await fetch(url);
+          const response = await fetch(url, {
+            timeout: 10000 // 10 second timeout
+          });
           if (!response.ok) {
             throw new Error(`HAPI FHIR server error: ${response.status} - ${response.statusText}`);
           }
           return response.json();
         } catch (error) {
           console.error('Error querying HAPI FHIR server:', error);
-          throw error;
+          // Return empty bundle structure for graceful degradation
+          return { entry: [] };
         }
       }
     };

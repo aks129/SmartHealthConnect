@@ -43,15 +43,14 @@ export async function initializeSmartAuth(fhirServerUrl: string, redirectUri?: s
       scope: 'launch/patient patient/*.read',
       redirectUri: redirectUri || window.location.origin + '/dashboard',
       iss: fhirServerUrl,
+      state: state,
     });
     
     // Save the auth URL to session to complete after redirect
-    if (authorizationUri) {
-      localStorage.setItem('fhir_auth_url', authorizationUri);
-    }
+    localStorage.setItem('fhir_auth_url', authorizationUri);
     
     // Return the authorization URL
-    return authorizationUri || '';
+    return authorizationUri;
   } catch (error) {
     console.error('Error initializing SMART auth:', error);
     throw new Error('Failed to initialize SMART authentication');
@@ -87,19 +86,16 @@ export async function completeSmartAuth() {
     const provider = localStorage.getItem('last_provider') || 'unknown';
     
     // Save the FHIR session data to the server
-    const tokenResponse = smartClient.state.tokenResponse;
-    if (tokenResponse) {
-      await apiRequest('POST', '/api/fhir/sessions', {
-        provider,
-        accessToken: tokenResponse.access_token,
-        refreshToken: tokenResponse.refresh_token,
-        tokenExpiry: new Date(Date.now() + (tokenResponse.expires_in || 3600) * 1000).toISOString(),
-        fhirServer,
-        patientId,
-        scope: tokenResponse.scope,
-        state: savedState
-      });
-    }
+    await apiRequest('POST', '/api/fhir/sessions', {
+      provider,
+      accessToken: smartClient.state.tokenResponse.access_token,
+      refreshToken: smartClient.state.tokenResponse.refresh_token,
+      tokenExpiry: new Date(Date.now() + smartClient.state.tokenResponse.expires_in * 1000).toISOString(),
+      fhirServer,
+      patientId,
+      scope: smartClient.state.tokenResponse.scope,
+      state: savedState
+    });
     
     // Clear auth state from localStorage
     localStorage.removeItem('fhir_auth_state');
@@ -329,7 +325,7 @@ export function getDisplayFromCodeableConcept(codeableConcept: any): string {
  * Determine observation status for display
  */
 export function getObservationStatusClass(observation: any): { color: string, label: string } {
-  if (!observation) {
+  if (!observation || typeof observation !== 'object') {
     return { color: 'gray', label: 'Unknown' };
   }
   
