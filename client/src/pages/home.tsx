@@ -29,10 +29,7 @@ export default function Home() {
     <div className="flex flex-col items-center min-h-screen p-4 md:p-8 bg-gray-50">
       {/* Header */}
       <header className="w-full max-w-4xl mb-6 text-center">
-        <div className="flex items-center justify-center mb-2">
-          <LiaraLogo size="lg" className="mr-2" />
-          <h1 className="text-4xl font-bold text-gray-800">Liara AI Health</h1>
-        </div>
+        <h1 className="text-4xl font-bold text-gray-800 mb-2">Liara AI Health</h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           Your secure gateway to comprehensive health records
         </p>
