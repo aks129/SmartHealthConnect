@@ -222,6 +222,28 @@
   @apply flex items-center gap-2 text-sm text-muted-foreground;
 }
 
+/* Sidebar layout fixes */
+.sidebar-fixed {
+  @apply fixed left-0 top-0 h-screen w-64 bg-white shadow-lg border-r border-slate-200 z-40 overflow-y-auto;
+}
+
+.main-with-sidebar {
+  @apply ml-64 min-h-screen;
+}
+
+/* Navigation improvements */
+.nav-item {
+  @apply w-full justify-start p-3 h-auto transition-all duration-200 rounded-lg mb-1;
+}
+
+.nav-item-active {
+  @apply bg-blue-50 text-blue-700 border-r-2 border-blue-600 font-medium;
+}
+
+.nav-item-inactive {
+  @apply text-slate-600 hover:bg-slate-50 hover:text-slate-900;
+}
+
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .health-card {
@@ -235,6 +257,28 @@
   .grid-health-detailed {
     @apply grid-cols-1 gap-6;
   }
+
+  .sidebar-fixed {
+    @apply transform -translate-x-full transition-transform duration-300;
+  }
+
+  .sidebar-open {
+    @apply transform translate-x-0;
+  }
+
+  .main-with-sidebar {
+    @apply ml-0;
+  }
+}
+
+/* Improve scrolling behavior */
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+/* Better focus states */
+.nav-item:focus {
+  @apply outline-none ring-2 ring-blue-500 ring-opacity-50;
 }
 
 /* Focus states for accessibility */

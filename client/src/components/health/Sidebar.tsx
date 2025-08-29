@@ -182,65 +182,73 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
             <li>
               <Button
                 variant="ghost"
-                className={`nav-tab w-full justify-start ${
-                  activeTab === 'vital-signs' ? 'nav-tab-active' : 'nav-tab-inactive'
+                className={`w-full justify-start p-3 h-auto transition-all duration-200 ${
+                  activeTab === 'vital-signs' 
+                    ? 'bg-red-50 text-red-700 border-r-2 border-red-600 font-medium' 
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
                 onClick={() => onTabChange?.('vital-signs')}
               >
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                  activeTab === 'vital-signs' ? 'bg-green-100' : 'bg-slate-100'
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${
+                  activeTab === 'vital-signs' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'
                 }`}>
                   <Heart className="h-4 w-4" />
                 </div>
-                <span>Vital Signs</span>
+                <span className="text-sm">Vital Signs</span>
               </Button>
             </li>
             <li>
               <Button
                 variant="ghost"
-                className={`nav-tab w-full justify-start ${
-                  activeTab === 'lab-results' ? 'nav-tab-active' : 'nav-tab-inactive'
+                className={`w-full justify-start p-3 h-auto transition-all duration-200 ${
+                  activeTab === 'lab-results' 
+                    ? 'bg-purple-50 text-purple-700 border-r-2 border-purple-600 font-medium' 
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
                 onClick={() => onTabChange?.('lab-results')}
               >
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                  activeTab === 'lab-results' ? 'bg-purple-100' : 'bg-slate-100'
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${
+                  activeTab === 'lab-results' ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-500'
                 }`}>
                   <TestTube className="h-4 w-4" />
                 </div>
-                <span>Lab Results</span>
+                <span className="text-sm">Lab Results</span>
               </Button>
             </li>
             <li>
               <Button
                 variant="ghost"
-                className={`nav-tab w-full justify-start ${
-                  activeTab === 'medications' ? 'nav-tab-active' : 'nav-tab-inactive'
+                className={`w-full justify-start p-3 h-auto transition-all duration-200 ${
+                  activeTab === 'medications' 
+                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600 font-medium' 
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
                 onClick={() => onTabChange?.('medications')}
               >
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                  activeTab === 'medications' ? 'bg-blue-100' : 'bg-slate-100'
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${
+                  activeTab === 'medications' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'
                 }`}>
                   <Pill className="h-4 w-4" />
                 </div>
-                <span>Medications</span>
+                <span className="text-sm">Medications</span>
               </Button>
             </li>
             <li>
               <Button
                 variant="ghost"
-                className={`nav-tab w-full justify-start ${
-                  activeTab === 'allergies' ? 'nav-tab-active' : 'nav-tab-inactive'
+                className={`w-full justify-start p-3 h-auto transition-all duration-200 ${
+                  activeTab === 'allergies' 
+                    ? 'bg-red-50 text-red-700 border-r-2 border-red-600 font-medium' 
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
                 onClick={() => onTabChange?.('allergies')}
               >
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                  activeTab === 'allergies' ? 'bg-red-100' : 'bg-slate-100'
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${
+                  activeTab === 'allergies' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'
                 }`}>
                   <AlertTriangle className="h-4 w-4" />
                 </div>
-                <span>Allergies</span>
+                <span className="text-sm">Allergies</span>
               </Button>
             </li>
           </ul>
@@ -401,11 +409,19 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
           <li>
             <Button
               variant="ghost"
-              className={`w-full justify-start px-3 py-2 ${activeTab === 'allergies' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`w-full justify-start p-3 h-auto transition-all duration-200 ${
+                activeTab === 'allergies' 
+                  ? 'bg-red-50 text-red-700 border-r-2 border-red-600 font-medium' 
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
               onClick={() => onTabChange?.('allergies')}
             >
-              <AlertTriangle className="mr-3 h-5 w-5" />
-              <span>Allergies</span>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${
+                activeTab === 'allergies' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'
+              }`}>
+                <AlertTriangle className="h-4 w-4" />
+              </div>
+              <span className="text-sm">Allergies</span>
             </Button>
           </li>
 
@@ -413,11 +429,19 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
           <li>
             <Button
               variant="ghost"
-              className={`w-full justify-start px-3 py-2 ${activeTab === 'immunizations' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`w-full justify-start p-3 h-auto transition-all duration-200 ${
+                activeTab === 'immunizations' 
+                  ? 'bg-cyan-50 text-cyan-700 border-r-2 border-cyan-600 font-medium' 
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
               onClick={() => onTabChange?.('immunizations')}
             >
-              <Syringe className="mr-3 h-5 w-5" />
-              <span>Immunizations</span>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${
+                activeTab === 'immunizations' ? 'bg-cyan-100 text-cyan-600' : 'bg-slate-100 text-slate-500'
+              }`}>
+                <Syringe className="h-4 w-4" />
+              </div>
+              <span className="text-sm">Immunizations</span>
             </Button>
           </li>
 
@@ -425,11 +449,19 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
           <li>
             <Button
               variant="ghost"
-              className={`w-full justify-start px-3 py-2 ${activeTab === 'care-gaps' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`w-full justify-start p-3 h-auto transition-all duration-200 ${
+                activeTab === 'care-gaps' 
+                  ? 'bg-emerald-50 text-emerald-700 border-r-2 border-emerald-600 font-medium' 
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
               onClick={() => onTabChange?.('care-gaps')}
             >
-              <AlertTriangle className="mr-3 h-5 w-5" />
-              <span>Care Gaps</span>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${
+                activeTab === 'care-gaps' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'
+              }`}>
+                <AlertTriangle className="h-4 w-4" />
+              </div>
+              <span className="text-sm">Care Gaps</span>
             </Button>
           </li>
 
@@ -522,23 +554,39 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
           <li>
             <Button
               variant="ghost"
-              className={`w-full justify-start px-3 py-2 ${activeTab === 'advanced-analytics' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`w-full justify-start p-3 h-auto transition-all duration-200 ${
+                activeTab === 'advanced-analytics' 
+                  ? 'bg-fuchsia-50 text-fuchsia-700 border-r-2 border-fuchsia-600 font-medium' 
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
               onClick={() => onTabChange?.('advanced-analytics')}
             >
-              <BarChart3 className="mr-3 h-5 w-5" />
-              <span>Advanced Analytics</span>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${
+                activeTab === 'advanced-analytics' ? 'bg-fuchsia-100 text-fuchsia-600' : 'bg-slate-100 text-slate-500'
+              }`}>
+                <BarChart3 className="h-4 w-4" />
+              </div>
+              <span className="text-sm">Advanced Analytics</span>
             </Button>
           </li>
-          
+
           {/* Diabetes Dashboard */}
           <li>
             <Button
               variant="ghost"
-              className={`w-full justify-start px-3 py-2 ${activeTab === 'diabetes-dashboard' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`w-full justify-start p-3 h-auto transition-all duration-200 ${
+                activeTab === 'diabetes-dashboard' 
+                  ? 'bg-orange-50 text-orange-700 border-r-2 border-orange-600 font-medium' 
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
               onClick={() => onTabChange?.('diabetes-dashboard')}
             >
-              <Target className="mr-3 h-5 w-5" />
-              <span>Diabetes Dashboard</span>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${
+                activeTab === 'diabetes-dashboard' ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'
+              }`}>
+                <Target className="h-4 w-4" />
+              </div>
+              <span className="text-sm">Diabetes Dashboard</span>
             </Button>
           </li>
 
@@ -546,11 +594,19 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
           <li>
             <Button
               variant="ghost"
-              className={`w-full justify-start px-3 py-2 ${activeTab === 'community-challenges' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`w-full justify-start p-3 h-auto transition-all duration-200 ${
+                activeTab === 'community-challenges' 
+                  ? 'bg-lime-50 text-lime-700 border-r-2 border-lime-600 font-medium' 
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
               onClick={() => onTabChange?.('community-challenges')}
             >
-              <Users className="mr-3 h-5 w-5" />
-              <span>Community Challenges</span>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${
+                activeTab === 'community-challenges' ? 'bg-lime-100 text-lime-600' : 'bg-slate-100 text-slate-500'
+              }`}>
+                <Users className="h-4 w-4" />
+              </div>
+              <span className="text-sm">Community Challenges</span>
             </Button>
           </li>
 
@@ -558,11 +614,19 @@ export function Sidebar({ activeTab = 'health', onTabChange }: SidebarProps) {
           <li>
             <Button
               variant="ghost"
-              className={`w-full justify-start px-3 py-2 ${activeTab === 'readiness-score' ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`w-full justify-start p-3 h-auto transition-all duration-200 ${
+                activeTab === 'readiness-score' 
+                  ? 'bg-pink-50 text-pink-700 border-r-2 border-pink-600 font-medium' 
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
               onClick={() => onTabChange?.('readiness-score')}
             >
-              <Brain className="mr-3 h-5 w-5" />
-              <span>Readiness Score</span>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${
+                activeTab === 'readiness-score' ? 'bg-pink-100 text-pink-600' : 'bg-slate-100 text-slate-500'
+              }`}>
+                <Brain className="h-4 w-4" />
+              </div>
+              <span className="text-sm">Readiness Score</span>
             </Button>
           </li>
         </ul>

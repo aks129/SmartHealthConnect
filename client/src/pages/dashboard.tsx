@@ -208,7 +208,7 @@ export default function Dashboard() {
           onTabChange={setActiveTab}
         />
 
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto ml-64">
           <div className="p-6 max-w-7xl mx-auto">
             <Tabs 
               value={activeTab} 
