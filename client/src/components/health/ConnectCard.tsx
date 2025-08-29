@@ -23,6 +23,7 @@ import {
   CreditCard
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { ProviderLogo } from '@/components/ui/provider-logo';
 // Import icons from react-icons
 import { SiEpicgames, SiBitcoinsv, SiSpring, SiAmazonpay } from 'react-icons/si';
 
@@ -134,85 +135,7 @@ export function ConnectCard({ provider, className }: ConnectCardProps) {
     }
   };
 
-  // Get provider logo based on ID
-  const getProviderLogo = () => {
-    // Special case for providers with known logos
-    if (provider.brandId === 'epic-mychart' || provider.id.includes('epic')) {
-      return <SiEpicgames className="h-8 w-8 text-blue-600" />;
-    } else if (provider.id === 'cerner') {
-      return <SiBitcoinsv className="h-8 w-8 text-blue-600" />;
-    } else if (provider.id === 'allscripts') {
-      return <SiSpring className="h-8 w-8 text-blue-600" />;
-    } else if (provider.id.includes('bluecross')) {
-      return <SiAmazonpay className="h-8 w-8 text-blue-600" />;
-    }
-    
-    // If provider has a logoUrl, use that
-    if (provider.logoUrl) {
-      return (
-        <div className="h-12 w-12 flex-shrink-0 bg-white rounded-md border p-1 flex items-center justify-center">
-          <img src={provider.logoUrl} alt={provider.name} className="max-h-full max-w-full" />
-        </div>
-      );
-    }
-    
-    // Otherwise use the icon based on type or logoIcon
-    if (!provider || !provider.logoIcon) {
-      return <Database className="h-8 w-8 text-gray-500" />;
-    }
-    
-    const iconSize = "h-8 w-8";
-    let iconColor = "text-gray-700";
-    let IconComponent = Database;
-    
-    // Set icon color based on provider type
-    switch (provider.type) {
-      case 'provider':
-        iconColor = "text-blue-600";
-        break;
-      case 'insurance':
-        iconColor = "text-green-600";
-        break;
-      case 'pharmacy':
-        iconColor = "text-red-600";
-        break;
-      case 'lab':
-        iconColor = "text-yellow-600";
-        break;
-      case 'tefca':
-        iconColor = "text-purple-600";
-        break;
-      default:
-        iconColor = "text-gray-700";
-    }
-    
-    // Set icon component based on logoIcon
-    switch (provider.logoIcon) {
-      case 'server':
-        IconComponent = Server;
-        break;
-      case 'building':
-        IconComponent = Building;
-        break;
-      case 'microscope':
-        IconComponent = Microscope;
-        break;
-      case 'pill':
-        IconComponent = Pill;
-        break;
-      case 'stethoscope':
-        IconComponent = Stethoscope;
-        break;
-      default:
-        IconComponent = Database;
-    }
-    
-    return (
-      <div className={`h-12 w-12 rounded-full flex items-center justify-center ${getProviderTypeColor()}`}>
-        <IconComponent className="h-6 w-6 text-white" />
-      </div>
-    );
-  };
+  
   
   // Get provider type badge color and text
   const getProviderTypeColor = () => {
@@ -286,9 +209,13 @@ export function ConnectCard({ provider, className }: ConnectCardProps) {
       <Card className={cn("overflow-hidden border-2 border-primary shadow-md", className)}>
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
-            <div className="flex-shrink-0">
-              {getProviderLogo()}
-            </div>
+            <ProviderLogo
+              logoUrl={provider.logoUrl}
+              name={provider.name}
+              type={provider.type}
+              size="md"
+              fallbackText={provider.brand}
+            />
             <div className="flex-1 min-w-0">
               <h3 className="font-medium text-base truncate">{provider.name}</h3>
               <p className="text-sm text-gray-500 truncate">Enter patient ID to connect</p>
@@ -345,9 +272,13 @@ export function ConnectCard({ provider, className }: ConnectCardProps) {
     )}>
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
-          <div className="flex-shrink-0">
-            {getProviderLogo()}
-          </div>
+          <ProviderLogo
+            logoUrl={provider.logoUrl}
+            name={provider.name}
+            type={provider.type}
+            size="md"
+            fallbackText={provider.brand}
+          />
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-base truncate">{provider.name || 'Unknown Provider'}</h3>

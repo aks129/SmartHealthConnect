@@ -330,7 +330,20 @@ export function ConnectSelector() {
                                 <div className="flex items-center gap-3">
                                   <div className="h-12 w-12 flex-shrink-0 bg-white rounded-md border p-1 flex items-center justify-center">
                                     {brand.logoUrl ? (
-                                      <img src={brand.logoUrl} alt={brand.name} className="max-h-full max-w-full" />
+                                      <>
+                                        <img 
+                                          src={brand.logoUrl} 
+                                          alt={brand.name} 
+                                          className="max-h-full max-w-full object-contain"
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                            const fallback = target.nextElementSibling as HTMLElement;
+                                            if (fallback) fallback.style.display = 'block';
+                                          }}
+                                        />
+                                        <Building className="h-8 w-8 text-gray-500 hidden" />
+                                      </>
                                     ) : (
                                       <Building className="h-8 w-8 text-gray-500" />
                                     )}
@@ -384,11 +397,20 @@ export function ConnectSelector() {
                                 <div className="flex items-center gap-3">
                                   <div className="h-16 w-16 flex-shrink-0 bg-white rounded-md border p-1 flex items-center justify-center">
                                     {epicBrands.find(b => b.id === selectedBrand)?.logoUrl ? (
-                                      <img 
-                                        src={epicBrands.find(b => b.id === selectedBrand)?.logoUrl} 
-                                        alt={epicBrands.find(b => b.id === selectedBrand)?.name} 
-                                        className="max-h-full max-w-full" 
-                                      />
+                                      <>
+                                        <img 
+                                          src={epicBrands.find(b => b.id === selectedBrand)?.logoUrl} 
+                                          alt={epicBrands.find(b => b.id === selectedBrand)?.name} 
+                                          className="max-h-full max-w-full object-contain" 
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                            const fallback = target.nextElementSibling as HTMLElement;
+                                            if (fallback) fallback.style.display = 'block';
+                                          }}
+                                        />
+                                        <Building className="h-8 w-8 text-gray-500 hidden" />
+                                      </>
                                     ) : (
                                       <Building className="h-8 w-8 text-gray-500" />
                                     )}

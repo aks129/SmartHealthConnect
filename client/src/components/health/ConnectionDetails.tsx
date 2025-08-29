@@ -104,7 +104,18 @@ export function ConnectionDetails() {
     } else if (provider.logoUrl) {
       return (
         <div className="h-12 w-12 flex-shrink-0 bg-white rounded-md border p-1 flex items-center justify-center">
-          <img src={provider.logoUrl} alt={provider.name} className="max-h-full max-w-full" />
+          <img 
+            src={provider.logoUrl} 
+            alt={provider.name} 
+            className="max-h-full max-w-full object-contain"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              const fallback = target.nextElementSibling as HTMLElement;
+              if (fallback) fallback.style.display = 'block';
+            }}
+          />
+          <Database className="h-8 w-8 text-gray-500 hidden" />
         </div>
       );
     }

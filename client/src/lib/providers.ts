@@ -9,6 +9,7 @@ export interface FhirProvider {
   organizationId?: string;
   logoUrl?: string;
   brand?: string;
+  fallbackText?: string; // Added for fallback logo display
 }
 
 export interface EpicBrand {
@@ -31,12 +32,15 @@ export const epicBrands: EpicBrand[] = [
   {
     id: 'epic-mychart',
     name: 'Epic MyChart',
-    logoUrl: 'https://provider-assets.epic.com/prod/Logos/EPIC.png',
+    logoUrl: 'https://provider-assets.epic.com/prod/Logos/Epic.png',
+    fallbackText: 'Epic',
     organizations: [
       {
-        id: 'epic-mychart-main',
-        name: 'Epic MyChart',
-        url: 'https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4'
+        id: 'demo-epic',
+        name: 'Demo Epic MyChart',
+        url: 'https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4',
+        state: 'Demo',
+        city: 'Test'
       }
     ]
   },
@@ -44,6 +48,7 @@ export const epicBrands: EpicBrand[] = [
     id: 'mayo-clinic',
     name: 'Mayo Clinic',
     logoUrl: 'https://provider-assets.epic.com/prod/Logos/MC.png',
+    fallbackText: 'Mayo Clinic',
     organizations: [
       {
         id: 'mayo-clinic-arizona',
@@ -72,6 +77,7 @@ export const epicBrands: EpicBrand[] = [
     id: 'kaiser-permanente',
     name: 'Kaiser Permanente',
     logoUrl: 'https://provider-assets.epic.com/prod/Logos/KP.png',
+    fallbackText: 'Kaiser Permanente',
     organizations: [
       {
         id: 'kaiser-permanente-norcal',
@@ -100,6 +106,7 @@ export const epicBrands: EpicBrand[] = [
     id: 'cleveland-clinic',
     name: 'Cleveland Clinic',
     logoUrl: 'https://provider-assets.epic.com/prod/Logos/CC.png',
+    fallbackText: 'Cleveland Clinic',
     organizations: [
       {
         id: 'cleveland-clinic-main',
@@ -121,6 +128,7 @@ export const epicBrands: EpicBrand[] = [
     id: 'ucsf',
     name: 'UCSF Health',
     logoUrl: 'https://provider-assets.epic.com/prod/Logos/UCSF.png',
+    fallbackText: 'UCSF Health',
     organizations: [
       {
         id: 'ucsf-main',
@@ -135,6 +143,7 @@ export const epicBrands: EpicBrand[] = [
     id: 'uw-medicine',
     name: 'UW Medicine',
     logoUrl: 'https://provider-assets.epic.com/prod/Logos/UW.png',
+    fallbackText: 'UW Medicine',
     organizations: [
       {
         id: 'uw-medicine-main',
@@ -159,7 +168,8 @@ const epicProviders: FhirProvider[] = epicBrands.flatMap(brand => {
     brandId: brand.id,
     brand: brand.name,
     organizationId: org.id,
-    logoUrl: brand.logoUrl
+    logoUrl: brand.logoUrl,
+    fallbackText: brand.fallbackText
   }));
 });
 
