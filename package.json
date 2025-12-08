@@ -53,6 +53,7 @@
     "d3": "^7.9.0",
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.7",
+    "driver.js": "^1.4.0",
     "drizzle-orm": "^0.39.1",
     "drizzle-zod": "^0.7.0",
     "embla-carousel-react": "^8.3.0",
