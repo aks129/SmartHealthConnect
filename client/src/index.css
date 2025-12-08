@@ -71,6 +71,18 @@
     --chart-3: 251 91% 67%;
     --chart-4: 38 92% 50%;
     --chart-5: 0 72% 51%;
+
+    /* Healthcare System - Dark Mode Overrides */
+    --health-primary: 200 98% 39%;       /* Keep teal, maybe slightly brighter? */
+    --health-vitals: 142 69% 48%;        /* Adjusted green for dark mode readability */
+    --health-preventive: 173 58% 39%;
+    --health-warning: 38 92% 50%;
+    --health-critical: 0 72% 51%;
+    --health-lab: 251 91% 67%;
+    --health-medication: 199 89% 48%;
+    --health-neutral: 215 20% 65%;       /* Match muted foreground */
+    --health-success: 142 70% 50%;       
+    --health-info: 201 96% 32%;
   }
 }
 

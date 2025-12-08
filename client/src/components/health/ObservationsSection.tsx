@@ -70,15 +70,15 @@ export function ObservationsSection() {
   // Get additional classes for status colors
   const getStatusColorClass = (color: string): string => {
     switch (color) {
-      case 'green': return 'bg-green-100 text-green-800 hover:bg-green-100';
-      case 'yellow': return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
+      case 'green': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30';
+      case 'yellow': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30';
       default: return '';
     }
   };
 
   return (
     <section id="observations" className="mb-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Recent Lab Results</h2>
+      <h2 className="text-2xl font-bold text-foreground mb-6">Recent Lab Results</h2>
 
       {/* Trend Analysis Section */}
       {!isLoading && availableTrends.length > 0 && (
@@ -96,11 +96,17 @@ export function ObservationsSection() {
                   <div className="h-[80px] w-full mt-2">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={data}>
-                        <Tooltip />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            borderColor: 'hsl(var(--border))',
+                            color: 'hsl(var(--foreground))'
+                          }}
+                        />
                         <Line
                           type="monotone"
                           dataKey="value"
-                          stroke="#2563eb"
+                          stroke="hsl(var(--primary))"
                           strokeWidth={2}
                           dot={false}
                         />
@@ -195,17 +201,17 @@ export function ObservationsSection() {
                           <TableCell>
                             <div>
                               <div className="font-medium">{testName}</div>
-                              <div className="text-xs text-gray-500">{category}</div>
+                              <div className="text-xs text-muted-foreground">{category}</div>
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="font-medium">{value}</div>
                           </TableCell>
                           <TableCell>
-                            <div className="text-gray-500">{referenceRange}</div>
+                            <div className="text-muted-foreground">{referenceRange}</div>
                           </TableCell>
                           <TableCell>
-                            <div className="text-gray-500">{date}</div>
+                            <div className="text-muted-foreground">{date}</div>
                           </TableCell>
                           <TableCell>
                             <Badge
