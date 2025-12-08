@@ -1,3 +1,4 @@
+import { ClinicalDisclaimer } from '@/components/ui/clinical-disclaimer';
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChatMessage } from '@shared/schema';
@@ -32,7 +33,7 @@ export function ChatInterface() {
     data: messages = [] as ChatMessage[],
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<ChatMessage[], Error>({
     queryKey: ['/api/chat/messages'],
     refetchOnWindowFocus: false,
   });
@@ -40,10 +41,7 @@ export function ChatInterface() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      return apiRequest('/api/chat/messages', {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-      } as RequestInit);
+      return apiRequest('POST', '/api/chat/messages', { content });
     },
     onSuccess: () => {
       // Clear the input field and refetch messages
@@ -65,9 +63,7 @@ export function ChatInterface() {
   // Clear chat history mutation
   const clearChatMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/chat/messages', {
-        method: 'DELETE',
-      } as RequestInit);
+      return apiRequest('DELETE', '/api/chat/messages');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/messages'] });
@@ -94,14 +90,15 @@ export function ChatInterface() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
-    
+
     setIsSubmitting(true);
     sendMessageMutation.mutate(message);
   };
 
   // Format timestamp to readable format
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
+  const formatTime = (timestamp: string | Date | undefined) => {
+    if (!timestamp) return '';
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
@@ -159,7 +156,7 @@ export function ChatInterface() {
           </AlertDialogContent>
         </AlertDialog>
       </CardHeader>
-      
+
       <CardContent className="flex-1 overflow-hidden p-0">
         <ScrollArea className="h-[400px] px-4">
           {isLoading ? (
@@ -187,16 +184,14 @@ export function ChatInterface() {
               {messages.map((msg: ChatMessage) => (
                 <div
                   key={msg.id}
-                  className={`flex ${
-                    msg.role === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'
+                    }`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      msg.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
+                    className={`max-w-[80%] rounded-lg px-4 py-2 ${msg.role === 'user'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted'
+                      }`}
                   >
                     <div className="flex flex-col">
                       <span className="text-xs opacity-70">
@@ -212,8 +207,8 @@ export function ChatInterface() {
           )}
         </ScrollArea>
       </CardContent>
-      
-      <CardFooter className="p-4 pt-2">
+
+      <CardFooter className="p-4 pt-2 flex-col gap-2">
         <form onSubmit={handleSubmit} className="w-full flex space-x-2">
           <Textarea
             value={message}
@@ -230,11 +225,12 @@ export function ChatInterface() {
               }
             }}
           />
-          <Button 
-            type="submit" 
-            size="icon" 
+          <Button
+            type="button"
+            size="icon"
             disabled={!message.trim() || isSubmitting}
             className="h-[60px] w-[60px]"
+            onClick={(e) => handleSubmit(e as any)}
           >
             {isSubmitting ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -243,6 +239,7 @@ export function ChatInterface() {
             )}
           </Button>
         </form>
+        <ClinicalDisclaimer variant="compact" />
       </CardFooter>
     </Card>
   );

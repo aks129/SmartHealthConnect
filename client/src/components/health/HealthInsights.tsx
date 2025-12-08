@@ -1,29 +1,29 @@
-
+import { ClinicalDisclaimer } from '@/components/ui/clinical-disclaimer';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getQueryFn } from '@/lib/queryClient';
 import { CareGap } from '@shared/schema';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
 } from '@/components/ui/card';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
 } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Lightbulb, 
-  Heart, 
-  Calendar, 
-  TrendingUp, 
-  CheckCircle, 
+import {
+  Lightbulb,
+  Heart,
+  Calendar,
+  TrendingUp,
+  CheckCircle,
   AlertTriangle,
   Info,
   Target,
@@ -35,21 +35,21 @@ import { format } from 'date-fns';
 
 export function HealthInsights() {
   const [activeTab, setActiveTab] = useState<string>('recommendations');
-  
+
   const { data: careGaps, isLoading, error } = useQuery({
     queryKey: ['/api/fhir/care-gaps'],
     queryFn: getQueryFn({ on401: 'returnNull' }),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
-  
+
   // Group recommendations by priority and category
   const groupRecommendations = () => {
     if (!careGaps) return { urgent: [], important: [], routine: [] };
-    
+
     const urgent: CareGap[] = [];
     const important: CareGap[] = [];
     const routine: CareGap[] = [];
-    
+
     (careGaps as CareGap[]).forEach((gap: CareGap) => {
       if (gap.status === 'due') {
         if (gap.priority === 'high') {
@@ -61,15 +61,15 @@ export function HealthInsights() {
         }
       }
     });
-    
+
     return { urgent, important, routine };
   };
-  
+
   const { urgent, important, routine } = groupRecommendations();
-  
+
   // Get category icon
   const getCategoryIcon = (category: string) => {
-    switch(category) {
+    switch (category) {
       case 'preventive':
         return <Shield className="h-5 w-5 text-blue-500" />;
       case 'chronic':
@@ -80,10 +80,10 @@ export function HealthInsights() {
         return <Target className="h-5 w-5 text-gray-500" />;
     }
   };
-  
+
   // Get priority styling
   const getPriorityStyle = (priority?: string) => {
-    switch(priority) {
+    switch (priority) {
       case 'high':
         return 'border-l-4 border-l-red-500 bg-red-50';
       case 'medium':
@@ -92,32 +92,32 @@ export function HealthInsights() {
         return 'border-l-4 border-l-blue-500 bg-blue-50';
     }
   };
-  
+
   // Generate health score
   const calculateHealthScore = () => {
     if (!careGaps) return { score: 85, status: 'Good' };
-    
+
     const totalGaps = (careGaps as CareGap[]).filter(gap => gap.status === 'due').length;
     const urgentGaps = urgent.length;
     const importantGaps = important.length;
-    
+
     let score = 100;
     score -= urgentGaps * 15;
     score -= importantGaps * 8;
     score -= routine.length * 3;
-    
+
     score = Math.max(60, Math.min(100, score));
-    
+
     let status = 'Excellent';
     if (score < 70) status = 'Needs Attention';
     else if (score < 85) status = 'Good';
     else if (score < 95) status = 'Very Good';
-    
+
     return { score, status };
   };
-  
+
   const healthScore = calculateHealthScore();
-  
+
   const RecommendationCard = ({ gap }: { gap: CareGap }) => (
     <Card className={`mb-4 ${getPriorityStyle(gap.priority)}`}>
       <CardContent className="pt-4">
@@ -127,7 +127,7 @@ export function HealthInsights() {
             <div className="flex-1">
               <h3 className="font-semibold text-slate-800 mb-1">{gap.title}</h3>
               <p className="text-sm text-slate-600 mb-3">{gap.description}</p>
-              
+
               <div className="bg-white/80 rounded-lg p-3 border border-slate-200">
                 <div className="flex items-start space-x-2">
                   <Lightbulb className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
@@ -137,7 +137,7 @@ export function HealthInsights() {
                   </div>
                 </div>
               </div>
-              
+
               {gap.dueDate && (
                 <div className="flex items-center mt-3 text-xs text-slate-500">
                   <Calendar className="h-3 w-3 mr-1" />
@@ -146,7 +146,7 @@ export function HealthInsights() {
               )}
             </div>
           </div>
-          
+
           <div className="flex flex-col space-y-2 ml-4">
             <Badge variant={gap.priority === 'high' ? 'destructive' : gap.priority === 'medium' ? 'secondary' : 'outline'}>
               {gap.priority === 'high' ? 'Urgent' : gap.priority === 'medium' ? 'Important' : 'Routine'}
@@ -159,7 +159,7 @@ export function HealthInsights() {
       </CardContent>
     </Card>
   );
-  
+
   if (isLoading) {
     return (
       <Card className="shadow-md">
@@ -178,7 +178,7 @@ export function HealthInsights() {
       </Card>
     );
   }
-  
+
   if (error) {
     return (
       <Card className="shadow-md">
@@ -197,7 +197,7 @@ export function HealthInsights() {
       </Card>
     );
   }
-  
+
   return (
     <Card className="shadow-md">
       <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
@@ -211,7 +211,7 @@ export function HealthInsights() {
               </CardDescription>
             </div>
           </div>
-          
+
           <div className="text-right">
             <div className="text-2xl font-bold text-slate-800">{healthScore.score}</div>
             <div className="text-sm text-slate-600">Health Score</div>
@@ -221,7 +221,7 @@ export function HealthInsights() {
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="p-6">
         <Tabs defaultValue="recommendations" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-3 mb-6">
@@ -236,7 +236,7 @@ export function HealthInsights() {
             <TabsTrigger value="insights">Insights</TabsTrigger>
             <TabsTrigger value="trends">Trends</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="recommendations" className="space-y-6">
             {urgent.length > 0 && (
               <div>
@@ -249,7 +249,7 @@ export function HealthInsights() {
                 ))}
               </div>
             )}
-            
+
             {important.length > 0 && (
               <div>
                 <div className="flex items-center space-x-2 mb-3">
@@ -261,7 +261,7 @@ export function HealthInsights() {
                 ))}
               </div>
             )}
-            
+
             {routine.length > 0 && (
               <div>
                 <div className="flex items-center space-x-2 mb-3">
@@ -273,7 +273,7 @@ export function HealthInsights() {
                 ))}
               </div>
             )}
-            
+
             {urgent.length === 0 && important.length === 0 && routine.length === 0 && (
               <div className="text-center py-8">
                 <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
@@ -284,7 +284,7 @@ export function HealthInsights() {
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="insights" className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <Card>
@@ -296,15 +296,15 @@ export function HealthInsights() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-slate-600">
-                    Your health score of {healthScore.score} indicates {healthScore.status.toLowerCase()} health management. 
-                    {urgent.length === 0 
+                    Your health score of {healthScore.score} indicates {healthScore.status.toLowerCase()} health management.
+                    {urgent.length === 0
                       ? " Keep up the excellent work with preventive care!"
                       : " Focus on urgent items to improve your score."
                     }
                   </p>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center">
@@ -314,18 +314,18 @@ export function HealthInsights() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-slate-600">
-                    {urgent.length > 0 
+                    {urgent.length > 0
                       ? `Address ${urgent.length} urgent item${urgent.length > 1 ? 's' : ''} first, then focus on routine care.`
                       : important.length > 0
-                      ? `Schedule ${important.length} important health check${important.length > 1 ? 's' : ''} in the coming weeks.`
-                      : "Continue your excellent health management routine!"
+                        ? `Schedule ${important.length} important health check${important.length > 1 ? 's' : ''} in the coming weeks.`
+                        : "Continue your excellent health management routine!"
                     }
                   </p>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="trends" className="space-y-4">
             <Card>
               <CardHeader>
@@ -356,7 +356,7 @@ export function HealthInsights() {
             </Card>
           </TabsContent>
         </Tabs>
-        
+
         <div className="mt-6 pt-4 border-t border-slate-200">
           <div className="flex items-center justify-between">
             <p className="text-xs text-slate-500">
@@ -367,6 +367,7 @@ export function HealthInsights() {
               Schedule Appointments
             </Button>
           </div>
+          <ClinicalDisclaimer variant="compact" />
         </div>
       </CardContent>
     </Card>

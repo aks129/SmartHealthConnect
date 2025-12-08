@@ -25,10 +25,10 @@ const FHIR_SERVER_URL = process.env.FHIR_SERVER_URL || 'http://localhost:8000/fh
 /**
  * Generic FHIR resource types
  */
-export type FhirResourceType = 
+export type FhirResourceType =
   | 'Patient'
   | 'Condition'
-  | 'Observation' 
+  | 'Observation'
   | 'MedicationRequest'
   | 'AllergyIntolerance'
   | 'Immunization'
@@ -80,19 +80,31 @@ export class HapiFhirClient {
   /**
    * Search for resources
    */
-  async searchResources<T>(resourceType: FhirResourceType, params: Record<string, string>): Promise<T[]> {
+  async searchResources<T>(resourceType: FhirResourceType, params: Record<string, string>, accessToken?: string): Promise<T[]> {
     try {
       const queryString = new URLSearchParams(params).toString();
-      const response = await axios.get(`${this.baseUrl}/${resourceType}?${queryString}`);
-      
+      const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+
+      const response = await axios.get(`${this.baseUrl}/${resourceType}?${queryString}`, { headers });
+
       // FHIR search returns a Bundle
       if (response.data && response.data.resourceType === 'Bundle' && response.data.entry) {
         return response.data.entry.map((entry: any) => entry.resource) as T[];
       }
-      
-      return response.data as T[];
+
+      // Handle array response (if server returns array directly)
+      if (Array.isArray(response.data)) {
+        return response.data as T[];
+      }
+
+      // Handle single resource return wrapped in array
+      if (response.data && response.data.resourceType) {
+        return [response.data] as T[];
+      }
+
+      return [];
     } catch (error) {
-      console.error(`Error searching ${resourceType}:`, error);
+      console.warn(`Error searching ${resourceType} with params ${JSON.stringify(params)}:`, error);
       throw error;
     }
   }
@@ -136,56 +148,56 @@ export class HapiFhirClient {
   async getAllPatients(): Promise<Patient[]> {
     return this.searchResources<Patient>('Patient', {});
   }
-  
+
   /**
    * Get conditions for a patient
    */
   async getPatientConditions(patientId: string): Promise<Condition[]> {
     return this.searchResources<Condition>('Condition', { patient: patientId });
   }
-  
+
   /**
    * Get observations for a patient
    */
   async getPatientObservations(patientId: string): Promise<Observation[]> {
     return this.searchResources<Observation>('Observation', { patient: patientId });
   }
-  
+
   /**
    * Get medication requests for a patient
    */
   async getPatientMedications(patientId: string): Promise<MedicationRequest[]> {
     return this.searchResources<MedicationRequest>('MedicationRequest', { patient: patientId });
   }
-  
+
   /**
    * Get allergies for a patient
    */
   async getPatientAllergies(patientId: string): Promise<AllergyIntolerance[]> {
     return this.searchResources<AllergyIntolerance>('AllergyIntolerance', { patient: patientId });
   }
-  
+
   /**
    * Get immunizations for a patient
    */
   async getPatientImmunizations(patientId: string): Promise<Immunization[]> {
     return this.searchResources<Immunization>('Immunization', { patient: patientId });
   }
-  
+
   /**
    * Get coverage for a patient
    */
   async getPatientCoverage(patientId: string): Promise<Coverage[]> {
     return this.searchResources<Coverage>('Coverage', { beneficiary: patientId });
   }
-  
+
   /**
    * Get claims for a patient
    */
   async getPatientClaims(patientId: string): Promise<Claim[]> {
     return this.searchResources<Claim>('Claim', { patient: patientId });
   }
-  
+
   /**
    * Get explanations of benefit for a patient
    */

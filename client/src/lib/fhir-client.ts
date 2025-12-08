@@ -43,14 +43,17 @@ export async function initializeSmartAuth(fhirServerUrl: string, redirectUri?: s
       scope: 'launch/patient patient/*.read',
       redirectUri: redirectUri || window.location.origin + '/dashboard',
       iss: fhirServerUrl,
-      state: state,
-    });
+    } as any);
     
     // Save the auth URL to session to complete after redirect
-    localStorage.setItem('fhir_auth_url', authorizationUri);
-    
-    // Return the authorization URL
-    return authorizationUri;
+    if (authorizationUri) {
+      localStorage.setItem('fhir_auth_url', authorizationUri);
+
+      // Return the authorization URL
+      return authorizationUri;
+    } else {
+      throw new Error('Failed to generate authorization URI');
+    }
   } catch (error) {
     console.error('Error initializing SMART auth:', error);
     throw new Error('Failed to initialize SMART authentication');
@@ -86,16 +89,18 @@ export async function completeSmartAuth() {
     const provider = localStorage.getItem('last_provider') || 'unknown';
     
     // Save the FHIR session data to the server
-    await apiRequest('POST', '/api/fhir/sessions', {
-      provider,
-      accessToken: smartClient.state.tokenResponse.access_token,
-      refreshToken: smartClient.state.tokenResponse.refresh_token,
-      tokenExpiry: new Date(Date.now() + smartClient.state.tokenResponse.expires_in * 1000).toISOString(),
-      fhirServer,
-      patientId,
-      scope: smartClient.state.tokenResponse.scope,
-      state: savedState
-    });
+    if (smartClient.state.tokenResponse) {
+      await apiRequest('POST', '/api/fhir/sessions', {
+        provider,
+        accessToken: smartClient.state.tokenResponse.access_token,
+        refreshToken: smartClient.state.tokenResponse.refresh_token,
+        tokenExpiry: new Date(Date.now() + (smartClient.state.tokenResponse.expires_in || 3600) * 1000).toISOString(),
+        fhirServer,
+        patientId,
+        scope: smartClient.state.tokenResponse.scope,
+        state: savedState
+      });
+    }
     
     // Clear auth state from localStorage
     localStorage.removeItem('fhir_auth_state');

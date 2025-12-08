@@ -1,0 +1,11 @@
+{
+  "name": "liara-ai-health-client",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^5.4.14"
+  }
+}

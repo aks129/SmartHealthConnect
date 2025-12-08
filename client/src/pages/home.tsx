@@ -1,27 +1,30 @@
-import React from 'react';
+import { useState } from 'react';
 import { Link } from 'wouter';
 import { ConnectCard } from '@/components/health/ConnectCard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Heart, 
-  Database, 
-  Stethoscope, 
-  Shield, 
-  ChevronRight, 
-  Building2, 
-  FilePlus2, 
-  FolderOpen, 
-  Search, 
-  PlayCircle, 
+import {
+  Heart,
+  Database,
+  Stethoscope,
+  Shield,
+  ChevronRight,
+  Building2,
+  FilePlus2,
+  FolderOpen,
+  Search,
+  PlayCircle,
   BookOpen,
   HelpCircle
 } from 'lucide-react';
 import { fhirProviders, epicBrands } from '@/lib/providers';
 import { LiaraLogo } from "@/components/ui/liara-logo";
+import { AuthModal } from '@/components/auth/AuthModal';
 
 export default function Home() {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  // Get the demo provider for the home page
   // Get the demo provider for the home page
   const demoProvider = fhirProviders.find(p => p.id === 'demo');
 
@@ -83,8 +86,8 @@ export default function Home() {
                 <h3 className="text-lg font-medium">Popular Healthcare Systems</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {epicBrands.slice(0, 6).map((brand) => (
-                    <Card 
-                      key={brand.id} 
+                    <Card
+                      key={brand.id}
                       className="overflow-hidden cursor-pointer hover:shadow-md transition-all hover:border-primary"
                       onClick={() => window.location.href = '/dashboard'}
                     >
@@ -110,14 +113,29 @@ export default function Home() {
                 </div>
 
                 <div className="flex justify-center mt-4">
-                  <Button 
+                  <Button
                     className="mt-2"
-                    onClick={() => window.location.href = '/dashboard'}
+                    onClick={() => setIsAuthModalOpen(true)}
                   >
-                    View All Healthcare Providers
+                    Connect to Provider
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
+
+                <AuthModal
+                  isOpen={isAuthModalOpen}
+                  onClose={() => setIsAuthModalOpen(false)}
+                  onConfirm={async () => {
+                    setIsAuthModalOpen(false);
+                    try {
+                      const { smartAuth } = await import('@/lib/smart-auth');
+                      await smartAuth.authorize();
+                    } catch (e) {
+                      console.error(e);
+                      alert("Failed to start authorization");
+                    }
+                  }}
+                />
               </TabsContent>
 
               {/* Demo Tab */}
@@ -162,7 +180,7 @@ export default function Home() {
                               <div>
                                 <h3 className="font-medium text-xl">Demo Patient</h3>
                                 <p className="text-sm text-gray-500 mb-4">Access sample health records</p>
-                                <Button 
+                                <Button
                                   className="w-full"
                                   size="lg"
                                   onClick={() => window.location.href = '/dashboard'}
@@ -216,7 +234,7 @@ export default function Home() {
                     </Card>
                   </div>
 
-                  <Button 
+                  <Button
                     onClick={() => window.location.href = '/dashboard'}
                     className="mt-4"
                   >

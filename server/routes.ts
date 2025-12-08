@@ -2760,7 +2760,47 @@ class DemoFhirClient {
       };
     } else if (resourceUrl.startsWith('Observation?patient=')) {
       const patientId = resourceUrl.split('=')[1];
-      const observationsForPatient = sampleObservations.filter(o => o.subject.reference.includes(patientId));
+      let observationsForPatient = sampleObservations.filter(o => o.subject.reference.includes(patientId));
+
+      // SYNTHETIC DATA GENERATOR FOR DEMO TRENDS
+      const generateTrend = (baseObs: any, count: number, variance: number) => {
+        const trends = [];
+        const baseDate = new Date(baseObs.effectiveDateTime || new Date());
+        for (let i = 1; i <= count; i++) {
+          const newDate = new Date(baseDate);
+          newDate.setMonth(baseDate.getMonth() - i);
+
+          const factor = 1 + (Math.random() * variance * 2 - variance);
+          if (baseObs.valueQuantity && baseObs.valueQuantity.value) {
+            const val = baseObs.valueQuantity.value * factor;
+            // Create a deep copy
+            const newObs = JSON.parse(JSON.stringify(baseObs));
+            newObs.id = `${baseObs.id}-hist-${i}`;
+            newObs.effectiveDateTime = newDate.toISOString();
+            newObs.issued = newDate.toISOString();
+            newObs.valueQuantity.value = parseFloat(val.toFixed(1));
+            trends.push(newObs);
+          }
+        }
+        return trends;
+      };
+
+      // Add history for Weight (Code 29463-7)
+      const weightObs = observationsForPatient.find(o =>
+        o.code?.coding?.some((c: any) => c.code === '29463-7')
+      );
+      if (weightObs) {
+        observationsForPatient = [...observationsForPatient, ...generateTrend(weightObs, 6, 0.05)];
+      }
+
+      // Add history for BMI (Code 39156-5)
+      const bmiObs = observationsForPatient.find(o =>
+        o.code?.coding?.some((c: any) => c.code === '39156-5')
+      );
+      if (bmiObs) {
+        observationsForPatient = [...observationsForPatient, ...generateTrend(bmiObs, 6, 0.02)];
+      }
+
       // Handle sorting by date if requested
       if (resourceUrl.includes('_sort=-date')) {
         observationsForPatient.sort((a, b) => new Date(b.effectiveDateTime!).getTime() - new Date(a.effectiveDateTime!).getTime());
@@ -3687,9 +3727,8 @@ async function createFhirClient(session: any) {
       request: async (resourceUrl: string) => {
         try {
           const url = `https://hapi.fhir.org/baseR4/${resourceUrl}`;
-          console.log(`[HAPI FHIR] Requesting: ${url}`);
           const response = await fetch(url, {
-            timeout: 10000 // 10 second timeout
+            signal: AbortSignal.timeout(10000) // 10 second timeout
           });
           if (!response.ok) {
             throw new Error(`HAPI FHIR server error: ${response.status} - ${response.statusText}`);

@@ -51,6 +51,18 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        health: {
+          primary: "hsl(var(--health-primary))",
+          vitals: "hsl(var(--health-vitals))",
+          preventive: "hsl(var(--health-preventive))",
+          warning: "hsl(var(--health-warning))",
+          critical: "hsl(var(--health-critical))",
+          lab: "hsl(var(--health-lab))",
+          medication: "hsl(var(--health-medication))",
+          neutral: "hsl(var(--health-neutral))",
+          success: "hsl(var(--health-success))",
+          info: "hsl(var(--health-info))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

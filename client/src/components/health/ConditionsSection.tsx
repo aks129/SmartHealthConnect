@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +12,7 @@ export function ConditionsSection() {
   const { data: conditions, isLoading, error } = useQuery<Condition[]>({
     queryKey: ['/api/fhir/condition'],
   });
-  
+
   // Function to determine condition category/chronicity
   const getConditionCategory = (condition: Condition) => {
     // Check for specific category codings
@@ -33,7 +34,7 @@ export function ConditionsSection() {
         }
       }
     }
-    
+
     // Check clinical status if available
     if (condition.clinicalStatus?.coding) {
       for (const coding of condition.clinicalStatus.coding) {
@@ -48,23 +49,23 @@ export function ConditionsSection() {
         }
       }
     }
-    
+
     // Default category
     return { label: 'Unknown', color: 'gray' };
   };
-  
+
   // Function to get clinical status text
   const getClinicalStatus = (condition: Condition) => {
     if (!condition.clinicalStatus?.coding?.length) {
       return 'Unknown status';
     }
-    
+
     const coding = condition.clinicalStatus.coding[0];
-    
+
     if (coding.display) {
       return coding.display;
     }
-    
+
     // Map common clinical status codes to human-readable text
     if (coding.code === 'active') {
       return 'Clinically active';
@@ -84,10 +85,10 @@ export function ConditionsSection() {
     if (coding.code === 'resolved') {
       return 'Resolved';
     }
-    
+
     return coding.code || 'Unknown status';
   };
-  
+
   // Function to determine the onset date to display
   const getOnsetDate = (condition: Condition) => {
     // Check for various date fields
@@ -97,20 +98,20 @@ export function ConditionsSection() {
         label: 'Onset'
       };
     }
-    
+
     if (condition.recordedDate) {
       return {
         date: formatFhirDateTime(condition.recordedDate),
         label: 'Recorded'
       };
     }
-    
+
     return {
       date: 'Unknown date',
       label: 'Diagnosed'
     };
   };
-  
+
   // Map category colors to badge variants that exist in our Badge component
   const getBadgeVariant = (color: string) => {
     switch (color) {
@@ -119,7 +120,7 @@ export function ConditionsSection() {
       default: return 'secondary';
     }
   };
-  
+
   // Get CSS class based on category color
   const getBadgeColorClass = (color: string) => {
     switch (color) {
@@ -134,7 +135,7 @@ export function ConditionsSection() {
   return (
     <section id="conditions" className="mb-8">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Conditions</h2>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Medical Conditions</CardTitle>
@@ -142,59 +143,72 @@ export function ConditionsSection() {
         <CardContent>
           {isLoading && (
             <div className="py-6 text-center">
-              <MedicalSpinner 
-                size="md" 
-                text="Loading conditions..." 
+              <MedicalSpinner
+                size="md"
+                text="Loading conditions..."
                 variant="primary"
                 multiIcon={true}
                 speed="normal"
               />
             </div>
           )}
-          
+
           {error && (
-            <div className="py-6 text-center">
-              <p className="text-destructive">Error loading conditions</p>
+            <div className="py-8 text-center bg-destructive/5 rounded-lg border border-destructive/20 mx-4">
+              <div className="flex flex-col items-center justify-center text-destructive">
+                <p className="font-semibold mb-1">Unable to load conditions</p>
+                <p className="text-sm opacity-80">Our system encountered a temporary error.</p>
+              </div>
             </div>
           )}
-          
+
+
+
           {!isLoading && conditions && conditions.length === 0 && (
-            <div className="py-6 text-center">
-              <Activity className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-500">No conditions found in your record</p>
-            </div>
+            <EmptyState
+              title="No Conditions Found"
+              description="No medical conditions were found in your record."
+              icon={Activity}
+              className="border-none bg-transparent"
+            />
           )}
-          
+
           {!isLoading && conditions && conditions.length > 0 && (
             <ul className="divide-y divide-gray-100">
-              {conditions.map(condition => {
-                const conditionName = getDisplayFromCodeableConcept(condition.code);
-                const status = getClinicalStatus(condition);
-                const category = getConditionCategory(condition);
-                const onsetInfo = getOnsetDate(condition);
-                
-                return (
-                  <li key={condition.id} className="py-4">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between">
-                      <div>
-                        <h3 className="font-medium text-gray-900">{conditionName}</h3>
-                        <p className="text-sm text-gray-500 mt-1">{status}</p>
+              {conditions
+                .sort((a, b) => {
+                  const dateA = a.onsetDateTime || a.recordedDate || '';
+                  const dateB = b.onsetDateTime || b.recordedDate || '';
+                  return dateB.localeCompare(dateA);
+                })
+                .map(condition => {
+                  const conditionName = getDisplayFromCodeableConcept(condition.code);
+                  const status = getClinicalStatus(condition);
+                  const category = getConditionCategory(condition);
+                  const onsetInfo = getOnsetDate(condition);
+
+                  return (
+                    <li key={condition.id} className="py-4">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900">{conditionName}</h3>
+                          <p className="text-sm text-gray-500 mt-1">{status}</p>
+                        </div>
+                        <div className="mt-2 md:mt-0">
+                          <Badge
+                            variant={getBadgeVariant(category.color)}
+                            className={getBadgeColorClass(category.color)}
+                          >
+                            {category.label}
+                          </Badge>
+                          <span className="text-sm text-gray-500 ml-2">
+                            {onsetInfo.label}: {onsetInfo.date}
+                          </span>
+                        </div>
                       </div>
-                      <div className="mt-2 md:mt-0">
-                        <Badge 
-                          variant={getBadgeVariant(category.color)}
-                          className={getBadgeColorClass(category.color)}
-                        >
-                          {category.label}
-                        </Badge>
-                        <span className="text-sm text-gray-500 ml-2">
-                          {onsetInfo.label}: {onsetInfo.date}
-                        </span>
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
+                    </li>
+                  );
+                })}
             </ul>
           )}
         </CardContent>
