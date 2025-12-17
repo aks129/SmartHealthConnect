@@ -107,7 +107,7 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <BrandSwitcher />
             <ModeToggle />
-            <Button onClick={() => setLocation('/dashboard')} className="hidden sm:flex">
+            <Button onClick={() => window.location.href = '/dashboard'} className="hidden sm:flex">
               Get Started
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
@@ -144,7 +144,7 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12" data-tour="demo-tab">
-              <Button size="lg" className="text-lg px-8" onClick={() => setLocation('/dashboard')}>
+              <Button size="lg" className="text-lg px-8" onClick={() => { window.location.href = '/dashboard'; }}>
                 <PlayCircle className="h-5 w-5 mr-2" />
                 Try Free Demo
               </Button>
@@ -278,7 +278,7 @@ export default function Home() {
                             </li>
                           ))}
                         </ul>
-                        <Button size="lg" onClick={() => setLocation('/dashboard')}>
+                        <Button size="lg" onClick={() => window.location.href = '/dashboard'}>
                           <PlayCircle className="h-5 w-5 mr-2" />
                           Launch Demo
                         </Button>
@@ -294,7 +294,7 @@ export default function Home() {
                               </div>
                               <h3 className="text-xl font-semibold mb-2">Demo Patient</h3>
                               <p className="text-muted-foreground mb-6">Access sample health records</p>
-                              <Button className="w-full" size="lg" onClick={() => setLocation('/dashboard')}>
+                              <Button className="w-full" size="lg" onClick={() => window.location.href = '/dashboard'}>
                                 Start Demo
                               </Button>
                             </CardContent>
@@ -313,7 +313,7 @@ export default function Home() {
                           <Card
                             key={brand.id}
                             className="cursor-pointer hover:shadow-md hover:border-primary transition-all group"
-                            onClick={() => setLocation('/dashboard')}
+                            onClick={() => window.location.href = '/dashboard'}
                           >
                             <CardContent className="p-4 text-center">
                               <div className="h-12 w-12 mx-auto mb-2 bg-muted rounded-lg flex items-center justify-center">
@@ -464,7 +464,7 @@ export default function Home() {
             Try our interactive demo to see how Liara AI Health can transform health records management. No signup required.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" onClick={() => setLocation('/dashboard')}>
+            <Button size="lg" variant="secondary" onClick={() => window.location.href = '/dashboard'}>
               <PlayCircle className="h-5 w-5 mr-2" />
               Try the Demo
             </Button>
@@ -491,7 +491,7 @@ export default function Home() {
             <div>
               <h4 className="font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="hover:text-primary cursor-pointer" onClick={() => setLocation('/dashboard')}>Features</li>
+                <li className="hover:text-primary cursor-pointer" onClick={() => window.location.href = '/dashboard'}>Features</li>
                 <li className="hover:text-primary cursor-pointer">Pricing</li>
                 <li className="hover:text-primary cursor-pointer">Enterprise</li>
                 <li className="hover:text-primary cursor-pointer">Security</li>
