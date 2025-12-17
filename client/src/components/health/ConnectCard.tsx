@@ -81,21 +81,26 @@ export function ConnectCard({ provider, className }: ConnectCardProps) {
       }
       // For demo provider, use the demo API route
       else if (provider.id === 'demo') {
-        const response = await fetch('/api/fhir/demo/connect', {
-          method: 'POST',
-        });
-        if (!response.ok) {
-          throw new Error('Failed to connect to demo provider');
-        }
-        const data = await response.json();
-        if (data.success) {
-          toast({
-            title: 'Connected Successfully',
-            description: `You're now connected to ${provider.name}`,
+        try {
+          const response = await fetch('/api/fhir/demo/connect', {
+            method: 'POST',
           });
-          // Redirect to dashboard instead of reloading
-          window.location.href = '/dashboard';
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+              toast({
+                title: 'Connected Successfully',
+                description: `You're now connected to ${provider.name}`,
+              });
+            }
+          }
+        } catch (e) {
+          // Log but don't block - demo should still work
+          console.warn('Demo connect API call failed, proceeding anyway:', e);
         }
+        // Always redirect to dashboard for demo - this is the main action
+        window.location.href = '/dashboard';
+        return;
       } else if (provider.id.includes('qhin')) {
         // For TEFCA QHIN providers
         toast({

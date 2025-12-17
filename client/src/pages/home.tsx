@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConnectCard } from '@/components/health/ConnectCard';
@@ -26,7 +26,6 @@ import {
   Users,
   CheckCircle,
   ArrowRight,
-  Star,
   Zap,
   Globe
 } from 'lucide-react';
@@ -36,39 +35,6 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { ModeToggle } from "@/components/mode-toggle";
 import { BrandSwitcher, QuickBrandToggle } from '@/components/branding/BrandSwitcher';
 import { useGuidedTour, landingTourSteps, TourButton } from '@/components/tour/GuidedTour';
-
-// Animated stats counter
-function AnimatedStat({ value, label, suffix = '' }: { value: number; label: string; suffix?: string }) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    const duration = 2000;
-    const steps = 60;
-    const increment = value / steps;
-    let current = 0;
-
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= value) {
-        setCount(value);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(current));
-      }
-    }, duration / steps);
-
-    return () => clearInterval(timer);
-  }, [value]);
-
-  return (
-    <div className="text-center">
-      <div className="text-3xl md:text-4xl font-bold text-primary">
-        {count.toLocaleString()}{suffix}
-      </div>
-      <div className="text-sm text-muted-foreground mt-1">{label}</div>
-    </div>
-  );
-}
 
 // Trust badge component
 function TrustBadge({ icon: Icon, text }: { icon: React.ComponentType<{ className?: string }>; text: string }) {
@@ -119,27 +85,6 @@ export default function Home() {
       description: "Interactive dashboards track your health metrics over time with beautiful visualizations.",
       color: "text-orange-500",
       bgColor: "bg-orange-500/10"
-    }
-  ];
-
-  const testimonials = [
-    {
-      quote: "Finally, all my health records in one place. The AI insights helped me catch a preventive screening I had missed.",
-      author: "Sarah M.",
-      role: "Patient",
-      rating: 5
-    },
-    {
-      quote: "The white-label solution was exactly what our hospital needed. Implementation took just weeks, not months.",
-      author: "Dr. James Chen",
-      role: "CIO, Metro Health System",
-      rating: 5
-    },
-    {
-      quote: "My patients love being able to see their complete health picture. It's transformed our care coordination.",
-      author: "Dr. Emily Roberts",
-      role: "Primary Care Physician",
-      rating: 5
     }
   ];
 
@@ -220,14 +165,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Beta Program Section */}
       <section className="py-16 border-y bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <AnimatedStat value={250} label="Healthcare Systems" suffix="+" />
-            <AnimatedStat value={50000} label="Active Users" suffix="+" />
-            <AnimatedStat value={99} label="Uptime SLA" suffix="%" />
-            <AnimatedStat value={4.9} label="User Rating" suffix="/5" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            <div>
+              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">Beta</div>
+              <div className="text-sm text-muted-foreground">Currently in Active Development</div>
+            </div>
+            <div>
+              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">Open</div>
+              <div className="text-sm text-muted-foreground">Seeking Beta Testers & Collaborators</div>
+            </div>
+            <div>
+              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">Enterprise</div>
+              <div className="text-sm text-muted-foreground">Health System Partnerships Available</div>
+            </div>
           </div>
         </div>
       </section>
@@ -429,41 +382,74 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Join Beta Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4">Testimonials</Badge>
+            <Badge variant="outline" className="mb-4">Join Us</Badge>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Trusted by Patients and Providers
+              We're Looking For Partners
             </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Liara AI Health is in active development. We're seeking beta testers, technical collaborators, and health system partners to shape the future of patient health records.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Card className="h-full">
-                  <CardContent className="p-6">
-                    <div className="flex gap-1 mb-4">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      ))}
-                    </div>
-                    <p className="text-muted-foreground mb-4 italic">"{testimonial.quote}"</p>
-                    <div>
-                      <p className="font-semibold">{testimonial.author}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              viewport={{ once: true }}
+            >
+              <Card className="h-full">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+                    <Users className="h-6 w-6 text-blue-500" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">Beta Testers</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Help us refine the user experience by testing features and providing feedback on the platform.
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <Card className="h-full">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                    <Brain className="h-6 w-6 text-purple-500" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">Collaborators</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Developers, designers, and healthcare professionals interested in building the future of health tech.
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <Card className="h-full">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+                    <Building2 className="h-6 w-6 text-green-500" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">Health Systems</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Partner with us on enterprise deployments and white-label solutions for your patient portal needs.
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -472,18 +458,18 @@ export default function Home() {
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to Take Control of Your Health?
+            Ready to Explore the Platform?
           </h2>
           <p className="text-primary-foreground/80 max-w-2xl mx-auto mb-8">
-            Join thousands of users who trust Liara AI Health to manage their health records securely.
+            Try our interactive demo to see how Liara AI Health can transform health records management. No signup required.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="secondary" onClick={() => setLocation('/dashboard')}>
               <PlayCircle className="h-5 w-5 mr-2" />
-              Start Free Demo
+              Try the Demo
             </Button>
             <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
-              Schedule a Demo
+              Contact Us
             </Button>
           </div>
         </div>
