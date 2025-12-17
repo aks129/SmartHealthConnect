@@ -51,6 +51,16 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const demoProvider = fhirProviders.find(p => p.id === 'demo');
 
+  // Connect to demo and navigate to dashboard
+  const handleDemoConnect = async () => {
+    try {
+      await fetch('/api/fhir/demo/connect', { method: 'POST' });
+    } catch (e) {
+      console.warn('Demo connect API call failed, proceeding anyway:', e);
+    }
+    window.location.href = '/dashboard';
+  };
+
   const landingTour = useGuidedTour({
     steps: landingTourSteps,
     storageKey: 'liara-landing-tour',
@@ -144,7 +154,7 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12" data-tour="demo-tab">
-              <Button size="lg" className="text-lg px-8" onClick={() => { window.location.href = '/dashboard'; }}>
+              <Button size="lg" className="text-lg px-8" onClick={handleDemoConnect}>
                 <PlayCircle className="h-5 w-5 mr-2" />
                 Try Free Demo
               </Button>
@@ -278,7 +288,7 @@ export default function Home() {
                             </li>
                           ))}
                         </ul>
-                        <Button size="lg" onClick={() => window.location.href = '/dashboard'}>
+                        <Button size="lg" onClick={handleDemoConnect}>
                           <PlayCircle className="h-5 w-5 mr-2" />
                           Launch Demo
                         </Button>
@@ -294,7 +304,7 @@ export default function Home() {
                               </div>
                               <h3 className="text-xl font-semibold mb-2">Demo Patient</h3>
                               <p className="text-muted-foreground mb-6">Access sample health records</p>
-                              <Button className="w-full" size="lg" onClick={() => window.location.href = '/dashboard'}>
+                              <Button className="w-full" size="lg" onClick={handleDemoConnect}>
                                 Start Demo
                               </Button>
                             </CardContent>
@@ -464,7 +474,7 @@ export default function Home() {
             Try our interactive demo to see how Liara AI Health can transform health records management. No signup required.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" onClick={() => window.location.href = '/dashboard'}>
+            <Button size="lg" variant="secondary" onClick={handleDemoConnect}>
               <PlayCircle className="h-5 w-5 mr-2" />
               Try the Demo
             </Button>
