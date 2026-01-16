@@ -7,16 +7,17 @@ import {
   CardContent 
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  HistoryIcon, 
-  AlertCircle, 
+import {
+  HistoryIcon,
+  AlertCircle,
   CheckCircle2,
-  Calendar, 
+  Calendar,
   Bell,
   Clock,
   ArrowUpCircle,
   PlusCircle,
-  Activity
+  Activity,
+  Pill
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';

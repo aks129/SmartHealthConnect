@@ -7,7 +7,6 @@ import { BrandProvider } from "@/components/branding/BrandProvider";
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
-import MedicalSpinnerDemo from "@/pages/medical-spinner-demo";
 import About from "@/pages/about";
 import Tutorial from "@/pages/tutorial";
 import Callback from "@/pages/callback";
@@ -17,7 +16,6 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/dashboard" component={Dashboard} />
-      <Route path="/spinner-demo" component={MedicalSpinnerDemo} />
       <Route path="/about" component={About} />
       <Route path="/tutorial" component={Tutorial} />
       <Route path="/callback" component={Callback} />

@@ -16,6 +16,7 @@ export interface EpicBrand {
   id: string;
   name: string;
   logoUrl: string;
+  fallbackText?: string;
   organizations: EpicOrganization[];
 }
 

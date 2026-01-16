@@ -2,7 +2,7 @@
 
 A SMART on FHIR patient health records platform with AI-powered insights.
 
-**Status: Beta** - Currently seeking beta testers, collaborators, and health system partners.
+**Status: MVP** - Production-ready for beta deployment.
 
 ## Overview
 
@@ -68,6 +68,25 @@ npm run build
 # Start production server
 npm start
 ```
+
+## Production Deployment
+
+The application can be deployed to any Node.js hosting platform:
+
+```bash
+# Build production assets
+npm run build
+
+# Set environment variables
+export DATABASE_URL="postgresql://..."
+export OPENAI_API_KEY="sk-..."  # Optional
+export NODE_ENV="production"
+
+# Start server
+npm start
+```
+
+The server runs on port 5000 by default and serves both the API and static frontend assets.
 
 ## Project Structure
 
