@@ -63,6 +63,7 @@ export class MemStorage implements IStorage {
       lastName: insertUser.lastName || null,
       profilePicture: insertUser.profilePicture || null,
       theme: insertUser.theme || null,
+      notificationPreferences: insertUser.notificationPreferences ?? null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -97,7 +98,7 @@ export class MemStorage implements IStorage {
     
     // If current is set to true, update any other current sessions
     if (session.current) {
-      for (const [sid, existingSession] of this.fhirSessions.entries()) {
+      for (const [sid, existingSession] of Array.from(this.fhirSessions.entries())) {
         if (existingSession.current) {
           existingSession.current = false;
           existingSession.endedAt = new Date();

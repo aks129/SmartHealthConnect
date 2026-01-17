@@ -191,11 +191,16 @@ const generateActivityItems = (
   careGaps.forEach(careGap => {
     const gapName = careGap.title || 'Unknown care gap';
     let activityStatus: ActivityItem['status'] = 'warning';
-    
+
     if (careGap.status === 'due') {
-      activityStatus = 'warning';
-    } else if (careGap.status === 'overdue') {
-      activityStatus = 'error';
+      // Check if it's past due date to show as error
+      if (careGap.dueDate && new Date(careGap.dueDate) < new Date()) {
+        activityStatus = 'error';
+      } else {
+        activityStatus = 'warning';
+      }
+    } else if (careGap.status === 'satisfied') {
+      activityStatus = 'success';
     }
     
     activityItems.push({

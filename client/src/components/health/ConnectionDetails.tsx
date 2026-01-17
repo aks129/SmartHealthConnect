@@ -6,14 +6,14 @@ import { ConnectSelector } from './ConnectSelector';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Database, 
-  AlertCircle, 
-  Compass as CompassIcon, 
-  ArrowRight, 
-  Loader2, 
-  CheckCircle2, 
-  Shield, 
+import {
+  Database,
+  AlertCircle,
+  Compass as CompassIcon,
+  ArrowRight,
+  Loader2,
+  CheckCircle2,
+  Shield,
   Share2,
   Copy
 } from 'lucide-react';
@@ -22,6 +22,7 @@ import { Progress } from '@/components/ui/progress';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SiEpicgames, SiBitcoinsv } from 'react-icons/si';
 import { getProviderById } from '@/lib/providers';
+import type { FhirSession } from '@shared/schema';
 
 export function ConnectionDetails() {
   const [showConnectOptions, setShowConnectOptions] = useState(false);
@@ -31,7 +32,7 @@ export function ConnectionDetails() {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   
-  const { data: session, isLoading } = useQuery({
+  const { data: session, isLoading } = useQuery<FhirSession | null>({
     queryKey: ['/api/fhir/sessions/current'],
   });
   

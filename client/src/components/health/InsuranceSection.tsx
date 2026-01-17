@@ -14,17 +14,17 @@ export function InsuranceSection() {
   const [activeTab, setActiveTab] = useState("coverage");
 
   // Fetch insurance data
-  const { data: coverages, isLoading: isLoadingCoverage } = useQuery({
+  const { data: coverages, isLoading: isLoadingCoverage } = useQuery<Coverage[]>({
     queryKey: ['/api/fhir/coverage'],
     queryFn: getQueryFn({ on401: 'returnNull' })
   });
 
-  const { data: claims, isLoading: isLoadingClaims } = useQuery({
+  const { data: claims, isLoading: isLoadingClaims } = useQuery<Claim[]>({
     queryKey: ['/api/fhir/claim'],
     queryFn: getQueryFn({ on401: 'returnNull' })
   });
 
-  const { data: explanationOfBenefits, isLoading: isLoadingEOB } = useQuery({
+  const { data: explanationOfBenefits, isLoading: isLoadingEOB } = useQuery<ExplanationOfBenefit[]>({
     queryKey: ['/api/fhir/explanation-of-benefit'],
     queryFn: getQueryFn({ on401: 'returnNull' })
   });
@@ -73,7 +73,7 @@ export function InsuranceSection() {
                 {coverages.map((coverage: Coverage) => (
                   <div key={coverage.id} className="rounded-lg border p-4">
                     <h3 className="text-lg font-semibold">
-                      {coverage.type?.text || "Health Insurance"}
+                      {coverage.class?.[0]?.name || coverage.class?.[0]?.value || "Health Insurance"}
                     </h3>
                     
                     <div className="grid grid-cols-2 gap-4 mt-4">
@@ -110,7 +110,7 @@ export function InsuranceSection() {
                         <div className="space-y-2">
                           {coverage.class.map((classItem, index) => (
                             <div key={index} className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">{classItem.type?.text || classItem.type?.coding?.[0]?.display}</span>
+                              <span className="text-sm text-muted-foreground">{classItem.type?.coding?.[0]?.display || 'Plan'}</span>
                               <span className="font-medium">{classItem.name || classItem.value}</span>
                             </div>
                           ))}

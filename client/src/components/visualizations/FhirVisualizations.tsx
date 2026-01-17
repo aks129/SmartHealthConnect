@@ -4,18 +4,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
   ScatterChart,
   Scatter,
   BarChart,
   Bar,
+  Cell,
   Area,
   AreaChart,
   ReferenceLine,
@@ -52,75 +53,91 @@ const HEALTH_THRESHOLDS = {
   glucose: { low: 70, normal: 100, prediabetic: 126, diabetic: 200 },
   bmi: { underweight: 18.5, normal: 25, overweight: 30, obese: 35 },
   temperature: { low: 97, normal: 99, fever: 100.4, highFever: 103 }
-};
+} as const;
+
+type ThresholdMetric = keyof typeof HEALTH_THRESHOLDS;
 
 // Color schemes for different health metrics
-const getThresholdColor = (value: number, metric: keyof typeof HEALTH_THRESHOLDS) => {
-  const thresholds = HEALTH_THRESHOLDS[metric];
-
+const getThresholdColor = (value: number, metric: ThresholdMetric) => {
   switch (metric) {
     case 'bloodPressureSystolic':
-    case 'bloodPressureDiastolic':
-      if (value < thresholds.low) return '#EF4444'; // red
-      if (value <= thresholds.normal) return '#10B981'; // green
-      if (value <= thresholds.high) return '#F59E0B'; // amber
+    case 'bloodPressureDiastolic': {
+      const t = HEALTH_THRESHOLDS[metric];
+      if (value < t.low) return '#EF4444'; // red
+      if (value <= t.normal) return '#10B981'; // green
+      if (value <= t.high) return '#F59E0B'; // amber
       return '#DC2626'; // dark red
+    }
 
-    case 'heartRate':
-      if (value < thresholds.low || value > thresholds.critical) return '#EF4444';
-      if (value <= thresholds.normal) return '#10B981';
-      if (value <= thresholds.high) return '#F59E0B';
+    case 'heartRate': {
+      const t = HEALTH_THRESHOLDS.heartRate;
+      if (value < t.low || value > t.critical) return '#EF4444';
+      if (value <= t.normal) return '#10B981';
+      if (value <= t.high) return '#F59E0B';
       return '#DC2626';
+    }
 
-    case 'cholesterol':
-      if (value <= thresholds.optimal) return '#10B981';
-      if (value <= thresholds.borderline) return '#F59E0B';
+    case 'cholesterol': {
+      const t = HEALTH_THRESHOLDS.cholesterol;
+      if (value <= t.optimal) return '#10B981';
+      if (value <= t.borderline) return '#F59E0B';
       return '#EF4444';
+    }
 
-    case 'glucose':
-      if (value < thresholds.low) return '#EF4444';
-      if (value <= thresholds.normal) return '#10B981';
-      if (value <= thresholds.prediabetic) return '#F59E0B';
+    case 'glucose': {
+      const t = HEALTH_THRESHOLDS.glucose;
+      if (value < t.low) return '#EF4444';
+      if (value <= t.normal) return '#10B981';
+      if (value <= t.prediabetic) return '#F59E0B';
       return '#EF4444';
+    }
 
-    case 'bmi':
-      if (value < thresholds.underweight) return '#F59E0B';
-      if (value <= thresholds.normal) return '#10B981';
-      if (value <= thresholds.overweight) return '#F59E0B';
+    case 'bmi': {
+      const t = HEALTH_THRESHOLDS.bmi;
+      if (value < t.underweight) return '#F59E0B';
+      if (value <= t.normal) return '#10B981';
+      if (value <= t.overweight) return '#F59E0B';
       return '#EF4444';
+    }
 
-    case 'temperature':
-      if (value < thresholds.low) return '#3B82F6';
-      if (value <= thresholds.normal) return '#10B981';
-      if (value <= thresholds.fever) return '#F59E0B';
+    case 'temperature': {
+      const t = HEALTH_THRESHOLDS.temperature;
+      if (value < t.low) return '#3B82F6';
+      if (value <= t.normal) return '#10B981';
+      if (value <= t.fever) return '#F59E0B';
       return '#EF4444';
+    }
 
     default:
       return '#6B7280';
   }
 };
 
-const getStatusText = (value: number, metric: keyof typeof HEALTH_THRESHOLDS) => {
-  const thresholds = HEALTH_THRESHOLDS[metric];
-
+const getStatusText = (value: number, metric: ThresholdMetric) => {
   switch (metric) {
     case 'bloodPressureSystolic':
-    case 'bloodPressureDiastolic':
-      if (value < thresholds.low) return 'Low';
-      if (value <= thresholds.normal) return 'Normal';
-      if (value <= thresholds.high) return 'Elevated';
+    case 'bloodPressureDiastolic': {
+      const t = HEALTH_THRESHOLDS[metric];
+      if (value < t.low) return 'Low';
+      if (value <= t.normal) return 'Normal';
+      if (value <= t.high) return 'Elevated';
       return 'High';
+    }
 
-    case 'cholesterol':
-      if (value <= thresholds.optimal) return 'Optimal';
-      if (value <= thresholds.borderline) return 'Borderline';
+    case 'cholesterol': {
+      const t = HEALTH_THRESHOLDS.cholesterol;
+      if (value <= t.optimal) return 'Optimal';
+      if (value <= t.borderline) return 'Borderline';
       return 'High';
+    }
 
-    case 'glucose':
-      if (value < thresholds.low) return 'Low';
-      if (value <= thresholds.normal) return 'Normal';
-      if (value <= thresholds.prediabetic) return 'Prediabetic';
+    case 'glucose': {
+      const t = HEALTH_THRESHOLDS.glucose;
+      if (value < t.low) return 'Low';
+      if (value <= t.normal) return 'Normal';
+      if (value <= t.prediabetic) return 'Prediabetic';
       return 'Diabetic';
+    }
 
     default:
       return 'Normal';
@@ -515,11 +532,14 @@ export function FhirVisualizations({ observations, conditions, medications, alle
                       <ReferenceLine y={200} stroke="#10B981" strokeDasharray="5 5" strokeOpacity={0.8} />
                       <ReferenceLine y={240} stroke="#F59E0B" strokeDasharray="5 5" strokeOpacity={0.8} />
 
-                      <Bar 
-                        dataKey="value" 
-                        fill={(entry: any) => entry.color || '#6B7280'}
+                      <Bar
+                        dataKey="value"
                         radius={[4, 4, 0, 0]}
-                      />
+                      >
+                        {filteredData.cholesterol.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={entry.color || '#6B7280'} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

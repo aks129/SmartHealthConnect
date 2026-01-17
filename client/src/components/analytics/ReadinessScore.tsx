@@ -602,8 +602,8 @@ export function ReadinessScore() {
                   <LineChart data={historicalData}>
                     <XAxis dataKey="date" stroke="#9CA3AF" />
                     <YAxis domain={[0, 100]} stroke="#9CA3AF" />
-                    <Tooltip 
-                      formatter={(value, name) => [`${value}`, name.charAt(0).toUpperCase() + name.slice(1)]}
+                    <Tooltip
+                      formatter={(value, name) => [`${value}`, typeof name === 'string' ? name.charAt(0).toUpperCase() + name.slice(1) : String(name)]}
                       labelFormatter={(label) => `Date: ${label}`}
                     />
                     <Line 

@@ -174,6 +174,14 @@ export const observationSchema = z.object({
     }).optional(),
     text: z.string().optional(),
   })).optional(),
+  interpretation: z.array(z.object({
+    coding: z.array(z.object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })).optional(),
+    text: z.string().optional(),
+  })).optional(),
   status: z.string().optional(),
   effectiveDateTime: z.string().optional(),
   issued: z.string().optional(),

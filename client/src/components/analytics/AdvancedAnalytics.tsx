@@ -251,11 +251,13 @@ export function AdvancedAnalytics({
       // Check if this is a lab value that could be out of range
       if (value !== null && obs.referenceRange && obs.referenceRange.length > 0) {
         const range = obs.referenceRange[0];
-        if ((range.low && value < range.low.value) || (range.high && value > range.high.value)) {
+        const lowValue = range.low?.value;
+        const highValue = range.high?.value;
+        if ((lowValue !== undefined && value < lowValue) || (highValue !== undefined && value > highValue)) {
           insights.push({
             id: `insight-${obs.id}-range`,
             title: `Abnormal ${name} Value`,
-            description: `Your ${name} value of ${value} ${unit} is outside the reference range of ${range.low?.value || 'N/A'} - ${range.high?.value || 'N/A'} ${unit}.`,
+            description: `Your ${name} value of ${value} ${unit} is outside the reference range of ${lowValue ?? 'N/A'} - ${highValue ?? 'N/A'} ${unit}.`,
             category: 'warning',
             date: new Date(obs.effectiveDateTime || obs.issued || Date.now())
           });

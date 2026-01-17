@@ -2,10 +2,12 @@ import OpenAI from 'openai';
 import { Patient, Condition, Observation, MedicationRequest, AllergyIntolerance, Immunization } from '@shared/schema';
 import { getPatientName, formatFhirDate, getDisplayFromCodeableConcept } from '../client/src/lib/fhir-client';
 
-// Initialize the OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize the OpenAI client (only if API key is present)
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+const AI_UNAVAILABLE_MESSAGE = "AI features are currently unavailable. Please configure your OPENAI_API_KEY environment variable to enable AI-powered health insights.";
 
 // Types for AI service
 export type HealthContext = {
@@ -128,21 +130,26 @@ export async function generateHealthResponse(
   healthContext: HealthContext,
   chatHistory: ChatHistoryItem[] = []
 ): Promise<string> {
+  // Check if OpenAI is configured
+  if (!openai) {
+    return AI_UNAVAILABLE_MESSAGE;
+  }
+
   try {
     // Generate system prompt with patient context
     const systemPrompt = generateSystemPrompt(healthContext);
-    
+
     // Construct the messages array for OpenAI
     const messages = [
       { role: 'system', content: systemPrompt },
       // Add previous chat history (limited to last 10 messages)
       ...chatHistory.slice(-10).map(item => ({
-        role: item.role as 'user' | 'assistant', 
+        role: item.role as 'user' | 'assistant',
         content: item.content
       })),
       { role: 'user', content: userMessage }
     ];
-    
+
     // Call OpenAI API
     const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo', // Adjust the model as needed
@@ -150,11 +157,11 @@ export async function generateHealthResponse(
       temperature: 0.5,
       max_tokens: 500
     });
-    
+
     // Return the generated response
-    return response.choices[0]?.message?.content || 
+    return response.choices[0]?.message?.content ||
       "I apologize, but I couldn't generate a helpful response at the moment. Please try again or phrase your question differently.";
-    
+
   } catch (error) {
     console.error('Error generating AI response:', error);
     return "I encountered an error while processing your request. Please try again later.";
