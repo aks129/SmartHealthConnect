@@ -794,3 +794,318 @@ export type Organization = z.infer<typeof organizationSchema>;
 export type Location = z.infer<typeof locationSchema>;
 export type Appointment = z.infer<typeof appointmentSchema>;
 export type PractitionerRole = z.infer<typeof practitionerRoleSchema>;
+
+// ============================================
+// PHASE 1: Family Health Management Tables
+// ============================================
+
+// Family member relationships
+export const familyMembers = pgTable("family_members", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  relationship: text("relationship").notNull(), // 'self', 'child', 'spouse', 'parent', 'sibling'
+  dateOfBirth: text("date_of_birth"), // ISO date string
+  fhirSessionId: integer("fhir_session_id").references(() => fhirSessions.id),
+  avatarUrl: text("avatar_url"),
+  isPrimary: boolean("is_primary").default(false),
+  gender: text("gender"), // 'male', 'female', 'other'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertFamilyMemberSchema = createInsertSchema(familyMembers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertFamilyMember = z.infer<typeof insertFamilyMemberSchema>;
+export type FamilyMember = typeof familyMembers.$inferSelect;
+
+// Health narratives (AI-generated summaries)
+export const healthNarratives = pgTable("health_narratives", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").references(() => familyMembers.id).notNull(),
+  narrativeType: text("narrative_type").notNull(), // 'overview', 'condition_focus', 'preventive', 'growth', 'medication'
+  title: text("title"),
+  content: text("content").notNull(),
+  sourceData: jsonb("source_data"), // References to FHIR resources used
+  keyInsights: jsonb("key_insights"), // Array of key insights extracted from narrative
+  generatedAt: timestamp("generated_at").defaultNow(),
+  validUntil: timestamp("valid_until"), // When narrative should be regenerated
+  aiModel: text("ai_model"),
+});
+
+export const insertHealthNarrativeSchema = createInsertSchema(healthNarratives).omit({
+  id: true,
+  generatedAt: true,
+});
+
+export type InsertHealthNarrative = z.infer<typeof insertHealthNarrativeSchema>;
+export type HealthNarrative = typeof healthNarratives.$inferSelect;
+
+// Health goals for tracking
+export const healthGoals = pgTable("health_goals", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").references(() => familyMembers.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  targetValue: integer("target_value"), // Numeric target value
+  currentValue: integer("current_value"), // Numeric current value
+  unit: text("unit"),
+  category: text("category"), // 'weight', 'a1c', 'bp', 'activity', 'nutrition', 'sleep', 'custom'
+  status: text("status").default("active"), // 'active', 'achieved', 'paused', 'cancelled'
+  targetDate: text("target_date"), // ISO date string
+  progress: integer("progress").default(0), // 0-100 percentage
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertHealthGoalSchema = createInsertSchema(healthGoals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertHealthGoal = z.infer<typeof insertHealthGoalSchema>;
+export type HealthGoal = typeof healthGoals.$inferSelect;
+
+// Action items (care gaps + custom tasks)
+export const actionItems = pgTable("action_items", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").references(() => familyMembers.id).notNull(),
+  careGapId: text("care_gap_id"), // Reference to FHIR care gap if applicable
+  title: text("title").notNull(),
+  description: text("description"),
+  priority: text("priority").default("medium"), // 'high', 'medium', 'low'
+  status: text("status").default("pending"), // 'pending', 'scheduled', 'completed', 'cancelled'
+  dueDate: text("due_date"), // ISO date string
+  scheduledDate: text("scheduled_date"), // ISO date string
+  scheduledProvider: text("scheduled_provider"),
+  scheduledLocation: text("scheduled_location"),
+  category: text("category"), // 'preventive', 'chronic', 'wellness', 'follow_up', 'custom'
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertActionItemSchema = createInsertSchema(actionItems).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export type InsertActionItem = z.infer<typeof insertActionItemSchema>;
+export type ActionItem = typeof actionItems.$inferSelect;
+
+// ============================================
+// PHASE 2: Scheduling & Form Pre-fill Tables
+// ============================================
+
+// Scheduled appointments (beyond FHIR appointments)
+export const scheduledAppointments = pgTable("scheduled_appointments", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").references(() => familyMembers.id).notNull(),
+  actionItemId: integer("action_item_id").references(() => actionItems.id),
+  providerName: text("provider_name"),
+  providerNpi: text("provider_npi"),
+  facilityName: text("facility_name"),
+  facilityAddress: text("facility_address"),
+  appointmentType: text("appointment_type"), // 'office_visit', 'procedure', 'lab', 'imaging', 'telehealth'
+  scheduledDateTime: timestamp("scheduled_date_time"),
+  durationMinutes: integer("duration_minutes"),
+  status: text("status").default("scheduled"), // 'scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'
+  confirmationNumber: text("confirmation_number"),
+  notes: text("notes"),
+  reminderSent: boolean("reminder_sent").default(false),
+  prefilledFormId: integer("prefilled_form_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertScheduledAppointmentSchema = createInsertSchema(scheduledAppointments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertScheduledAppointment = z.infer<typeof insertScheduledAppointmentSchema>;
+export type ScheduledAppointment = typeof scheduledAppointments.$inferSelect;
+
+// Form templates for pre-fill
+export const formTemplates = pgTable("form_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  providerType: text("provider_type"), // 'general', 'specialist', 'lab', 'imaging', 'dental', 'vision'
+  fields: jsonb("fields").notNull(), // Array of IntakeFormField
+  version: integer("version").default(1),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertFormTemplateSchema = createInsertSchema(formTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertFormTemplate = z.infer<typeof insertFormTemplateSchema>;
+export type FormTemplate = typeof formTemplates.$inferSelect;
+
+// Pre-filled forms ready for appointments
+export const prefilledForms = pgTable("prefilled_forms", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").references(() => familyMembers.id).notNull(),
+  templateId: integer("template_id").references(() => formTemplates.id).notNull(),
+  appointmentId: integer("appointment_id").references(() => scheduledAppointments.id),
+  filledData: jsonb("filled_data").notNull(), // Pre-filled form data
+  status: text("status").default("draft"), // 'draft', 'ready', 'submitted', 'verified'
+  generatedAt: timestamp("generated_at").defaultNow(),
+  submittedAt: timestamp("submitted_at"),
+  lastModified: timestamp("last_modified").defaultNow(),
+});
+
+export const insertPrefilledFormSchema = createInsertSchema(prefilledForms).omit({
+  id: true,
+  generatedAt: true,
+  submittedAt: true,
+  lastModified: true,
+});
+
+export type InsertPrefilledForm = z.infer<typeof insertPrefilledFormSchema>;
+export type PrefilledForm = typeof prefilledForms.$inferSelect;
+
+// ============================================
+// PHASE 3: Proactive Health Alerts & Digests
+// ============================================
+
+// Health alerts and notifications
+export const healthAlerts = pgTable("health_alerts", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").references(() => familyMembers.id).notNull(),
+  alertType: text("alert_type").notNull(), // 'care_gap_due', 'trend_concern', 'medication_refill', 'appointment_reminder', 'milestone', 'custom'
+  category: text("category"), // 'medication_reminder', 'appointment_upcoming', 'care_gap', 'goal_milestone', 'health_trend', 'preventive_care', 'follow_up_needed'
+  priority: text("priority").default("medium"), // 'urgent', 'high', 'medium', 'low'
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  actionUrl: text("action_url"),
+  actionLabel: text("action_label"),
+  metadata: jsonb("metadata"), // Additional context data
+  scheduledFor: timestamp("scheduled_for"),
+  sentAt: timestamp("sent_at"),
+  readAt: timestamp("read_at"),
+  dismissedAt: timestamp("dismissed_at"),
+  relatedEntityType: text("related_entity_type"), // 'care_gap', 'observation', 'medication', 'appointment'
+  relatedEntityId: text("related_entity_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertHealthAlertSchema = createInsertSchema(healthAlerts).omit({
+  id: true,
+  sentAt: true,
+  readAt: true,
+  dismissedAt: true,
+  createdAt: true,
+});
+
+export type InsertHealthAlert = z.infer<typeof insertHealthAlertSchema>;
+export type HealthAlert = typeof healthAlerts.$inferSelect;
+
+// Weekly health digests
+export const healthDigests = pgTable("health_digests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  weekStartDate: timestamp("week_start_date").notNull(),
+  weekEndDate: timestamp("week_end_date"),
+  summary: jsonb("summary").notNull(), // Full digest content with appointments, goals, actions
+  highlights: jsonb("highlights"), // Key highlights from the week
+  appointmentCount: integer("appointment_count").default(0),
+  actionItemCount: integer("action_item_count").default(0),
+  completedActionsCount: integer("completed_actions_count").default(0),
+  status: text("status").default("pending"), // 'pending', 'sent', 'failed'
+  generatedAt: timestamp("generated_at").defaultNow(),
+  readAt: timestamp("read_at"),
+  sentAt: timestamp("sent_at"),
+  deliveryMethod: text("delivery_method").default("email"), // 'email', 'push', 'in_app'
+});
+
+export const insertHealthDigestSchema = createInsertSchema(healthDigests).omit({
+  id: true,
+  generatedAt: true,
+  sentAt: true,
+});
+
+export type InsertHealthDigest = z.infer<typeof insertHealthDigestSchema>;
+export type HealthDigest = typeof healthDigests.$inferSelect;
+
+// ============================================
+// Zod Schemas for API Validation
+// ============================================
+
+// Family member validation schema
+export const familyMemberInputSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  relationship: z.enum(['self', 'child', 'spouse', 'parent', 'sibling', 'other']),
+  dateOfBirth: z.string().optional(),
+  gender: z.enum(['male', 'female', 'other']).optional(),
+  avatarUrl: z.string().url().optional(),
+  isPrimary: z.boolean().optional(),
+});
+
+// Health narrative request schema
+export const narrativeRequestSchema = z.object({
+  familyMemberId: z.number(),
+  narrativeType: z.enum(['overview', 'condition_focus', 'preventive', 'growth', 'medication']),
+  forceRegenerate: z.boolean().optional(),
+});
+
+// Health goal input schema
+export const healthGoalInputSchema = z.object({
+  familyMemberId: z.number(),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  targetValue: z.number().optional(),
+  currentValue: z.number().optional(),
+  unit: z.string().optional(),
+  category: z.enum(['weight', 'a1c', 'bp', 'activity', 'nutrition', 'sleep', 'custom']).optional(),
+  targetDate: z.string().optional(),
+});
+
+// Action item input schema
+export const actionItemInputSchema = z.object({
+  familyMemberId: z.number(),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  priority: z.enum(['high', 'medium', 'low']).optional(),
+  dueDate: z.string().optional(),
+  category: z.enum(['preventive', 'chronic', 'wellness', 'follow_up', 'custom']).optional(),
+  careGapId: z.string().optional(),
+});
+
+// Schedule action input schema
+export const scheduleActionInputSchema = z.object({
+  actionItemId: z.number(),
+  providerName: z.string().optional(),
+  facilityName: z.string().optional(),
+  facilityAddress: z.string().optional(),
+  scheduledDateTime: z.string(),
+  appointmentType: z.enum(['office_visit', 'procedure', 'lab', 'imaging', 'telehealth']).optional(),
+  durationMinutes: z.number().optional(),
+  notes: z.string().optional(),
+});
+
+// Health alert input schema
+export const healthAlertInputSchema = z.object({
+  familyMemberId: z.number(),
+  alertType: z.enum(['care_gap_due', 'trend_concern', 'medication_refill', 'appointment_reminder', 'milestone', 'custom']).optional(),
+  category: z.enum(['medication_reminder', 'appointment_upcoming', 'care_gap', 'goal_milestone', 'health_trend', 'preventive_care', 'follow_up_needed']).optional(),
+  priority: z.enum(['urgent', 'high', 'medium', 'low']).optional(),
+  title: z.string().min(1, "Title is required"),
+  message: z.string().min(1, "Message is required"),
+  actionUrl: z.string().optional(),
+  actionLabel: z.string().optional(),
+  metadata: z.record(z.any()).optional(),
+  scheduledFor: z.string().optional(),
+});

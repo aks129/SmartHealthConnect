@@ -8,6 +8,9 @@ import { careGapsService, type PatientHealthContext } from './care-gaps-service'
 import { z } from 'zod';
 import { insertChatMessageSchema, type Coverage, type Claim, type ExplanationOfBenefit } from '../shared/schema';
 import { registerUserRoutes } from './user-routes';
+import familyRoutes from './family-routes';
+import schedulingService from './scheduling-service';
+import notificationService from './notification-service';
 
 // Sample FHIR data for demo purposes
 const samplePatient = {
@@ -3706,6 +3709,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to clear chat history' });
     }
   });
+
+  // Register Phase 1-3 routes
+  app.use('/api/family', familyRoutes);
+  app.use('/api/scheduling', schedulingService);
+  app.use('/api/notifications', notificationService);
 
   return httpServer;
 }
