@@ -8,6 +8,10 @@ import { ModeToggle } from '@/components/mode-toggle';
 import { checkAuth } from '@/lib/fhir-client';
 import { SchedulingModal } from '@/components/health/SchedulingModal';
 import { ExecutiveSummary } from '@/components/health/ExecutiveSummary';
+import { LongitudinalTimeline } from '@/components/health/LongitudinalTimeline';
+import { HealthNavigator } from '@/components/health/HealthNavigator';
+import { MedicationHub } from '@/components/health/MedicationHub';
+import { ClinicalTrialsMatcher } from '@/components/health/ClinicalTrialsMatcher';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import {
   Heart,
@@ -28,7 +32,10 @@ import {
   TrendingDown,
   Minus,
   Info,
-  LayoutDashboard
+  LayoutDashboard,
+  LineChart,
+  Compass,
+  FlaskConical
 } from 'lucide-react';
 import {
   Tooltip,
@@ -363,25 +370,21 @@ export default function Dashboard() {
               <LayoutDashboard className="w-4 h-4 mr-2" />
               Summary
             </TabsTrigger>
-            <TabsTrigger value="overview" className="data-[state=active]:bg-background">
-              <Home className="w-4 h-4 mr-2" />
-              Overview
+            <TabsTrigger value="timeline" className="data-[state=active]:bg-background">
+              <LineChart className="w-4 h-4 mr-2" />
+              Timeline
             </TabsTrigger>
-            <TabsTrigger value="vitals" className="data-[state=active]:bg-background">
-              <Activity className="w-4 h-4 mr-2" />
-              Vitals
-            </TabsTrigger>
-            <TabsTrigger value="conditions" className="data-[state=active]:bg-background">
-              <Heart className="w-4 h-4 mr-2" />
-              Conditions
+            <TabsTrigger value="navigator" className="data-[state=active]:bg-background">
+              <Compass className="w-4 h-4 mr-2" />
+              Navigator
             </TabsTrigger>
             <TabsTrigger value="medications" className="data-[state=active]:bg-background">
               <Pill className="w-4 h-4 mr-2" />
               Medications
             </TabsTrigger>
-            <TabsTrigger value="labs" className="data-[state=active]:bg-background">
-              <TestTube className="w-4 h-4 mr-2" />
-              Labs
+            <TabsTrigger value="trials" className="data-[state=active]:bg-background">
+              <FlaskConical className="w-4 h-4 mr-2" />
+              Trials
             </TabsTrigger>
             <TabsTrigger value="care-gaps" className="data-[state=active]:bg-background relative">
               <AlertTriangle className="w-4 h-4 mr-2" />
@@ -389,6 +392,10 @@ export default function Dashboard() {
               {careGaps.filter(g => g.status === 'due').length > 0 && (
                 <Badge variant="destructive" className="ml-2 h-5 px-1.5">{careGaps.filter(g => g.status === 'due').length}</Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="overview" className="data-[state=active]:bg-background">
+              <Home className="w-4 h-4 mr-2" />
+              All Data
             </TabsTrigger>
           </TabsList>
 
@@ -408,7 +415,46 @@ export default function Dashboard() {
             />
           </TabsContent>
 
-          {/* Overview Tab */}
+          {/* Timeline Tab - Longitudinal Health Analysis (Pillar 1) */}
+          <TabsContent value="timeline" className="animate-fade-in">
+            <LongitudinalTimeline
+              observations={observations}
+              conditions={conditions}
+              medications={medications}
+              patientBirthDate={patient?.birthDate}
+            />
+          </TabsContent>
+
+          {/* Navigator Tab - Health System Navigation (Pillar 2) */}
+          <TabsContent value="navigator" className="animate-fade-in">
+            <HealthNavigator
+              patient={patient}
+              conditions={conditions}
+              medications={medications}
+              allergies={allergies}
+            />
+          </TabsContent>
+
+          {/* Medications Tab - Comprehensive Medication Hub (Pillar 4) */}
+          <TabsContent value="medications" className="animate-fade-in">
+            <MedicationHub
+              medications={medications}
+              conditions={conditions}
+              allergies={allergies}
+            />
+          </TabsContent>
+
+          {/* Trials Tab - Clinical Trials & New Treatments (Pillar 3) */}
+          <TabsContent value="trials" className="animate-fade-in">
+            <ClinicalTrialsMatcher
+              conditions={conditions}
+              medications={medications}
+              patientAge={patientAge}
+              patientGender={patient?.gender}
+            />
+          </TabsContent>
+
+          {/* Overview Tab - All Data */}
           <TabsContent value="overview" className="space-y-6 animate-fade-in">
             {/* Quick Stats */}
             <div className="grid-summary">
@@ -603,276 +649,6 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
-            </div>
-          </TabsContent>
-
-          {/* Vitals Tab */}
-          <TabsContent value="vitals" className="animate-fade-in">
-            <div className="card-elevated p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground">Vital Signs</h3>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <Info className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>Vital signs show how well your body's basic functions are working. Trends help identify changes over time.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              {vitals.length > 0 ? (
-                <div className="space-y-4">
-                  {vitals.map((obs, i) => {
-                    const trend = getObservationTrend(obs, observations);
-                    const interpretation = getObservationInterpretation(obs);
-                    const freshness = getDataFreshness(obs.effectiveDateTime);
-
-                    return (
-                      <div key={i} className="list-item">
-                        <div className="category-icon-vitals flex-shrink-0">
-                          <Activity className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-foreground">
-                            {obs.code?.coding?.[0]?.display || 'Vital Sign'}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              freshness.status === 'fresh' ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300' :
-                              freshness.status === 'stale' ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300' :
-                              'bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300'
-                            }`}>
-                              {freshness.text}
-                            </span>
-                            {interpretation.text && (
-                              <span className={`text-xs ${
-                                interpretation.status === 'normal' ? 'text-emerald-600 dark:text-emerald-400' :
-                                interpretation.status === 'warning' ? 'text-amber-600 dark:text-amber-400' :
-                                'text-rose-600 dark:text-rose-400'
-                              }`}>
-                                {interpretation.text}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right flex items-center gap-2">
-                          <div>
-                            <p className="text-xl font-semibold text-foreground">
-                              {obs.valueQuantity?.value ?? 'N/A'}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {obs.valueQuantity?.unit || ''}
-                            </p>
-                          </div>
-                          {trend && (
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                              trend === 'up' ? 'bg-rose-100 dark:bg-rose-900' :
-                              trend === 'down' ? 'bg-emerald-100 dark:bg-emerald-900' :
-                              'bg-secondary'
-                            }`}>
-                              {trend === 'up' && <TrendingUp className="w-4 h-4 text-rose-500" />}
-                              {trend === 'down' && <TrendingDown className="w-4 h-4 text-emerald-500" />}
-                              {trend === 'stable' && <Minus className="w-4 h-4 text-muted-foreground" />}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <div className="empty-state-icon">
-                    <Activity className="w-8 h-8" />
-                  </div>
-                  <p className="empty-state-title">No vital signs recorded</p>
-                  <p className="empty-state-description">Vital sign readings will appear here when available</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Conditions Tab */}
-          <TabsContent value="conditions" className="animate-fade-in">
-            <div className="card-elevated p-6">
-              <h3 className="font-semibold text-foreground mb-4">Health Conditions</h3>
-              {conditions.length > 0 ? (
-                <div className="space-y-4">
-                  {conditions.map((condition, i) => (
-                    <div key={i} className="list-item">
-                      <div className="category-icon-vitals flex-shrink-0">
-                        <Heart className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">
-                          {condition.code?.coding?.[0]?.display || 'Unknown Condition'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Recorded: {formatDate(condition.recordedDate)}
-                        </p>
-                      </div>
-                      <Badge variant={condition.clinicalStatus?.coding?.[0]?.code === 'active' ? 'default' : 'secondary'}>
-                        {condition.clinicalStatus?.coding?.[0]?.code || 'unknown'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <div className="empty-state-icon">
-                    <Heart className="w-8 h-8" />
-                  </div>
-                  <p className="empty-state-title">No conditions recorded</p>
-                  <p className="empty-state-description">Health conditions will appear here when available</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Medications Tab */}
-          <TabsContent value="medications" className="animate-fade-in">
-            <div className="card-elevated p-6">
-              <h3 className="font-semibold text-foreground mb-4">Medications</h3>
-              {medications.length > 0 ? (
-                <div className="space-y-4">
-                  {medications.map((med, i) => (
-                    <div key={i} className="list-item">
-                      <div className="category-icon-medications flex-shrink-0">
-                        <Pill className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">
-                          {med.medicationCodeableConcept?.coding?.[0]?.display || 'Unknown Medication'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {med.dosageInstruction?.[0]?.text || 'No dosage information'}
-                        </p>
-                        {med.authoredOn && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Prescribed: {formatDate(med.authoredOn)}
-                          </p>
-                        )}
-                      </div>
-                      <Badge variant={med.status === 'active' ? 'default' : 'secondary'}>
-                        {med.status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <div className="empty-state-icon">
-                    <Pill className="w-8 h-8" />
-                  </div>
-                  <p className="empty-state-title">No medications recorded</p>
-                  <p className="empty-state-description">Medication information will appear here when available</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Labs Tab */}
-          <TabsContent value="labs" className="animate-fade-in">
-            <div className="card-elevated p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground">Laboratory Results</h3>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <Info className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>Lab tests help diagnose conditions and monitor your health. Results are compared to standard reference ranges.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              {labs.length > 0 ? (
-                <div className="space-y-4">
-                  {labs.map((obs, i) => {
-                    const trend = getObservationTrend(obs, observations);
-                    const interpretation = getObservationInterpretation(obs);
-                    const freshness = getDataFreshness(obs.effectiveDateTime);
-
-                    return (
-                      <div key={i} className="list-item">
-                        <div className="category-icon-labs flex-shrink-0">
-                          <TestTube className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-foreground">
-                            {obs.code?.coding?.[0]?.display || 'Lab Test'}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              freshness.status === 'fresh' ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300' :
-                              freshness.status === 'stale' ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300' :
-                              'bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300'
-                            }`}>
-                              {freshness.text}
-                            </span>
-                            {interpretation.text && (
-                              <span className={`text-xs ${
-                                interpretation.status === 'normal' ? 'text-emerald-600 dark:text-emerald-400' :
-                                interpretation.status === 'warning' ? 'text-amber-600 dark:text-amber-400' :
-                                'text-rose-600 dark:text-rose-400'
-                              }`}>
-                                {interpretation.text}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right flex items-center gap-2">
-                          <div>
-                            <p className="text-xl font-semibold text-foreground">
-                              {obs.valueQuantity?.value ?? obs.valueString ?? 'N/A'}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {obs.valueQuantity?.unit || ''}
-                            </p>
-                          </div>
-                          {trend && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center cursor-help ${
-                                    trend === 'up' ? 'bg-amber-100 dark:bg-amber-900' :
-                                    trend === 'down' ? 'bg-emerald-100 dark:bg-emerald-900' :
-                                    'bg-secondary'
-                                  }`}>
-                                    {trend === 'up' && <TrendingUp className="w-4 h-4 text-amber-500" />}
-                                    {trend === 'down' && <TrendingDown className="w-4 h-4 text-emerald-500" />}
-                                    {trend === 'stable' && <Minus className="w-4 h-4 text-muted-foreground" />}
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {trend === 'up' && 'Increased from previous test'}
-                                  {trend === 'down' && 'Decreased from previous test'}
-                                  {trend === 'stable' && 'Stable compared to previous test'}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <div className="empty-state-icon">
-                    <TestTube className="w-8 h-8" />
-                  </div>
-                  <p className="empty-state-title">No lab results recorded</p>
-                  <p className="empty-state-description">Laboratory results will appear here when available</p>
-                </div>
-              )}
             </div>
           </TabsContent>
 
