@@ -3063,16 +3063,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Epic SMART on FHIR OAuth callback endpoint
-  const EPIC_SANDBOX_CONFIG = {
-    tokenEndpoint: 'https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token',
-    fhirBaseUrl: 'https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4',
-    clientId: 'be26c1d8-7f24-454f-b0e6-8e88d23f3d5e' // Epic's sandbox non-production client ID
-  };
-
-  app.post('/api/fhir/epic/callback', async (req: Request, res: Response) => {
+  // SMART on FHIR OAuth callback endpoint (works with SMART Health IT Launcher and Epic)
+  app.post('/api/fhir/smart/callback', async (req: Request, res: Response) => {
     try {
-      const { code, redirectUri } = req.body;
+      const { code, redirectUri, provider } = req.body;
 
       if (!code) {
         return res.status(400).json({
@@ -3081,8 +3075,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Determine token endpoint based on provider
+      let tokenEndpoint: string;
+      let fhirBaseUrl: string;
+      const clientId = 'my_web_app'; // Public client ID for SMART launcher
+
+      if (provider === 'smart-sandbox') {
+        // SMART Health IT Launcher
+        const launchConfig = Buffer.from(JSON.stringify({ h: '1', i: '1', j: '1' })).toString('base64');
+        tokenEndpoint = `https://launch.smarthealthit.org/v/r4/sim/${launchConfig}/auth/token`;
+        fhirBaseUrl = `https://launch.smarthealthit.org/v/r4/sim/${launchConfig}/fhir`;
+      } else {
+        // Epic sandbox (fallback)
+        tokenEndpoint = 'https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token';
+        fhirBaseUrl = 'https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4';
+      }
+
       // Exchange authorization code for access token
-      const tokenResponse = await fetch(EPIC_SANDBOX_CONFIG.tokenEndpoint, {
+      const tokenResponse = await fetch(tokenEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
@@ -3091,13 +3101,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           grant_type: 'authorization_code',
           code: code,
           redirect_uri: redirectUri,
-          client_id: EPIC_SANDBOX_CONFIG.clientId
+          client_id: clientId
         })
       });
 
       if (!tokenResponse.ok) {
         const errorData = await tokenResponse.text();
-        console.error('Epic token exchange failed:', errorData);
+        console.error('Token exchange failed:', errorData);
         return res.status(400).json({
           success: false,
           message: 'Failed to exchange authorization code'
@@ -3107,7 +3117,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tokenData = await tokenResponse.json();
 
       // Extract patient ID from the token response
-      // Epic returns patient ID in the response
       const patientId = tokenData.patient;
 
       if (!patientId) {
@@ -3117,15 +3126,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create FHIR session with Epic tokens
+      // Create FHIR session with tokens
       const sessionData = {
-        provider: 'epic-sandbox',
+        provider: provider || 'smart-sandbox',
         accessToken: tokenData.access_token,
         refreshToken: tokenData.refresh_token || null,
         tokenExpiry: new Date(Date.now() + (tokenData.expires_in || 3600) * 1000),
-        fhirServer: EPIC_SANDBOX_CONFIG.fhirBaseUrl,
+        fhirServer: fhirBaseUrl,
         patientId: patientId,
-        scope: tokenData.scope || 'patient/*.rs',
+        scope: tokenData.scope || 'patient/*.read',
         state: uuidv4(),
         current: true
       };
@@ -3135,15 +3144,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(200).json({
         success: true,
-        message: 'Epic connection successful',
+        message: 'SMART connection successful',
         patientId: patientId
       });
     } catch (error) {
-      console.error('Epic OAuth callback error:', error);
+      console.error('SMART OAuth callback error:', error);
       res.status(500).json({
         success: false,
-        message: 'Failed to complete Epic authentication'
+        message: 'Failed to complete SMART authentication'
       });
+    }
+  });
+
+  // Keep Epic callback for backwards compatibility
+  app.post('/api/fhir/epic/callback', async (req: Request, res: Response) => {
+    req.body.provider = 'epic-sandbox';
+    // Forward to smart callback handler
+    const { code, redirectUri } = req.body;
+
+    const launchConfig = Buffer.from(JSON.stringify({ h: '1', i: '1', j: '1' })).toString('base64');
+    const tokenEndpoint = 'https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token';
+    const fhirBaseUrl = 'https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4';
+    const clientId = 'be26c1d8-7f24-454f-b0e6-8e88d23f3d5e';
+
+    try {
+      const tokenResponse = await fetch(tokenEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: redirectUri,
+          client_id: clientId
+        })
+      });
+
+      if (!tokenResponse.ok) {
+        const errorData = await tokenResponse.text();
+        console.error('Epic token exchange failed:', errorData);
+        return res.status(400).json({ success: false, message: 'Failed to exchange authorization code' });
+      }
+
+      const tokenData = await tokenResponse.json();
+      const patientId = tokenData.patient;
+
+      if (!patientId) {
+        return res.status(400).json({ success: false, message: 'No patient context in token response' });
+      }
+
+      const sessionData = {
+        provider: 'epic-sandbox',
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token || null,
+        tokenExpiry: new Date(Date.now() + (tokenData.expires_in || 3600) * 1000),
+        fhirServer: fhirBaseUrl,
+        patientId: patientId,
+        scope: tokenData.scope || 'patient/*.rs',
+        state: uuidv4(),
+        current: true
+      };
+
+      await storage.createFhirSession(sessionData);
+      res.status(200).json({ success: true, message: 'Epic connection successful', patientId: patientId });
+    } catch (error) {
+      console.error('Epic OAuth callback error:', error);
+      res.status(500).json({ success: false, message: 'Failed to complete Epic authentication' });
     }
   });
 
@@ -3848,8 +3913,8 @@ async function createFhirClient(session: any) {
     };
   }
 
-  // Special handling for Epic sandbox - use direct fetch with Bearer token
-  if (session.provider === 'epic-sandbox') {
+  // Special handling for SMART sandbox and Epic sandbox - use direct fetch with Bearer token
+  if (session.provider === 'epic-sandbox' || session.provider === 'smart-sandbox') {
     return {
       request: async (resourceUrl: string) => {
         try {
@@ -3859,15 +3924,15 @@ async function createFhirClient(session: any) {
               'Authorization': `Bearer ${session.accessToken}`,
               'Accept': 'application/fhir+json'
             },
-            signal: AbortSignal.timeout(15000) // 15 second timeout for Epic
+            signal: AbortSignal.timeout(15000) // 15 second timeout
           });
           if (!response.ok) {
-            console.error(`Epic FHIR error: ${response.status} - ${response.statusText}`);
-            throw new Error(`Epic FHIR server error: ${response.status}`);
+            console.error(`SMART FHIR error: ${response.status} - ${response.statusText}`);
+            throw new Error(`SMART FHIR server error: ${response.status}`);
           }
           return response.json();
         } catch (error) {
-          console.error('Error querying Epic FHIR server:', error);
+          console.error('Error querying SMART FHIR server:', error);
           // Return empty bundle structure for graceful degradation
           return { entry: [] };
         }

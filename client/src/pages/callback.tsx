@@ -24,8 +24,8 @@ export default function Callback() {
                 return;
             }
 
-            // Handle Epic Sandbox OAuth flow
-            if (provider === 'epic-sandbox' && code) {
+            // Handle SMART Sandbox or Epic OAuth flow
+            if ((provider === 'smart-sandbox' || provider === 'epic-sandbox') && code) {
                 const savedState = localStorage.getItem('epic_oauth_state');
 
                 // Verify state to prevent CSRF
@@ -38,12 +38,13 @@ export default function Callback() {
 
                 try {
                     // Exchange code for tokens via backend
-                    const response = await fetch('/api/fhir/epic/callback', {
+                    const response = await fetch('/api/fhir/smart/callback', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             code,
-                            redirectUri: `${window.location.origin}/callback`
+                            redirectUri: `${window.location.origin}/callback`,
+                            provider: provider
                         })
                     });
 
@@ -59,8 +60,8 @@ export default function Callback() {
                     // Redirect to dashboard
                     window.location.href = '/dashboard';
                 } catch (err) {
-                    console.error('Epic OAuth Error:', err);
-                    setError(err instanceof Error ? err.message : 'Failed to connect to Epic');
+                    console.error('SMART OAuth Error:', err);
+                    setError(err instanceof Error ? err.message : 'Failed to connect to SMART sandbox');
                     setTimeout(() => setLocation('/'), 3000);
                 }
                 return;

@@ -29,13 +29,15 @@ import {
   ExternalLink
 } from 'lucide-react';
 
-// Epic Sandbox OAuth Configuration
-const EPIC_SANDBOX_CONFIG = {
-  authorizationEndpoint: 'https://fhir.epic.com/interconnect-fhir-oauth/oauth2/authorize',
-  tokenEndpoint: 'https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token',
-  fhirBaseUrl: 'https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4',
-  clientId: 'be26c1d8-7f24-454f-b0e6-8e88d23f3d5e', // Epic's sandbox non-production client ID
-  scope: 'launch/patient patient/*.rs openid fhirUser',
+// SMART Health IT Public Sandbox Configuration
+// This uses the public SMART launcher which doesn't require app registration
+const SMART_SANDBOX_CONFIG = {
+  // SMART Health IT Launcher - simulates Epic/Cerner with test patients
+  launcherUrl: 'https://launch.smarthealthit.org',
+  fhirBaseUrl: 'https://launch.smarthealthit.org/v/r4/fhir',
+  // Public client - no registration required
+  clientId: 'my_web_app',
+  scope: 'launch/patient patient/*.read openid fhirUser',
   redirectUri: typeof window !== 'undefined' ? `${window.location.origin}/callback` : ''
 };
 
@@ -59,18 +61,35 @@ export default function Home() {
     // Generate a random state for CSRF protection
     const state = crypto.randomUUID();
     localStorage.setItem('epic_oauth_state', state);
-    localStorage.setItem('selected_provider', 'epic-sandbox');
+    localStorage.setItem('selected_provider', 'smart-sandbox');
 
-    // Build the authorization URL
-    const authUrl = new URL(EPIC_SANDBOX_CONFIG.authorizationEndpoint);
+    // Use SMART Health IT Launcher - publicly accessible sandbox
+    // The launcher will simulate an EHR launch and let user pick a test patient
+    const launchParams = {
+      launch_type: 'patient-standalone',
+      patient: '', // Empty = let user pick
+      fhir_version: 'r4',
+      skip_login: false,
+      skip_auth: false
+    };
+
+    // Encode launch parameters
+    const launchConfig = btoa(JSON.stringify({
+      h: '1', // Show patient picker
+      i: '1', // Include patient
+      j: '1'  // Include encounter
+    }));
+
+    // Build the SMART launcher authorization URL
+    const authUrl = new URL(`${SMART_SANDBOX_CONFIG.launcherUrl}/v/r4/sim/${launchConfig}/auth/authorize`);
     authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('client_id', EPIC_SANDBOX_CONFIG.clientId);
-    authUrl.searchParams.set('redirect_uri', EPIC_SANDBOX_CONFIG.redirectUri);
-    authUrl.searchParams.set('scope', EPIC_SANDBOX_CONFIG.scope);
+    authUrl.searchParams.set('client_id', SMART_SANDBOX_CONFIG.clientId);
+    authUrl.searchParams.set('redirect_uri', SMART_SANDBOX_CONFIG.redirectUri);
+    authUrl.searchParams.set('scope', SMART_SANDBOX_CONFIG.scope);
     authUrl.searchParams.set('state', state);
-    authUrl.searchParams.set('aud', EPIC_SANDBOX_CONFIG.fhirBaseUrl);
+    authUrl.searchParams.set('aud', `${SMART_SANDBOX_CONFIG.launcherUrl}/v/r4/sim/${launchConfig}/fhir`);
 
-    // Redirect to Epic's authorization page
+    // Redirect to SMART launcher
     window.location.href = authUrl.toString();
   };
 
@@ -192,7 +211,7 @@ export default function Home() {
               </Button>
               <Button size="lg" variant="outline" onClick={handleEpicConnect} disabled={isEpicLoading} className="text-base px-8">
                 <Stethoscope className="w-5 h-5 mr-2" />
-                {isEpicLoading ? 'Connecting...' : 'Epic Sandbox'}
+                {isEpicLoading ? 'Connecting...' : 'SMART Sandbox'}
               </Button>
             </div>
           </div>
@@ -265,7 +284,7 @@ export default function Home() {
                   </Button>
                   <Button size="lg" variant="outline" onClick={handleEpicConnect} disabled={isEpicLoading}>
                     <Stethoscope className="w-5 h-5 mr-2" />
-                    {isEpicLoading ? 'Connecting...' : 'Epic Sandbox'}
+                    {isEpicLoading ? 'Connecting...' : 'SMART Sandbox'}
                   </Button>
                 </div>
               </div>
@@ -286,7 +305,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Epic Sandbox Section */}
+      {/* SMART Sandbox Section */}
       <section className="py-16 bg-secondary/30">
         <div className="container-app">
           <div className="card-elevated p-8 md:p-10">
@@ -298,22 +317,21 @@ export default function Home() {
               </div>
               <div className="flex-1 text-center md:text-left">
                 <h3 className="text-xl font-semibold text-foreground mb-2">
-                  Connect to Epic's SMART on FHIR Sandbox
+                  Connect to SMART Health IT Sandbox
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  Test the SMART on FHIR integration with Epic's official sandbox environment.
-                  Use test credentials to see real EHR data flow.
+                  Test the SMART on FHIR integration with real EHR workflows.
+                  Choose from dozens of synthetic test patients with full medical histories.
                 </p>
-                <div className="inline-flex items-center gap-4 px-4 py-3 rounded-xl bg-secondary text-sm font-mono">
-                  <span><strong>Username:</strong> fhircamila</span>
-                  <span className="text-muted-foreground">|</span>
-                  <span><strong>Password:</strong> epicepic1</span>
+                <div className="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <span>No login required - Select any test patient</span>
                 </div>
               </div>
               <div className="flex-shrink-0">
                 <Button onClick={handleEpicConnect} disabled={isEpicLoading} className="gap-2">
                   <ExternalLink className="w-4 h-4" />
-                  {isEpicLoading ? 'Connecting...' : 'Connect to Epic'}
+                  {isEpicLoading ? 'Connecting...' : 'Try SMART Sandbox'}
                 </Button>
               </div>
             </div>
