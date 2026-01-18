@@ -341,6 +341,14 @@ const developmentProviders: FhirProvider[] = [
     type: 'vendor'
   },
   {
+    id: 'epic-sandbox',
+    name: 'Epic Sandbox (Test Patient)',
+    url: 'https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4',
+    description: 'Connect to Epic\'s test sandbox with sample patient data (fhircamila/epicepic1)',
+    logoIcon: 'stethoscope',
+    type: 'vendor'
+  },
+  {
     id: 'hapi',
     name: 'HAPI FHIR Server (Test)',
     url: 'https://hapi.fhir.org/baseR4',

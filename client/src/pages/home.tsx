@@ -24,8 +24,20 @@ import {
   Play,
   ChevronRight,
   Lock,
-  AlertCircle
+  AlertCircle,
+  Stethoscope,
+  ExternalLink
 } from 'lucide-react';
+
+// Epic Sandbox OAuth Configuration
+const EPIC_SANDBOX_CONFIG = {
+  authorizationEndpoint: 'https://fhir.epic.com/interconnect-fhir-oauth/oauth2/authorize',
+  tokenEndpoint: 'https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token',
+  fhirBaseUrl: 'https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4',
+  clientId: 'be26c1d8-7f24-454f-b0e6-8e88d23f3d5e', // Epic's sandbox non-production client ID
+  scope: 'launch/patient patient/*.rs openid fhirUser',
+  redirectUri: typeof window !== 'undefined' ? `${window.location.origin}/callback` : ''
+};
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -33,11 +45,33 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isEpicLoading, setIsEpicLoading] = useState(false);
 
   const handleDemoClick = () => {
     setShowPasswordDialog(true);
     setPassword('');
     setError('');
+  };
+
+  const handleEpicConnect = () => {
+    setIsEpicLoading(true);
+
+    // Generate a random state for CSRF protection
+    const state = crypto.randomUUID();
+    localStorage.setItem('epic_oauth_state', state);
+    localStorage.setItem('selected_provider', 'epic-sandbox');
+
+    // Build the authorization URL
+    const authUrl = new URL(EPIC_SANDBOX_CONFIG.authorizationEndpoint);
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('client_id', EPIC_SANDBOX_CONFIG.clientId);
+    authUrl.searchParams.set('redirect_uri', EPIC_SANDBOX_CONFIG.redirectUri);
+    authUrl.searchParams.set('scope', EPIC_SANDBOX_CONFIG.scope);
+    authUrl.searchParams.set('state', state);
+    authUrl.searchParams.set('aud', EPIC_SANDBOX_CONFIG.fhirBaseUrl);
+
+    // Redirect to Epic's authorization page
+    window.location.href = authUrl.toString();
   };
 
   const handleDemoConnect = async () => {
@@ -156,9 +190,9 @@ export default function Home() {
                 <Play className="w-5 h-5 mr-2" />
                 Explore Demo
               </Button>
-              <Button size="lg" variant="outline" className="text-base px-8">
-                Learn More
-                <ChevronRight className="w-5 h-5 ml-1" />
+              <Button size="lg" variant="outline" onClick={handleEpicConnect} disabled={isEpicLoading} className="text-base px-8">
+                <Stethoscope className="w-5 h-5 mr-2" />
+                {isEpicLoading ? 'Connecting...' : 'Epic Sandbox'}
               </Button>
             </div>
           </div>
@@ -224,10 +258,16 @@ export default function Home() {
                   ))}
                 </ul>
 
-                <Button size="lg" onClick={handleDemoClick}>
-                  <Play className="w-5 h-5 mr-2" />
-                  Launch Demo
-                </Button>
+                <div className="flex flex-wrap gap-3">
+                  <Button size="lg" onClick={handleDemoClick}>
+                    <Play className="w-5 h-5 mr-2" />
+                    Launch Demo
+                  </Button>
+                  <Button size="lg" variant="outline" onClick={handleEpicConnect} disabled={isEpicLoading}>
+                    <Stethoscope className="w-5 h-5 mr-2" />
+                    {isEpicLoading ? 'Connecting...' : 'Epic Sandbox'}
+                  </Button>
+                </div>
               </div>
 
               <div className="relative">
@@ -240,6 +280,41 @@ export default function Home() {
                     <p className="text-sm text-muted-foreground">Click to explore</p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Epic Sandbox Section */}
+      <section className="py-16 bg-secondary/30">
+        <div className="container-app">
+          <div className="card-elevated p-8 md:p-10">
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-orange-100 dark:bg-orange-950 flex items-center justify-center">
+                  <Stethoscope className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+                </div>
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-xl font-semibold text-foreground mb-2">
+                  Connect to Epic's SMART on FHIR Sandbox
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Test the SMART on FHIR integration with Epic's official sandbox environment.
+                  Use test credentials to see real EHR data flow.
+                </p>
+                <div className="inline-flex items-center gap-4 px-4 py-3 rounded-xl bg-secondary text-sm font-mono">
+                  <span><strong>Username:</strong> fhircamila</span>
+                  <span className="text-muted-foreground">|</span>
+                  <span><strong>Password:</strong> epicepic1</span>
+                </div>
+              </div>
+              <div className="flex-shrink-0">
+                <Button onClick={handleEpicConnect} disabled={isEpicLoading} className="gap-2">
+                  <ExternalLink className="w-4 h-4" />
+                  {isEpicLoading ? 'Connecting...' : 'Connect to Epic'}
+                </Button>
               </div>
             </div>
           </div>

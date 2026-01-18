@@ -3063,6 +3063,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Epic SMART on FHIR OAuth callback endpoint
+  const EPIC_SANDBOX_CONFIG = {
+    tokenEndpoint: 'https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token',
+    fhirBaseUrl: 'https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4',
+    clientId: 'be26c1d8-7f24-454f-b0e6-8e88d23f3d5e' // Epic's sandbox non-production client ID
+  };
+
+  app.post('/api/fhir/epic/callback', async (req: Request, res: Response) => {
+    try {
+      const { code, redirectUri } = req.body;
+
+      if (!code) {
+        return res.status(400).json({
+          success: false,
+          message: 'Authorization code is required'
+        });
+      }
+
+      // Exchange authorization code for access token
+      const tokenResponse = await fetch(EPIC_SANDBOX_CONFIG.tokenEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: redirectUri,
+          client_id: EPIC_SANDBOX_CONFIG.clientId
+        })
+      });
+
+      if (!tokenResponse.ok) {
+        const errorData = await tokenResponse.text();
+        console.error('Epic token exchange failed:', errorData);
+        return res.status(400).json({
+          success: false,
+          message: 'Failed to exchange authorization code'
+        });
+      }
+
+      const tokenData = await tokenResponse.json();
+
+      // Extract patient ID from the token response
+      // Epic returns patient ID in the response
+      const patientId = tokenData.patient;
+
+      if (!patientId) {
+        return res.status(400).json({
+          success: false,
+          message: 'No patient context in token response'
+        });
+      }
+
+      // Create FHIR session with Epic tokens
+      const sessionData = {
+        provider: 'epic-sandbox',
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token || null,
+        tokenExpiry: new Date(Date.now() + (tokenData.expires_in || 3600) * 1000),
+        fhirServer: EPIC_SANDBOX_CONFIG.fhirBaseUrl,
+        patientId: patientId,
+        scope: tokenData.scope || 'patient/*.rs',
+        state: uuidv4(),
+        current: true
+      };
+
+      // Save session to storage
+      await storage.createFhirSession(sessionData);
+
+      res.status(200).json({
+        success: true,
+        message: 'Epic connection successful',
+        patientId: patientId
+      });
+    } catch (error) {
+      console.error('Epic OAuth callback error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to complete Epic authentication'
+      });
+    }
+  });
+
   // Current FHIR session route
   app.get('/api/fhir/sessions/current', async (req: Request, res: Response) => {
     try {
@@ -3757,6 +3841,33 @@ async function createFhirClient(session: any) {
           return response.json();
         } catch (error) {
           console.error('Error querying HAPI FHIR server:', error);
+          // Return empty bundle structure for graceful degradation
+          return { entry: [] };
+        }
+      }
+    };
+  }
+
+  // Special handling for Epic sandbox - use direct fetch with Bearer token
+  if (session.provider === 'epic-sandbox') {
+    return {
+      request: async (resourceUrl: string) => {
+        try {
+          const url = `${session.fhirServer}/${resourceUrl}`;
+          const response = await fetch(url, {
+            headers: {
+              'Authorization': `Bearer ${session.accessToken}`,
+              'Accept': 'application/fhir+json'
+            },
+            signal: AbortSignal.timeout(15000) // 15 second timeout for Epic
+          });
+          if (!response.ok) {
+            console.error(`Epic FHIR error: ${response.status} - ${response.statusText}`);
+            throw new Error(`Epic FHIR server error: ${response.status}`);
+          }
+          return response.json();
+        } catch (error) {
+          console.error('Error querying Epic FHIR server:', error);
           // Return empty bundle structure for graceful degradation
           return { entry: [] };
         }
