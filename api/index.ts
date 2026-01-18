@@ -46,6 +46,84 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ success: true, message: 'Session ended' });
     }
 
+    // Handle FHIR resource requests for SMART sandbox
+    if (demoSession?.provider === 'smart-sandbox' && req.method === 'GET') {
+      // Handle patient endpoint - returns single patient
+      if (req.url === '/api/fhir/patient') {
+        try {
+          const fhirUrl = `${demoSession.fhirServer}/Patient/${demoSession.patientId}`;
+          const fhirResponse = await fetch(fhirUrl, {
+            headers: {
+              'Authorization': `Bearer ${demoSession.accessToken}`,
+              'Accept': 'application/fhir+json'
+            }
+          });
+
+          if (!fhirResponse.ok) {
+            console.error(`Patient fetch failed: ${fhirResponse.status}`);
+            return res.status(200).json({});
+          }
+
+          const patientData = await fhirResponse.json();
+          return res.status(200).json(patientData);
+        } catch (error) {
+          console.error('Patient fetch error:', error);
+          return res.status(200).json({});
+        }
+      }
+
+      // Handle other FHIR resources that use search
+      const fhirResourcePatterns = [
+        '/api/fhir/condition',
+        '/api/fhir/observation',
+        '/api/fhir/medicationrequest',
+        '/api/fhir/allergyintolerance',
+        '/api/fhir/immunization',
+        '/api/fhir/procedure',
+        '/api/fhir/encounter',
+        '/api/fhir/diagnosticreport'
+      ];
+
+      const matchedPattern = fhirResourcePatterns.find(pattern =>
+        req.url?.toLowerCase().startsWith(pattern)
+      );
+
+      if (matchedPattern) {
+        try {
+          // Map endpoint to FHIR resource type
+          const resourceType = matchedPattern.replace('/api/fhir/', '');
+          const fhirResourceType = resourceType.charAt(0).toUpperCase() + resourceType.slice(1);
+
+          // Build FHIR server URL
+          const fhirUrl = `${demoSession.fhirServer}/${fhirResourceType}?patient=${demoSession.patientId}`;
+
+          const fhirResponse = await fetch(fhirUrl, {
+            headers: {
+              'Authorization': `Bearer ${demoSession.accessToken}`,
+              'Accept': 'application/fhir+json'
+            }
+          });
+
+          if (!fhirResponse.ok) {
+            console.error(`FHIR request failed: ${fhirResponse.status}`);
+            return res.status(200).json([]); // Graceful fallback
+          }
+
+          const fhirData = await fhirResponse.json();
+
+          // Extract resources from bundle
+          if (fhirData.entry && Array.isArray(fhirData.entry)) {
+            return res.status(200).json(fhirData.entry.map((e: any) => e.resource));
+          }
+
+          return res.status(200).json([]);
+        } catch (error) {
+          console.error('FHIR proxy error:', error);
+          return res.status(200).json([]); // Graceful fallback
+        }
+      }
+    }
+
     // Handle other demo FHIR endpoints
     if (req.url?.startsWith('/api/fhir/demo/')) {
       const resourcePath = req.url.replace('/api/fhir/demo/', '');
@@ -220,6 +298,97 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         total: 0,
         entry: []
       });
+    }
+
+    // Handle SMART on FHIR OAuth callback
+    if (req.method === 'POST' && req.url === '/api/fhir/smart/callback') {
+      const { code, redirectUri, provider } = req.body as any;
+
+      if (!code) {
+        return res.status(400).json({
+          success: false,
+          message: 'Authorization code is required'
+        });
+      }
+
+      // Determine token endpoint based on provider
+      let tokenEndpoint: string;
+      let fhirBaseUrl: string;
+      const clientId = 'my_web_app'; // Public client ID for SMART launcher
+
+      if (provider === 'smart-sandbox') {
+        // SMART Health IT Launcher
+        const launchConfig = Buffer.from(JSON.stringify({ h: '1', i: '1', j: '1' })).toString('base64');
+        tokenEndpoint = `https://launch.smarthealthit.org/v/r4/sim/${launchConfig}/auth/token`;
+        fhirBaseUrl = `https://launch.smarthealthit.org/v/r4/sim/${launchConfig}/fhir`;
+      } else {
+        // Epic sandbox (fallback)
+        tokenEndpoint = 'https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token';
+        fhirBaseUrl = 'https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4';
+      }
+
+      try {
+        // Exchange authorization code for access token
+        const tokenResponse = await fetch(tokenEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: new URLSearchParams({
+            grant_type: 'authorization_code',
+            code: code,
+            redirect_uri: redirectUri,
+            client_id: clientId
+          })
+        });
+
+        if (!tokenResponse.ok) {
+          const errorData = await tokenResponse.text();
+          console.error('Token exchange failed:', errorData);
+          return res.status(400).json({
+            success: false,
+            message: 'Failed to exchange authorization code'
+          });
+        }
+
+        const tokenData = await tokenResponse.json();
+
+        // Extract patient ID from the token response
+        const patientId = tokenData.patient;
+
+        if (!patientId) {
+          return res.status(400).json({
+            success: false,
+            message: 'No patient context in token response'
+          });
+        }
+
+        // Create FHIR session with tokens
+        demoSession = {
+          id: Date.now(),
+          provider: provider || 'smart-sandbox',
+          accessToken: tokenData.access_token,
+          refreshToken: tokenData.refresh_token || null,
+          tokenExpiry: new Date(Date.now() + (tokenData.expires_in || 3600) * 1000).toISOString(),
+          fhirServer: fhirBaseUrl,
+          patientId: patientId,
+          scope: tokenData.scope || 'patient/*.read',
+          current: true,
+          createdAt: new Date().toISOString()
+        };
+
+        return res.status(200).json({
+          success: true,
+          message: 'SMART connection successful',
+          patientId: patientId
+        });
+      } catch (error) {
+        console.error('SMART OAuth callback error:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to complete SMART authentication'
+        });
+      }
     }
 
     // Handle care gaps endpoint
