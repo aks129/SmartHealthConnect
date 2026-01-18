@@ -1,61 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { Sidebar } from '@/components/health/Sidebar';
-import { PatientSummary } from '@/components/health/PatientSummary';
-import { PatientSummaryIPS } from '@/components/health/PatientSummaryIPS';
-import { ConditionsSection } from '@/components/health/ConditionsSection';
-import { ObservationsSection } from '@/components/health/ObservationsSection';
-import { ConnectionDetails } from '@/components/health/ConnectionDetails';
-import { ConnectSelector } from '@/components/health/ConnectSelector';
-import { CareGapsSection } from '@/components/health/CareGapsSection';
-import { InsuranceSection } from '@/components/health/InsuranceSection';
-import { HealthFeed } from '@/components/health/HealthFeed';
-import { ChatInterface } from '@/components/chat/ChatInterface';
-import { FhirExplorer } from '@/components/fhir/FhirExplorer';
-import { ProviderDirectory } from '@/components/provider/ProviderDirectory';
-import { ConnectedProviders } from '@/components/provider/ConnectedProviders';
-import { ConnectedOrganizations } from '@/components/provider/ConnectedOrganizations';
-import { ResearchDashboard } from '@/components/research/ResearchDashboard';
-import { FhirVisualizations } from '@/components/visualizations/FhirVisualizations';
-import { AdvancedAnalytics } from '@/components/analytics/AdvancedAnalytics';
-import { MedicalLiterature } from '@/components/literature/MedicalLiterature';
-import { DiabetesDashboard } from '@/components/health/DiabetesDashboard';
-import { CommunityChallenge } from '@/components/community/CommunityChallenge';
-import { ReadinessScore } from '@/components/analytics/ReadinessScore';
-import { completeSmartAuth, checkAuth, formatFhirDate } from '@/lib/fhir-client';
-import { ErrorModal } from '@/components/auth/ErrorModal';
-import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { TabNavigation } from '@/components/ui/tab-navigation';
 import { useQuery } from '@tanstack/react-query';
-import { UserSettings } from '@/components/settings/UserSettings';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ModeToggle } from '@/components/mode-toggle';
+import { checkAuth } from '@/lib/fhir-client';
 import {
-  AlertTriangle,
-  Syringe,
-  Pill,
-  PenTool,
-  Package,
-  ClipboardList,
-  TestTube,
-  Activity,
-  BarChart,
   Heart,
+  Activity,
+  Pill,
+  AlertTriangle,
+  TestTube,
+  Bell,
+  ChevronRight,
+  Home,
+  CheckCircle2,
   User,
-  Calendar,
-  CalendarPlus,
-  RefreshCw,
-  HelpCircle
+  Syringe,
+  ArrowLeft
 } from 'lucide-react';
-import { MedicalSpinner, MedicalLoadingOverlay } from '@/components/ui/medical-spinner';
-import { OnboardingCarousel } from '@/components/onboarding/OnboardingCarousel';
-import { HealthInsights } from '@/components/health/HealthInsights';
-import { HelpTooltip } from '@/components/ui/help-tooltip';
-import { MobileBottomNav, FloatingScheduleButton } from '@/components/navigation/MobileBottomNav';
-import { AppointmentScheduler } from '@/components/scheduling/AppointmentScheduler';
-import { RefillRequest, MedicationCard } from '@/components/medications/RefillRequest';
-import { BrandSwitcher } from '@/components/branding/BrandSwitcher';
-import { useGuidedTour, dashboardTourSteps, TourButton } from '@/components/tour/GuidedTour';
-import { SlideUpTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 import {
   Patient,
   Observation,
@@ -65,1169 +29,602 @@ import {
   Immunization,
   CareGap
 } from '@shared/schema';
-import { Button } from '@/components/ui/button';
 
+// Format FHIR date helper
+function formatDate(dateString?: string): string {
+  if (!dateString) return 'Unknown';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Get age from birthdate
+function getAge(birthDate?: string): number | null {
+  if (!birthDate) return null;
+  const birth = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+}
 
 export default function Dashboard() {
-  const [location, navigate] = useLocation();
+  const [, navigate] = useLocation();
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [showError, setShowError] = useState(false);
-  const [activeTab, setActiveTab] = useState('health');
-  const [activeSection, setActiveSection] = useState('summary');
-  const [showOnboarding, setShowOnboarding] = useState(() => {
-    // Check if user has seen onboarding before
-    return !localStorage.getItem('liara-onboarding-completed');
-  });
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('overview');
 
-  // Guided tour setup
-  const dashboardTour = useGuidedTour({
-    steps: dashboardTourSteps,
-    storageKey: 'liara-dashboard-tour',
-    autoStart: false,
-  });
+  // Check authentication
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const isAuthed = await checkAuth();
+        if (!isAuthed) {
+          // Try to connect to demo
+          try {
+            await fetch('/api/fhir/demo/connect', { method: 'POST' });
+          } catch {
+            navigate('/');
+            return;
+          }
+        }
+      } catch {
+        navigate('/');
+        return;
+      }
+      setIsLoading(false);
+    };
+    init();
+  }, [navigate]);
 
-  // Fetch patient data for visualizations and feed
+  // Fetch data
   const { data: patient } = useQuery<Patient>({
     queryKey: ['/api/fhir/patient'],
     enabled: !isLoading
   });
 
-  const { data: conditions = [] as Condition[] } = useQuery<Condition[]>({
+  const { data: conditions = [] } = useQuery<Condition[]>({
     queryKey: ['/api/fhir/condition'],
     enabled: !isLoading
   });
 
-  const { data: observations = [] as Observation[] } = useQuery<Observation[]>({
+  const { data: observations = [] } = useQuery<Observation[]>({
     queryKey: ['/api/fhir/observation'],
     enabled: !isLoading
   });
 
-  const { data: medications = [] as MedicationRequest[] } = useQuery<MedicationRequest[]>({
+  const { data: medications = [] } = useQuery<MedicationRequest[]>({
     queryKey: ['/api/fhir/medicationrequest'],
     enabled: !isLoading
   });
 
-  const { data: allergies = [] as AllergyIntolerance[] } = useQuery<AllergyIntolerance[]>({
+  const { data: allergies = [] } = useQuery<AllergyIntolerance[]>({
     queryKey: ['/api/fhir/allergyintolerance'],
     enabled: !isLoading
   });
 
-  const { data: immunizations = [] as Immunization[] } = useQuery<Immunization[]>({
+  const { data: immunizations = [] } = useQuery<Immunization[]>({
     queryKey: ['/api/fhir/immunization'],
     enabled: !isLoading
   });
 
-  const { data: careGaps = [] as CareGap[] } = useQuery<CareGap[]>({
+  const { data: careGaps = [] } = useQuery<CareGap[]>({
     queryKey: ['/api/fhir/care-gaps'],
     enabled: !isLoading
   });
 
-  // Check if we're in an auth callback or if we're already authenticated
-  useEffect(() => {
-    const handleAuthFlow = async () => {
-      try {
-        setIsLoading(true);
+  // Get vitals from observations
+  const vitals = observations.filter(obs =>
+    obs.code?.coding?.some(c =>
+      ['8867-4', '8480-6', '8462-4', '8310-5', '9279-1', '59408-5', '29463-7', '8302-2'].includes(c.code || '')
+    )
+  );
 
-        // First, see if there's an existing session
-        const isAuthed = await checkAuth();
-
-        if (isAuthed) {
-          setIsLoading(false);
-          return; // We're already authenticated
-        }
-
-        // If we're in a callback situation (we have a code and state in URL)
-        if (window.location.search.includes('code=') && window.location.search.includes('state=')) {
-          // Complete the SMART auth flow
-          await completeSmartAuth();
-
-          // Clean up the URL by removing the query params
-          window.history.replaceState({}, document.title, window.location.pathname);
-
-          toast({
-            title: "Connected Successfully",
-            description: "You are now connected to your health records.",
-          });
-        } else {
-          // If we're not in a callback and not already authenticated, redirect to home
-          navigate('/');
-        }
-      } catch (error) {
-        console.error("Auth error:", error);
-        setErrorMessage(error instanceof Error ? error.message : "Authentication failed. Please try again.");
-        setShowError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    handleAuthFlow();
-  }, [navigate, toast]);
-
-  // Handle connection based on hash
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash === '#connections') {
-      setActiveSection('connections');
-    }
-  }, []);
-
-  const handleOnboardingComplete = () => {
-    localStorage.setItem('liara-onboarding-completed', 'true');
-    setShowOnboarding(false);
-  };
-
-  const handleOnboardingSkip = () => {
-    localStorage.setItem('liara-onboarding-completed', 'true');
-    setShowOnboarding(false);
-  };
-
-  // Handle closing error modal
-  const handleCloseError = () => {
-    setShowError(false);
-    navigate('/');
-  };
+  // Get labs from observations
+  const labs = observations.filter(obs =>
+    obs.code?.coding?.some(c =>
+      ['2093-3', '2085-9', '2089-1', '4548-4', '2823-3', '6301-6'].includes(c.code || '')
+    )
+  );
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <MedicalSpinner
-            size="lg"
-            text="Loading your health records..."
-            multiIcon={true}
-            variant="primary"
-            speed="normal"
-          />
-          <p className="text-sm text-gray-500 mt-6 max-w-md">
-            Securely connecting to your health provider and retrieving your medical information...
-          </p>
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 animate-pulse-soft">
+            <Heart className="w-8 h-8 text-primary" />
+          </div>
+          <p className="text-muted-foreground">Loading your health records...</p>
         </div>
       </div>
     );
   }
 
-  return (
-    <>
-      {showOnboarding && (
-        <OnboardingCarousel
-          onComplete={handleOnboardingComplete}
-          onSkip={handleOnboardingSkip}
-        />
-      )}
+  const patientName = patient?.name?.[0]?.given?.join(' ') + ' ' + patient?.name?.[0]?.family || 'Demo Patient';
+  const patientAge = getAge(patient?.birthDate);
 
-      <div className="flex h-screen bg-background">
-        {/* Desktop Sidebar - hidden on mobile */}
-        <div className="hidden md:block" data-tour="sidebar">
-          <Sidebar
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-soft">
+        <div className="container-app h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Exit Demo
+            </Button>
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                <Heart className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="font-semibold">SmartHealth</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="w-5 h-5" />
+              {careGaps.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-rose-500 text-white text-xs flex items-center justify-center">
+                  {careGaps.length}
+                </span>
+              )}
+            </Button>
+            <ModeToggle />
+          </div>
+        </div>
+      </header>
+
+      <div className="container-app py-6">
+        {/* Patient Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+              <User className="w-7 h-7 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{patientName}</h1>
+              <p className="text-muted-foreground">
+                {patientAge ? `${patientAge} years old` : ''}
+                {patient?.gender ? ` · ${patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1)}` : ''}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Mobile Bottom Navigation */}
-        <MobileBottomNav
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          careGapsCount={careGaps.length}
-        />
+        {/* Navigation Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-secondary/50 p-1 h-auto flex-wrap">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-background">
+              <Home className="w-4 h-4 mr-2" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="vitals" className="data-[state=active]:bg-background">
+              <Activity className="w-4 h-4 mr-2" />
+              Vitals
+            </TabsTrigger>
+            <TabsTrigger value="conditions" className="data-[state=active]:bg-background">
+              <Heart className="w-4 h-4 mr-2" />
+              Conditions
+            </TabsTrigger>
+            <TabsTrigger value="medications" className="data-[state=active]:bg-background">
+              <Pill className="w-4 h-4 mr-2" />
+              Medications
+            </TabsTrigger>
+            <TabsTrigger value="labs" className="data-[state=active]:bg-background">
+              <TestTube className="w-4 h-4 mr-2" />
+              Labs
+            </TabsTrigger>
+            <TabsTrigger value="care-gaps" className="data-[state=active]:bg-background relative">
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Care Gaps
+              {careGaps.length > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 px-1.5">{careGaps.length}</Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Floating Schedule Button for mobile */}
-        <FloatingScheduleButton />
-
-        <main className="flex-1 overflow-auto md:ml-64">
-          <div className="p-6 max-w-7xl mx-auto">
-            <Tabs
-              value={activeTab}
-              className="w-full"
-            >
-              <TabNavigation
-                activeTab={activeTab}
-                onTabChange={(tabId) => setActiveTab(tabId)}
-              />
-
-              <TabsContent value="health" className="space-y-8">
-                {/* Health Insights Section */}
-                <div className="mb-8" data-tour="ai-insights">
-                  <HealthInsights />
-                </div>
-
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-2">
-                    <h2 className="text-2xl font-bold text-foreground">Health Overview</h2>
-                    <HelpTooltip
-                      title="Health Overview"
-                      content="This dashboard shows your key health information from all connected providers, including recent activities, care gaps, and important health metrics."
-                    />
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6 animate-fade-in">
+            {/* Quick Stats */}
+            <div className="grid-summary">
+              <div className="card-elevated p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="category-icon-vitals">
+                    <Activity className="w-5 h-5" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <TourButton onClick={dashboardTour.startTour} variant="minimal" className="hidden md:flex" />
-                    <BrandSwitcher />
-                    <div data-tour="schedule-action">
-                      <AppointmentScheduler />
+                  <span className="text-sm font-medium text-muted-foreground">Vitals</span>
+                </div>
+                <p className="text-2xl font-semibold text-foreground">{vitals.length}</p>
+                <p className="text-sm text-muted-foreground">Recent readings</p>
+              </div>
+
+              <div className="card-elevated p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="category-icon-medications">
+                    <Pill className="w-5 h-5" />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">Medications</span>
+                </div>
+                <p className="text-2xl font-semibold text-foreground">{medications.length}</p>
+                <p className="text-sm text-muted-foreground">Active prescriptions</p>
+              </div>
+
+              <div className="card-elevated p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="category-icon-labs">
+                    <TestTube className="w-5 h-5" />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">Lab Results</span>
+                </div>
+                <p className="text-2xl font-semibold text-foreground">{labs.length}</p>
+                <p className="text-sm text-muted-foreground">Test results</p>
+              </div>
+
+              <div className="card-elevated p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="category-icon-alerts">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">Care Gaps</span>
+                </div>
+                <p className="text-2xl font-semibold text-foreground">{careGaps.length}</p>
+                <p className="text-sm text-muted-foreground">Action needed</p>
+              </div>
+            </div>
+
+            {/* Care Gaps Alert */}
+            {careGaps.length > 0 && (
+              <div className="card-elevated p-6 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
+                <div className="flex items-start gap-4">
+                  <div className="category-icon-alerts flex-shrink-0">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground mb-1">Preventive Care Recommendations</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      You have {careGaps.length} recommended health actions to review
+                    </p>
+                    <div className="space-y-2">
+                      {careGaps.slice(0, 3).map((gap, i) => (
+                        <div key={i} className="flex items-center gap-2 text-sm">
+                          <ChevronRight className="w-4 h-4 text-amber-500" />
+                          <span>{gap.description || gap.category}</span>
+                        </div>
+                      ))}
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => setActiveSection('connections')}>
-                      <User className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">Manage Connections</span>
+                    <Button variant="outline" size="sm" className="mt-4" onClick={() => setActiveTab('care-gaps')}>
+                      View All Care Gaps
                     </Button>
                   </div>
                 </div>
+              </div>
+            )}
 
-                {/* Health Summary Cards - Apple Health inspired */}
-                <div className="grid-health-summary mb-8" data-tour="health-summary">
-                  {/* Latest Vitals Card */}
-                  <div className="health-card-summary" data-tour="patient-info">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center space-x-4">
-                        <div className="icon-vitals">
-                          <Heart className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-foreground text-lg">Vital Signs</h3>
-                          <p className="text-health-caption">Latest readings</p>
-                        </div>
-                      </div>
-                      {observations.filter(obs =>
-                        obs.code?.coding?.some(code =>
-                          code.code === '8480-6' || code.code === '8462-4' || code.code === '8867-4'
-                        )
-                      ).length > 0 && (
-                          <div className="status-normal">
-                            Recent
-                          </div>
-                        )}
-                    </div>
-
-                    <div className="space-y-4">
-                      {observations.filter(obs =>
-                        obs.code?.coding?.some(code =>
-                          code.code === '8480-6' || code.code === '8462-4' || code.code === '8867-4'
-                        )
-                      ).slice(0, 3).map((obs, index) => (
-                        <div key={obs.id} className="flex justify-between items-center py-2 border-b border-border/50 last:border-0">
-                          <span className="text-health-body font-medium">
-                            {obs.code?.coding?.[0]?.display?.replace('Blood pressure', 'Blood Pressure') || 'Vital Sign'}
-                          </span>
-                          <div className="text-right">
-                            <span className="text-health-metric text-lg">
-                              {obs.valueQuantity ? obs.valueQuantity.value : 'N/A'}
-                            </span>
-                            <span className="text-health-metric-unit ml-1">
-                              {obs.valueQuantity?.unit || ''}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                      {observations.filter(obs =>
-                        obs.code?.coding?.some(code =>
-                          code.code === '8480-6' || code.code === '8462-4' || code.code === '8867-4'
-                        )
-                      ).length === 0 && (
-                          <div className="text-center py-8">
-                            <Heart className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-                            <p className="text-health-caption">No recent vitals available</p>
-                            <p className="text-xs text-muted-foreground mt-1">Connect providers to see your vital signs</p>
-                          </div>
-                        )}
-                    </div>
-                  </div>
-
-                  {/* Care Gaps Card */}
-                  <div className="health-card-summary" data-tour="care-gaps">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center space-x-4">
-                        <div className="icon-preventive">
-                          <AlertTriangle className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-foreground text-lg">Preventive Care</h3>
-                          <p className="text-health-caption">Care gap reminders</p>
-                        </div>
-                      </div>
-                      {careGaps.length > 0 ? (
-                        <div className="status-warning">
-                          {careGaps.length} {careGaps.length === 1 ? 'gap' : 'gaps'}
-                        </div>
-                      ) : (
-                        <div className="status-normal">
-                          Up to date
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-3">
-                      {careGaps.length > 0 ? (
-                        careGaps.slice(0, 2).map((gap) => (
-                          <div key={gap.id} className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border-l-4 border-amber-400 dark:border-amber-600">
-                            <p className="text-health-body font-medium text-amber-800 dark:text-amber-300">
-                              {gap.category || 'Preventive care recommended'}
-                            </p>
-                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                              {gap.description || 'Schedule appointment soon'}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-6">
-                          <AlertTriangle className="h-10 w-10 text-emerald-400/50 mx-auto mb-2" />
-                          <p className="text-health-body font-medium text-emerald-700 dark:text-emerald-400">All caught up!</p>
-                          <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-1">No preventive care gaps found</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Active Conditions Card */}
-                  <div className="health-card-summary">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center space-x-4">
-                        <div className="icon-warnings">
-                          <Activity className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-foreground text-lg">Health Conditions</h3>
-                          <p className="text-health-caption">Active diagnoses</p>
-                        </div>
-                      </div>
-                      {conditions.length > 0 && (
-                        <div className="status-info">
-                          {conditions.length} active
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-3">
-                      {conditions.length > 0 ? (
-                        conditions.slice(0, 2).map((condition) => (
-                          <div key={condition.id} className="p-3 bg-muted/50 rounded-xl border border-border/50">
-                            <p className="text-health-body font-medium">
-                              {condition.code?.coding?.[0]?.display || 'Unknown condition'}
-                            </p>
-                            {condition.recordedDate && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Since {formatFhirDate(condition.recordedDate)}
-                              </p>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-6">
-                          <Activity className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-                          <p className="text-health-caption">No active conditions</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Medications Card */}
-                  <div className="health-card-summary">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center space-x-4">
-                        <div className="icon-medications">
-                          <Pill className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-foreground text-lg">Medications</h3>
-                          <p className="text-health-caption">Current prescriptions</p>
-                        </div>
-                      </div>
-                      {medications.length > 0 && (
-                        <div className="status-normal">
-                          {medications.length} active
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-3">
-                      {medications.length > 0 ? (
-                        medications.slice(0, 2).map((med) => (
-                          <div key={med.id} className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
-                            <p className="text-health-body font-medium text-foreground">
-                              {med.medicationCodeableConcept?.coding?.[0]?.display || 'Unknown medication'}
-                            </p>
-                            {med.dosageInstruction?.[0]?.text && (
-                              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                {med.dosageInstruction[0].text}
-                              </p>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-6">
-                          <Pill className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-                          <p className="text-health-caption">No active medications</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            {/* Recent Activity */}
+            <div className="grid-cards">
+              {/* Conditions */}
+              <div className="card-elevated p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-foreground">Health Conditions</h3>
+                  <Badge variant="secondary">{conditions.length}</Badge>
                 </div>
-
-                {/* Health Highlights Section */}
-                <div className="space-y-8">
-                  {/* Quick Health Snapshot */}
-                  <div className="health-card">
-                    <div className="section-header">
-                      <h2 className="section-title">
-                        <BarChart className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                        <span>Health Highlights</span>
-                      </h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {/* Latest Lab Results */}
-                      <div className="text-center p-4">
-                        <div className="icon-labs mx-auto mb-3">
-                          <TestTube className="h-6 w-6" />
-                        </div>
-                        <h4 className="font-semibold text-foreground mb-2">Latest Labs</h4>
-                        <p className="text-health-metric">
-                          {observations.filter(obs =>
-                            obs.code?.coding?.some(code =>
-                              code.code === '2093-3' || code.code === '4548-4'
-                            )
-                          ).length}
+                <div className="space-y-3">
+                  {conditions.slice(0, 4).map((condition, i) => (
+                    <div key={i} className="list-item-compact">
+                      <div className="category-icon-vitals flex-shrink-0 w-8 h-8">
+                        <Heart className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {condition.code?.coding?.[0]?.display || 'Unknown'}
                         </p>
-                        <p className="text-health-caption">Recent results</p>
-                      </div>
-
-                      {/* Upcoming Care */}
-                      <div className="text-center p-4">
-                        <div className="icon-preventive mx-auto mb-3">
-                          <Calendar className="h-6 w-6" />
-                        </div>
-                        <h4 className="font-semibold text-foreground mb-2">Care Schedule</h4>
-                        <p className="text-health-metric">{careGaps.length}</p>
-                        <p className="text-health-caption">Items to schedule</p>
-                      </div>
-
-                      {/* Health Score */}
-                      <div className="text-center p-4">
-                        <div className="icon-vitals mx-auto mb-3">
-                          <Heart className="h-6 w-6" />
-                        </div>
-                        <h4 className="font-semibold text-foreground mb-2">Health Score</h4>
-                        <p className="text-health-metric">85</p>
-                        <p className="text-health-caption">Good standing</p>
+                        <p className="text-xs text-muted-foreground">
+                          Since {formatDate(condition.recordedDate)}
+                        </p>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Recent Activity Feed */}
-                  <div className="health-card">
-                    <div className="section-header">
-                      <h2 className="section-title">
-                        <Activity className="h-6 w-6 text-green-600 dark:text-green-400" />
-                        <span>Recent Activity</span>
-                      </h2>
-                    </div>
-                    <HealthFeed
-                      conditions={conditions as Condition[]}
-                      medications={medications as MedicationRequest[]}
-                      observations={observations as Observation[]}
-                      allergies={allergies as AllergyIntolerance[]}
-                      immunizations={immunizations as Immunization[]}
-                      careGaps={careGaps as CareGap[]}
-                    />
-                  </div>
-
-                  {/* Interactive Charts Section */}
-                  <div className="health-card">
-                    <div className="section-header">
-                      <h2 className="section-title">
-                        <BarChart className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                        <span>Health Trends & Analytics</span>
-                      </h2>
-                    </div>
-                    <FhirVisualizations
-                      observations={observations as Observation[]}
-                      conditions={conditions as Condition[]}
-                      medications={medications as MedicationRequest[]}
-                      allergies={allergies as AllergyIntolerance[]}
-                      immunizations={immunizations as Immunization[]}
-                    />
-                  </div>
+                  ))}
+                  {conditions.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No conditions recorded</p>
+                  )}
                 </div>
+                {conditions.length > 4 && (
+                  <Button variant="ghost" size="sm" className="w-full mt-3" onClick={() => setActiveTab('conditions')}>
+                    View all {conditions.length} conditions
+                  </Button>
+                )}
+              </div>
 
-                {/* Additional Sections */}
-                <div className="container-health space-y-8">
-                  <ConditionsSection />
-                  <ObservationsSection />
-                  <ConnectionDetails />
+              {/* Medications */}
+              <div className="card-elevated p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-foreground">Active Medications</h3>
+                  <Badge variant="secondary">{medications.length}</Badge>
                 </div>
-              </TabsContent>
-
-              <TabsContent value="ips">
-                <PatientSummaryIPS />
-              </TabsContent>
-
-              <TabsContent value="care-gaps">
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-2">
-                      <h2 className="text-2xl font-bold text-foreground">Care Gaps & Recommendations</h2>
-                      <HelpTooltip
-                        title="What are Care Gaps?"
-                        content="Care gaps are recommended health services you may be missing based on medical guidelines. This includes preventive screenings, vaccinations, and chronic disease monitoring to help keep you healthy."
-                      />
+                <div className="space-y-3">
+                  {medications.slice(0, 4).map((med, i) => (
+                    <div key={i} className="list-item-compact">
+                      <div className="category-icon-medications flex-shrink-0 w-8 h-8">
+                        <Pill className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {med.medicationCodeableConcept?.coding?.[0]?.display || 'Unknown'}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {med.dosageInstruction?.[0]?.text || 'No dosage info'}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <CareGapsSection />
+                  ))}
+                  {medications.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No medications recorded</p>
+                  )}
                 </div>
-              </TabsContent>
+                {medications.length > 4 && (
+                  <Button variant="ghost" size="sm" className="w-full mt-3" onClick={() => setActiveTab('medications')}>
+                    View all {medications.length} medications
+                  </Button>
+                )}
+              </div>
+            </div>
 
-              <TabsContent value="allergies">
-                <div className="space-y-6">
-                  <div className="bg-card rounded-lg border p-6">
-                    <h2 className="text-2xl font-semibold mb-4 flex items-center text-foreground">
-                      <AlertTriangle className="mr-2 h-6 w-6 text-red-500" />
-                      Allergies & Intolerances
-                    </h2>
+            {/* Allergies & Immunizations */}
+            <div className="grid-cards">
+              {/* Allergies */}
+              <div className="card-elevated p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-foreground">Allergies</h3>
+                  <Badge variant={allergies.length > 0 ? "destructive" : "secondary"}>
+                    {allergies.length}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  {allergies.slice(0, 3).map((allergy, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm p-2 rounded-lg bg-rose-50 dark:bg-rose-950/30">
+                      <AlertTriangle className="w-4 h-4 text-rose-500 flex-shrink-0" />
+                      <span className="text-foreground">{allergy.code?.coding?.[0]?.display || 'Unknown'}</span>
+                    </div>
+                  ))}
+                  {allergies.length === 0 && (
+                    <div className="flex items-center gap-2 text-sm p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      <span className="text-muted-foreground">No known allergies</span>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-                    <div className="space-y-4">
-                      {allergies.length === 0 ? (
-                        <p className="text-muted-foreground">No allergies or intolerances found in your records.</p>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {allergies.map((allergy: AllergyIntolerance) => (
-                            <div key={allergy.id} className="border rounded-lg p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
-                              <h3 className="font-medium text-red-700 dark:text-red-300">
-                                {allergy.code?.coding?.[0]?.display || 'Unknown Allergen'}
-                              </h3>
-                              <div className="mt-2 text-sm text-foreground/80">
-                                <div className="flex items-center">
-                                  <span className="font-medium mr-2">Severity:</span>
-                                  {allergy.reaction?.[0]?.severity === 'severe' ? (
-                                    <span className="text-red-600 dark:text-red-400 font-medium">Severe</span>
-                                  ) : allergy.reaction?.[0]?.severity === 'moderate' ? (
-                                    <span className="text-orange-600 dark:text-orange-400 font-medium">Moderate</span>
-                                  ) : (
-                                    <span className="text-yellow-600 dark:text-yellow-400 font-medium">Mild</span>
-                                  )}
-                                </div>
-                                <div className="flex items-center mt-1">
-                                  <span className="font-medium mr-2">Type:</span>
-                                  <span>{allergy.type === 'allergy' ? 'Allergy' : 'Intolerance'}</span>
-                                </div>
-                                {allergy.reaction?.[0]?.manifestation?.[0]?.coding?.[0]?.display && (
-                                  <div className="flex items-start mt-1">
-                                    <span className="font-medium mr-2">Manifestation:</span>
-                                    <span>{allergy.reaction?.[0]?.manifestation?.[0]?.coding?.[0]?.display}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
+              {/* Immunizations */}
+              <div className="card-elevated p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-foreground">Immunizations</h3>
+                  <Badge variant="secondary">{immunizations.length}</Badge>
+                </div>
+                <div className="space-y-2">
+                  {immunizations.slice(0, 3).map((imm, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <Syringe className="w-4 h-4 text-sky-500 flex-shrink-0" />
+                      <span className="text-foreground truncate flex-1">
+                        {imm.vaccineCode?.coding?.[0]?.display || 'Unknown'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(imm.occurrenceDateTime)}
+                      </span>
+                    </div>
+                  ))}
+                  {immunizations.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No immunization records</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Vitals Tab */}
+          <TabsContent value="vitals" className="animate-fade-in">
+            <div className="card-elevated p-6">
+              <h3 className="font-semibold text-foreground mb-4">Vital Signs</h3>
+              {vitals.length > 0 ? (
+                <div className="space-y-4">
+                  {vitals.map((obs, i) => (
+                    <div key={i} className="list-item">
+                      <div className="category-icon-vitals flex-shrink-0">
+                        <Activity className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">
+                          {obs.code?.coding?.[0]?.display || 'Vital Sign'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDate(obs.effectiveDateTime)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-semibold text-foreground">
+                          {obs.valueQuantity?.value ?? 'N/A'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {obs.valueQuantity?.unit || ''}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-state-icon">
+                    <Activity className="w-8 h-8" />
+                  </div>
+                  <p className="empty-state-title">No vital signs recorded</p>
+                  <p className="empty-state-description">Vital sign readings will appear here when available</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Conditions Tab */}
+          <TabsContent value="conditions" className="animate-fade-in">
+            <div className="card-elevated p-6">
+              <h3 className="font-semibold text-foreground mb-4">Health Conditions</h3>
+              {conditions.length > 0 ? (
+                <div className="space-y-4">
+                  {conditions.map((condition, i) => (
+                    <div key={i} className="list-item">
+                      <div className="category-icon-vitals flex-shrink-0">
+                        <Heart className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">
+                          {condition.code?.coding?.[0]?.display || 'Unknown Condition'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Recorded: {formatDate(condition.recordedDate)}
+                        </p>
+                      </div>
+                      <Badge variant={condition.clinicalStatus?.coding?.[0]?.code === 'active' ? 'default' : 'secondary'}>
+                        {condition.clinicalStatus?.coding?.[0]?.code || 'unknown'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-state-icon">
+                    <Heart className="w-8 h-8" />
+                  </div>
+                  <p className="empty-state-title">No conditions recorded</p>
+                  <p className="empty-state-description">Health conditions will appear here when available</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Medications Tab */}
+          <TabsContent value="medications" className="animate-fade-in">
+            <div className="card-elevated p-6">
+              <h3 className="font-semibold text-foreground mb-4">Medications</h3>
+              {medications.length > 0 ? (
+                <div className="space-y-4">
+                  {medications.map((med, i) => (
+                    <div key={i} className="list-item">
+                      <div className="category-icon-medications flex-shrink-0">
+                        <Pill className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">
+                          {med.medicationCodeableConcept?.coding?.[0]?.display || 'Unknown Medication'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {med.dosageInstruction?.[0]?.text || 'No dosage information'}
+                        </p>
+                        {med.authoredOn && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Prescribed: {formatDate(med.authoredOn)}
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant={med.status === 'active' ? 'default' : 'secondary'}>
+                        {med.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-state-icon">
+                    <Pill className="w-8 h-8" />
+                  </div>
+                  <p className="empty-state-title">No medications recorded</p>
+                  <p className="empty-state-description">Medication information will appear here when available</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Labs Tab */}
+          <TabsContent value="labs" className="animate-fade-in">
+            <div className="card-elevated p-6">
+              <h3 className="font-semibold text-foreground mb-4">Laboratory Results</h3>
+              {labs.length > 0 ? (
+                <div className="space-y-4">
+                  {labs.map((obs, i) => (
+                    <div key={i} className="list-item">
+                      <div className="category-icon-labs flex-shrink-0">
+                        <TestTube className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">
+                          {obs.code?.coding?.[0]?.display || 'Lab Test'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDate(obs.effectiveDateTime)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-semibold text-foreground">
+                          {obs.valueQuantity?.value ?? obs.valueString ?? 'N/A'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {obs.valueQuantity?.unit || ''}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-state-icon">
+                    <TestTube className="w-8 h-8" />
+                  </div>
+                  <p className="empty-state-title">No lab results recorded</p>
+                  <p className="empty-state-description">Laboratory results will appear here when available</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Care Gaps Tab */}
+          <TabsContent value="care-gaps" className="animate-fade-in">
+            <div className="card-elevated p-6">
+              <h3 className="font-semibold text-foreground mb-4">Preventive Care Recommendations</h3>
+              {careGaps.length > 0 ? (
+                <div className="space-y-4">
+                  {careGaps.map((gap, i) => (
+                    <div key={i} className="p-4 rounded-xl border bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+                      <div className="flex items-start gap-3">
+                        <div className="category-icon-alerts flex-shrink-0">
+                          <AlertTriangle className="w-5 h-5" />
                         </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="immunizations">
-                <div className="space-y-6">
-                  <div className="bg-card rounded-lg border p-6">
-                    <h2 className="text-2xl font-semibold mb-4 flex items-center text-foreground">
-                      <Syringe className="mr-2 h-6 w-6 text-blue-500" />
-                      Immunizations
-                    </h2>
-
-                    <div className="space-y-4">
-                      {immunizations.length === 0 ? (
-                        <p className="text-muted-foreground">No immunization records found.</p>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-4">
-                          {immunizations.map((immunization: Immunization) => (
-                            <div key={immunization.id} className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                              <h3 className="font-medium text-blue-700 dark:text-blue-300">
-                                {immunization.vaccineCode?.coding?.[0]?.display || 'Unknown Vaccine'}
-                              </h3>
-                              <div className="mt-2 text-sm text-foreground/80">
-                                <div className="flex items-center">
-                                  <span className="font-medium mr-2">Date:</span>
-                                  <span>{immunization.occurrenceDateTime ? formatFhirDate(immunization.occurrenceDateTime) : 'Unknown'}</span>
-                                </div>
-                                <div className="flex items-center mt-1">
-                                  <span className="font-medium mr-2">Status:</span>
-                                  <span className={`${immunization.status === 'completed' ? 'text-green-600 dark:text-green-400' :
-                                    immunization.status === 'entered-in-error' ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'
-                                    }`}>
-                                    {immunization.status === 'completed' ? 'Completed' :
-                                      immunization.status === 'not-done' ? 'Not Done' :
-                                        immunization.status === 'entered-in-error' ? 'Error' : 'Unknown'}
-                                  </span>
-                                </div>
-                                {/* Note: Remove note section as it's not in our schema */}
-                              </div>
-                            </div>
-                          ))}
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">{gap.category || 'Preventive Care'}</p>
+                          <p className="text-sm text-muted-foreground mt-1">{gap.description}</p>
+                          {gap.recommendedAction && (
+                            <p className="text-sm text-amber-700 dark:text-amber-400 mt-2">
+                              Recommendation: {gap.recommendedAction}
+                            </p>
+                          )}
                         </div>
-                      )}
+                        <Button variant="outline" size="sm">Schedule</Button>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              </TabsContent>
-
-              <TabsContent value="medications">
-                <div className="space-y-6">
-                  <div className="bg-card rounded-lg border p-6">
-                    <h2 className="text-2xl font-semibold mb-4 flex items-center text-foreground">
-                      <Pill className="mr-2 h-6 w-6 text-blue-500" />
-                      Medications Overview
-                    </h2>
-
-                    <div className="space-y-4">
-                      {medications.length === 0 ? (
-                        <p className="text-muted-foreground">No medication information found in your records.</p>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {medications.map((medication: MedicationRequest) => (
-                            <MedicationCard key={medication.id} medication={medication} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
+              ) : (
+                <div className="empty-state">
+                  <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center mb-4">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                   </div>
+                  <p className="empty-state-title">All caught up!</p>
+                  <p className="empty-state-description">No preventive care recommendations at this time</p>
                 </div>
-              </TabsContent>
-
-              <TabsContent value="prescriptions">
-                <div className="space-y-6">
-                  <div className="bg-card rounded-lg border p-6">
-                    <h2 className="text-2xl font-semibold mb-4 flex items-center text-foreground">
-                      <PenTool className="mr-2 h-6 w-6 text-indigo-500" />
-                      Prescriptions
-                    </h2>
-
-                    <div className="space-y-4">
-                      {medications.length === 0 ? (
-                        <p className="text-muted-foreground">No prescription information found in your records.</p>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-4">
-                          {medications.map((medication: MedicationRequest) => (
-                            <div key={medication.id} className="border rounded-lg p-4 bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800">
-                              <div className="flex justify-between">
-                                <h3 className="font-medium text-indigo-700 dark:text-indigo-300">
-                                  {medication.medicationCodeableConcept?.coding?.[0]?.display || 'Unknown Medication'}
-                                </h3>
-                                <span className={`px-2 py-0.5 rounded-full text-xs ${medication.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' :
-                                  medication.status === 'stopped' ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' :
-                                    'bg-muted text-muted-foreground'
-                                  }`}>
-                                  {medication.status === 'active' ? 'Active' :
-                                    medication.status === 'stopped' ? 'Stopped' :
-                                      medication.status === 'completed' ? 'Completed' :
-                                        medication.status}
-                                </span>
-                              </div>
-                              <div className="mt-2 text-sm text-foreground/80">
-                                {medication.dosageInstruction && medication.dosageInstruction.length > 0 && (
-                                  <div className="flex items-start mt-1">
-                                    <span className="font-medium mr-2">Instructions:</span>
-                                    <span>{medication.dosageInstruction[0].text || 'No instructions provided'}</span>
-                                  </div>
-                                )}
-                                {medication.authoredOn && (
-                                  <div className="flex items-center mt-1">
-                                    <span className="font-medium mr-2">Prescribed:</span>
-                                    <span>{formatFhirDate(medication.authoredOn)}</span>
-                                  </div>
-                                )}
-                                {/* Prescriber info is not in our current schema */}
-                                <div className="flex items-center mt-1">
-                                  <span className="font-medium mr-2">Prescriber:</span>
-                                  <span>Primary Provider</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="dispenses">
-                <div className="bg-card rounded-lg border p-6">
-                  <h2 className="text-2xl font-semibold mb-4 flex items-center text-foreground">
-                    <Package className="mr-2 h-6 w-6 text-purple-500" />
-                    Medication Dispenses
-                  </h2>
-                  <p className="text-muted-foreground">
-                    This section would display information about how your medications were dispensed by pharmacies.
-                    Currently, no dispensing information is available in your records.
-                  </p>
-                  <div className="mt-4 p-4 border-l-4 border-amber-400 bg-amber-50 dark:bg-amber-900/20">
-                    <h3 className="text-amber-700 dark:text-amber-400 font-medium">Information</h3>
-                    <p className="text-amber-700 dark:text-amber-300 text-sm mt-1">
-                      Dispensing records typically come from pharmacy systems and may not be available in all electronic health record exports.
-                    </p>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="statements">
-                <div className="bg-card rounded-lg border p-6">
-                  <h2 className="text-2xl font-semibold mb-4 flex items-center text-foreground">
-                    <ClipboardList className="mr-2 h-6 w-6 text-teal-500" />
-                    Medication Statements
-                  </h2>
-                  <p className="text-muted-foreground">
-                    This section would display statements about medications you are taking, have taken, or plan to take,
-                    including over-the-counter medications and supplements that may not have formal prescriptions.
-                  </p>
-                  <div className="mt-4 p-4 border-l-4 border-amber-400 bg-amber-50 dark:bg-amber-900/20">
-                    <h3 className="text-amber-700 dark:text-amber-400 font-medium">Information</h3>
-                    <p className="text-amber-700 dark:text-amber-300 text-sm mt-1">
-                      Medication statements are often collected during medical visits when providers ask about current medications.
-                      No medication statements are currently available in your records.
-                    </p>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="lab-results">
-                <div className="space-y-6">
-                  <div className="bg-card rounded-lg border p-6">
-                    <h2 className="text-2xl font-semibold mb-4 flex items-center text-foreground">
-                      <TestTube className="mr-2 h-6 w-6 text-indigo-500" />
-                      Laboratory Results
-                    </h2>
-
-                    <div className="space-y-4">
-                      {observations.filter(obs =>
-                        obs.code?.coding?.some(code =>
-                          // Common lab test LOINC codes
-                          code.code === '2093-3' || // Cholesterol
-                          code.code === '2085-9' || // HDL
-                          code.code === '2089-1' || // LDL
-                          code.code === '6301-6' || // INR
-                          code.code === '4548-4' || // HbA1c
-                          code.code === '2823-3'    // Potassium
-                        )
-                      ).length === 0 ? (
-                        <p className="text-muted-foreground">No laboratory results found in your records.</p>
-                      ) : (
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-border">
-                            <thead className="bg-muted/50">
-                              <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Test</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Value</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Reference Range</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-card divide-y divide-border">
-                              {observations.filter(obs =>
-                                obs.code?.coding?.some(code =>
-                                  // Common lab test LOINC codes
-                                  code.code === '2093-3' || // Cholesterol
-                                  code.code === '2085-9' || // HDL
-                                  code.code === '2089-1' || // LDL
-                                  code.code === '6301-6' || // INR
-                                  code.code === '4548-4' || // HbA1c
-                                  code.code === '2823-3'    // Potassium
-                                )
-                              ).map((observation: Observation) => (
-                                <tr key={observation.id}>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                                    {observation.code?.coding?.[0]?.display || 'Unknown Test'}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80">
-                                    {observation.valueQuantity ?
-                                      `${observation.valueQuantity.value} ${observation.valueQuantity.unit || ''}` :
-                                      observation.valueString || 'No value recorded'}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80">
-                                    {observation.referenceRange && observation.referenceRange.length > 0 ?
-                                      `${observation.referenceRange[0].low?.value || ''} - ${observation.referenceRange[0].high?.value || ''} ${observation.referenceRange[0].high?.unit || ''}` :
-                                      'Not specified'}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80">
-                                    {observation.effectiveDateTime ? formatFhirDate(observation.effectiveDateTime) : 'Unknown date'}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${observation.status === 'final' ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' :
-                                      observation.status === 'preliminary' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300' :
-                                        'bg-muted text-muted-foreground'
-                                      }`}>
-                                      {observation.status === 'final' ? 'Final' :
-                                        observation.status === 'preliminary' ? 'Preliminary' :
-                                          observation.status}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="vital-signs">
-                <div className="space-y-6">
-                  <div className="bg-card rounded-lg border p-6">
-                    <h2 className="text-2xl font-semibold mb-4 flex items-center text-foreground">
-                      <Activity className="mr-2 h-6 w-6 text-green-500" />
-                      Vital Signs
-                    </h2>
-
-                    <div className="space-y-4">
-                      {observations.filter(obs =>
-                        obs.code?.coding?.some(code =>
-                          // Common vital signs LOINC codes
-                          code.code === '8867-4' || // Heart rate
-                          code.code === '8310-5' || // Body temperature
-                          code.code === '8480-6' || // Systolic blood pressure
-                          code.code === '8462-4' || // Diastolic blood pressure
-                          code.code === '9279-1' || // Respiratory rate
-                          code.code === '59408-5'   // Oxygen saturation
-                        )
-                      ).length === 0 ? (
-                        <p className="text-muted-foreground">No vital signs found in your records.</p>
-                      ) : (
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-border">
-                            <thead className="bg-muted/50">
-                              <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Vital Sign</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Value</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-card divide-y divide-border">
-                              {observations.filter(obs =>
-                                obs.code?.coding?.some(code =>
-                                  // Common vital signs LOINC codes
-                                  code.code === '8867-4' || // Heart rate
-                                  code.code === '8310-5' || // Body temperature
-                                  code.code === '8480-6' || // Systolic blood pressure
-                                  code.code === '8462-4' || // Diastolic blood pressure
-                                  code.code === '9279-1' || // Respiratory rate
-                                  code.code === '59408-5'   // Oxygen saturation
-                                )
-                              ).map((observation: Observation) => (
-                                <tr key={observation.id}>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                                    {observation.code?.coding?.[0]?.display || 'Unknown Vital Sign'}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80">
-                                    {observation.valueQuantity ?
-                                      `${observation.valueQuantity.value} ${observation.valueQuantity.unit || ''}` :
-                                      observation.valueString || 'No value recorded'}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80">
-                                    {observation.effectiveDateTime ? formatFhirDate(observation.effectiveDateTime) : 'Unknown date'}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="blood-pressure">
-                <div className="space-y-6">
-                  <div className="bg-card rounded-lg border p-6">
-                    <h2 className="text-2xl font-semibold mb-4 flex items-center text-foreground">
-                      <BarChart className="mr-2 h-6 w-6 text-red-500" />
-                      Blood Pressure History
-                    </h2>
-
-                    <div className="space-y-4">
-                      {observations.filter(obs =>
-                        obs.code?.coding?.some(code =>
-                          code.code === '85354-9' || // Blood pressure panel
-                          code.code === '8480-6' ||  // Systolic blood pressure
-                          code.code === '8462-4'     // Diastolic blood pressure
-                        )
-                      ).length === 0 ? (
-                        <p className="text-muted-foreground">No blood pressure measurements found in your records.</p>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-6">
-                          <div className="h-80 bg-muted/50 rounded-lg p-4 flex items-center justify-center">
-                            <p className="text-center text-muted-foreground font-medium">Blood Pressure Trend Chart would display here</p>
-                          </div>
-                          <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-border">
-                              <thead className="bg-muted/50">
-                                <tr>
-                                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
-                                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Systolic</th>
-                                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Diastolic</th>
-                                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                                </tr>
-                              </thead>
-                              <tbody className="bg-card divide-y divide-border">
-                                {observations.filter(obs =>
-                                  obs.code?.coding?.some(code =>
-                                    code.code === '85354-9' // Blood pressure panel
-                                  )
-                                ).map((observation: Observation) => {
-                                  // Get systolic and diastolic values from separate observations with matching dates
-                                  const effectiveDate = observation.effectiveDateTime;
-
-                                  // Find matching systolic and diastolic observations
-                                  const systolicObs = observations.find(obs =>
-                                    obs.code?.coding?.some(code => code.code === '8480-6') &&
-                                    obs.effectiveDateTime === effectiveDate
-                                  );
-
-                                  const diastolicObs = observations.find(obs =>
-                                    obs.code?.coding?.some(code => code.code === '8462-4') &&
-                                    obs.effectiveDateTime === effectiveDate
-                                  );
-
-                                  return (
-                                    <tr key={observation.id}>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80">
-                                        {observation.effectiveDateTime ? formatFhirDate(observation.effectiveDateTime) : 'Unknown date'}
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80">
-                                        {systolicObs?.valueQuantity ?
-                                          `${systolicObs.valueQuantity.value} ${systolicObs.valueQuantity.unit || 'mmHg'}` :
-                                          'N/A'}
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80">
-                                        {diastolicObs?.valueQuantity ?
-                                          `${diastolicObs.valueQuantity.value} ${diastolicObs.valueQuantity.unit || 'mmHg'}` :
-                                          'N/A'}
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${(systolicObs?.valueQuantity?.value || 0) > 140 || (diastolicObs?.valueQuantity?.value || 0) > 90 ?
-                                          'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' :
-                                          'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
-                                          }`}>
-                                          {(systolicObs?.valueQuantity?.value || 0) > 140 || (diastolicObs?.valueQuantity?.value || 0) > 90 ?
-                                            'Elevated' : 'Normal'}
-                                        </span>
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="weight-bmi">
-                <div className="space-y-6">
-                  <div className="bg-card rounded-lg border p-6">
-                    <h2 className="text-2xl font-semibold mb-4 flex items-center text-foreground">
-                      <BarChart className="mr-2 h-6 w-6 text-blue-500" />
-                      Weight & BMI History
-                    </h2>
-
-                    <div className="space-y-4">
-                      {observations.filter(obs =>
-                        obs.code?.coding?.some(code =>
-                          code.code === '29463-7' || // Weight
-                          code.code === '39156-5' || // BMI
-                          code.code === '8302-2'     // Height
-                        )
-                      ).length === 0 ? (
-                        <p className="text-muted-foreground">No weight or BMI measurements found in your records.</p>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-6">
-                          <div className="h-80 bg-muted/50 rounded-lg p-4 flex items-center justify-center">
-                            <p className="text-center text-muted-foreground font-medium">Weight & BMI Trend Chart would display here</p>
-                          </div>
-                          <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-border">
-                              <thead className="bg-muted/50">
-                                <tr>
-                                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
-                                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Weight</th>
-                                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Height</th>
-                                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">BMI</th>
-                                </tr>
-                              </thead>
-                              <tbody className="bg-card divide-y divide-border">
-                                {observations.filter(obs =>
-                                  obs.code?.coding?.some(code =>
-                                    code.code === '29463-7' // Weight
-                                  )
-                                ).map((observation: Observation) => {
-                                  // Find matching height and BMI measurements by date
-                                  const effectiveDate = observation.effectiveDateTime;
-
-                                  const heightObs = observations.find(obs =>
-                                    obs.code?.coding?.some(code => code.code === '8302-2') &&
-                                    obs.effectiveDateTime === effectiveDate
-                                  );
-
-                                  const bmiObs = observations.find(obs =>
-                                    obs.code?.coding?.some(code => code.code === '39156-5') &&
-                                    obs.effectiveDateTime === effectiveDate
-                                  );
-
-                                  return (
-                                    <tr key={observation.id}>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80">
-                                        {effectiveDate ? formatFhirDate(effectiveDate) : 'Unknown date'}
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80">
-                                        {observation.valueQuantity ?
-                                          `${observation.valueQuantity.value} ${observation.valueQuantity.unit || 'kg'}` :
-                                          'N/A'}
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80">
-                                        {heightObs?.valueQuantity ?
-                                          `${heightObs.valueQuantity.value} ${heightObs.valueQuantity.unit || 'cm'}` :
-                                          'N/A'}
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80">
-                                        {bmiObs?.valueQuantity ?
-                                          `${bmiObs.valueQuantity.value} ${bmiObs.valueQuantity.unit || 'kg/m²'}` :
-                                          'N/A'}
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="insurance">
-                <InsuranceSection />
-              </TabsContent>
-
-              <TabsContent value="visualizations" className="space-y-6" data-tour="visualizations">
-                <FhirVisualizations
-                  observations={observations as Observation[]}
-                  conditions={conditions as Condition[]}
-                  medications={medications as MedicationRequest[]}
-                  allergies={allergies as AllergyIntolerance[]}
-                  immunizations={immunizations as Immunization[]}
-                />
-              </TabsContent>
-
-              <TabsContent value="activity-feed" className="space-y-6">
-                <HealthFeed
-                  conditions={conditions as Condition[]}
-                  medications={medications as MedicationRequest[]}
-                  observations={observations as Observation[]}
-                  allergies={allergies as AllergyIntolerance[]}
-                  immunizations={immunizations as Immunization[]}
-                  careGaps={careGaps as CareGap[]}
-                />
-              </TabsContent>
-
-              <TabsContent value="trends" className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-lg border bg-card p-6">
-                    <h3 className="font-semibold text-lg mb-4 text-primary">Health Trends</h3>
-                    <p className="text-muted-foreground">
-                      Track your health data over time with interactive trends analysis. See patterns, correlations, and progress
-                      toward your health goals.
-                    </p>
-                  </div>
-                  <div className="rounded-lg border bg-card p-6">
-                    <h3 className="font-semibold text-lg mb-4 text-primary">Longitudinal Analysis</h3>
-                    <p className="text-muted-foreground">
-                      Evaluate your health data across time to identify important changes and help you make informed decisions
-                      about your care.
-                    </p>
-                  </div>
-                </div>
-                <FhirVisualizations
-                  observations={observations as Observation[]}
-                  conditions={conditions as Condition[]}
-                  medications={medications as MedicationRequest[]}
-                  allergies={allergies as AllergyIntolerance[]}
-                  immunizations={immunizations as Immunization[]}
-                />
-              </TabsContent>
-
-              <TabsContent value="advanced-analytics" className="space-y-6">
-                <AdvancedAnalytics
-                  observations={observations as Observation[]}
-                  conditions={conditions as Condition[]}
-                  medications={medications as MedicationRequest[]}
-                  allergies={allergies as AllergyIntolerance[]}
-                  immunizations={immunizations as Immunization[]}
-                />
-              </TabsContent>
-
-              <TabsContent value="medical-literature" className="space-y-6">
-                <MedicalLiterature
-                  conditions={conditions as Condition[]}
-                  medications={medications as MedicationRequest[]}
-                />
-              </TabsContent>
-
-              <TabsContent value="fhir-explorer" className="h-[calc(100vh-160px)]">
-                <div className="border rounded-lg overflow-hidden h-full bg-card">
-                  <FhirExplorer />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="providers">
-                <ConnectedProviders />
-              </TabsContent>
-
-              <TabsContent value="organizations">
-                <ConnectedOrganizations />
-              </TabsContent>
-
-              <TabsContent value="provider-directory">
-                <ProviderDirectory />
-              </TabsContent>
-
-              <TabsContent value="research">
-                <ResearchDashboard />
-              </TabsContent>
-
-              <TabsContent value="connect-records">
-                <ConnectSelector />
-              </TabsContent>
-
-              <TabsContent value="chat">
-                <ChatInterface />
-              </TabsContent>
-
-              <TabsContent value="settings">
-                <UserSettings />
-              </TabsContent>
-
-              <TabsContent value="diabetes-dashboard">
-                <DiabetesDashboard />
-              </TabsContent>
-
-              <TabsContent value="community-challenges">
-                <CommunityChallenge />
-              </TabsContent>
-
-              <TabsContent value="readiness-score">
-                <ReadinessScore />
-              </TabsContent>
-            </Tabs>
-          </div>
-        </main>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-    </>
+    </div>
   );
 }

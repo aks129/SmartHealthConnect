@@ -2,87 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * SmartHealthConnect Design System
+ * Inspired by Apple Health & Google Verily
+ * Clean, minimal, focused on readability and trust
+ */
+
 @layer base {
   :root {
-    /* Modern Healthcare Color Palette - Professional & Calming */
-    --background: 0 0% 99%;              /* Soft white background */
-    --foreground: 222 47% 11%;           /* Deep navy text */
-    --card: 0 0% 100%;                   /* Pure white cards */
-    --card-foreground: 222 47% 11%;      /* Deep navy text on cards */
+    /* Core neutral palette - Clean and minimal */
+    --background: 0 0% 98%;
+    --foreground: 240 10% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 200 98% 39%;              /* Trustworthy teal-blue */
-    --primary-foreground: 0 0% 100%;     /* White on primary */
-    --secondary: 201 30% 95%;            /* Light teal background */
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 30% 96%;                /* Soft gray-blue */
-    --muted-foreground: 215 16% 47%;     /* Medium gray text */
-    --accent: 173 58% 39%;               /* Healing sea green */
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 51%;            /* Softer red */
+    --popover-foreground: 240 10% 4%;
+
+    /* Primary - Calming teal/cyan inspired by health apps */
+    --primary: 187 92% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Soft gray */
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 10%;
+
+    /* Muted - For subtle backgrounds */
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+
+    /* Accent - Soft teal highlight */
+    --accent: 187 60% 94%;
+    --accent-foreground: 187 92% 25%;
+
+    /* Semantic colors */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;               /* Light gray-blue border */
-    --input: 214 32% 91%;
-    --ring: 200 98% 39%;                 /* Teal focus ring */
-    --radius: 0.75rem;                   /* Slightly softer corners */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
 
-    /* Healthcare-specific color system */
-    --health-primary: 200 98% 39%;       /* Teal - trust & healing */
-    --health-vitals: 142 69% 58%;        /* Soft green - good health */
-    --health-preventive: 173 58% 39%;    /* Sea green - prevention */
-    --health-warning: 38 92% 50%;        /* Warm amber - caution */
-    --health-critical: 0 72% 51%;        /* Soft red - urgent */
-    --health-lab: 251 91% 67%;           /* Soft purple - diagnostics */
-    --health-medication: 199 89% 48%;    /* Sky blue - medications */
-    --health-neutral: 215 16% 47%;       /* Neutral gray */
-    --health-success: 142 71% 45%;       /* Success green */
-    --health-info: 201 96% 32%;          /* Info blue */
+    /* UI elements */
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 187 92% 35%;
+    --radius: 12px;
 
-    /* Chart colors - healthcare optimized */
-    --chart-1: 200 98% 39%;  /* Primary teal */
-    --chart-2: 142 69% 58%;  /* Health green */
-    --chart-3: 251 91% 67%;  /* Lab purple */
-    --chart-4: 38 92% 50%;   /* Warning amber */
-    --chart-5: 0 72% 51%;    /* Critical red */
+    /* Chart palette */
+    --chart-1: 187 92% 35%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 262 83% 58%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 0 84% 60%;
   }
 
   .dark {
-    --background: 222 47% 11%;           /* Deep navy background */
-    --foreground: 210 40% 98%;           /* Off-white text */
-    --card: 222 41% 15%;                 /* Slightly lighter navy */
-    --card-foreground: 210 40% 98%;
-    --popover: 222 41% 15%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 199 89% 48%;              /* Bright sky blue */
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;            /* Dark blue-gray */
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 173 58% 39%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 41%;            /* Darker red */
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 199 89% 48%;
-    --chart-1: 199 89% 48%;
-    --chart-2: 142 69% 58%;
-    --chart-3: 251 91% 67%;
-    --chart-4: 38 92% 50%;
-    --chart-5: 0 72% 51%;
-
-    /* Healthcare System - Dark Mode Overrides */
-    --health-primary: 200 98% 39%;       /* Keep teal, maybe slightly brighter? */
-    --health-vitals: 142 69% 48%;        /* Adjusted green for dark mode readability */
-    --health-preventive: 173 58% 39%;
-    --health-warning: 38 92% 50%;
-    --health-critical: 0 72% 51%;
-    --health-lab: 251 91% 67%;
-    --health-medication: 199 89% 48%;
-    --health-neutral: 215 20% 65%;       /* Match muted foreground */
-    --health-success: 142 70% 50%;       
-    --health-info: 201 96% 32%;
+    --background: 240 10% 4%;
+    --foreground: 0 0% 95%;
+    --card: 240 10% 8%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 10% 8%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 187 85% 53%;
+    --primary-foreground: 240 10% 4%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 187 85% 53%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 95%;
+    --success: 142 69% 35%;
+    --success-foreground: 0 0% 95%;
+    --warning: 38 80% 45%;
+    --warning-foreground: 0 0% 0%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 187 85% 53%;
+    --chart-1: 187 85% 53%;
+    --chart-2: 142 69% 45%;
+    --chart-3: 262 80% 65%;
+    --chart-4: 38 80% 55%;
+    --chart-5: 0 70% 55%;
   }
 }
 
@@ -90,237 +92,302 @@
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Improved scrollbar styling */
+  body {
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Custom scrollbar - minimal and elegant */
   ::-webkit-scrollbar {
-    @apply w-2;
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-muted/10;
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted/30 rounded-full;
+    @apply bg-border rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted/50;
+    @apply bg-muted-foreground/30;
   }
 }
 
 @layer components {
-  /* Health metric cards */
-  .health-card {
-    @apply bg-card rounded-2xl shadow-sm border border-border/50 p-6 transition-all duration-200 hover:shadow-lg hover:border-primary/20;
+  /* Card system - Apple-inspired with subtle shadows */
+  .card-elevated {
+    @apply bg-card rounded-2xl border border-border/50;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.04);
   }
 
-  .health-card-compact {
-    @apply bg-card rounded-xl shadow-sm border border-border/50 p-4 transition-all duration-200 hover:shadow-md;
+  .card-elevated:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
   }
 
-  /* Status indicators using health-specific colors */
-  .status-normal {
-    @apply bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full text-sm font-medium;
+  .card-flat {
+    @apply bg-card rounded-2xl border border-border;
   }
 
-  .status-warning {
-    @apply bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1 rounded-full text-sm font-medium;
+  .card-interactive {
+    @apply card-elevated cursor-pointer transition-all duration-200;
   }
 
-  .status-critical {
-    @apply bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1 rounded-full text-sm font-medium;
+  .card-interactive:hover {
+    @apply border-primary/20;
+    transform: translateY(-1px);
   }
 
-  .status-info {
-    @apply bg-sky-50 text-sky-700 border border-sky-200 px-3 py-1 rounded-full text-sm font-medium;
+  /* Metric display - inspired by Apple Health rings */
+  .metric-ring {
+    @apply relative inline-flex items-center justify-center;
   }
 
-  /* Modern button styles using health palette */
-  .btn-health-primary {
-    @apply bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6 py-3 font-medium transition-all duration-200 shadow-sm hover:shadow-md;
+  .metric-value {
+    @apply text-3xl font-semibold tracking-tight text-foreground;
   }
 
-  .btn-health-secondary {
-    @apply bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-xl px-6 py-3 font-medium transition-all duration-200;
-  }
-
-  /* Layout utilities with modern spacing and grid */
-  .container-health {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
-
-  .grid-health-summary {
-    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6;
-  }
-
-  .grid-health-detailed {
-    @apply grid grid-cols-1 lg:grid-cols-2 gap-8;
-  }
-
-  /* Typography improvements for clarity and modern feel */
-  .text-health-title {
-    @apply text-3xl font-bold text-foreground mb-3;
-  }
-
-  .text-health-subtitle {
-    @apply text-xl font-semibold text-muted-foreground mb-4;
-  }
-
-  .text-health-body {
-    @apply text-base text-muted-foreground leading-relaxed;
-  }
-
-  .text-health-caption {
-    @apply text-sm text-muted-foreground font-medium;
-  }
-
-  .text-health-metric {
-    @apply text-2xl font-bold text-foreground;
-  }
-
-  .text-health-metric-unit {
+  .metric-label {
     @apply text-sm font-medium text-muted-foreground;
   }
 
-  /* Health summary cards */
-  .health-card-summary {
-    @apply bg-card rounded-2xl shadow-sm border border-border/50 p-6 transition-all duration-200 hover:shadow-lg hover:border-primary/20;
+  .metric-unit {
+    @apply text-lg font-normal text-muted-foreground ml-1;
   }
 
-  /* Icon containers */
-  .icon-vitals {
-    @apply w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600;
+  /* Status badges - clean and readable */
+  .badge-success {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+    @apply bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300;
   }
 
-  .icon-preventive {
-    @apply w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center text-teal-600;
+  .badge-warning {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+    @apply bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300;
   }
 
-  .icon-warnings {
-    @apply w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center text-rose-600;
+  .badge-danger {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+    @apply bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300;
   }
 
-  .icon-medications {
-    @apply w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center text-sky-600;
+  .badge-info {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+    @apply bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300;
   }
 
-  .icon-labs {
-    @apply w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center text-violet-600;
+  .badge-neutral {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+    @apply bg-secondary text-secondary-foreground;
   }
 
-  /* Section headers */
-  .section-header {
-    @apply flex items-center justify-between mb-6;
-  }
-
+  /* Section layouts */
   .section-title {
-    @apply flex items-center gap-3 text-2xl font-bold text-foreground;
+    @apply text-xl font-semibold text-foreground tracking-tight;
+  }
+
+  .section-subtitle {
+    @apply text-sm text-muted-foreground mt-1;
+  }
+
+  /* Health category icons - colored circles */
+  .category-icon {
+    @apply w-10 h-10 rounded-full flex items-center justify-center;
+  }
+
+  .category-icon-vitals {
+    @apply category-icon bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400;
+  }
+
+  .category-icon-activity {
+    @apply category-icon bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400;
+  }
+
+  .category-icon-medications {
+    @apply category-icon bg-sky-100 text-sky-600 dark:bg-sky-950 dark:text-sky-400;
+  }
+
+  .category-icon-labs {
+    @apply category-icon bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400;
+  }
+
+  .category-icon-alerts {
+    @apply category-icon bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400;
+  }
+
+  .category-icon-calendar {
+    @apply category-icon bg-primary/10 text-primary;
+  }
+
+  /* List items - clean rows */
+  .list-item {
+    @apply flex items-center gap-4 py-4 border-b border-border last:border-0;
+  }
+
+  .list-item-compact {
+    @apply flex items-center gap-3 py-3 border-b border-border last:border-0;
+  }
+
+  /* Progress bars */
+  .progress-bar {
+    @apply h-2 bg-secondary rounded-full overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+  }
+
+  /* Navigation */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors;
+    @apply text-muted-foreground hover:text-foreground hover:bg-secondary;
+  }
+
+  .nav-item-active {
+    @apply bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary;
+  }
+
+  /* Buttons - clean and modern */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl;
+    @apply bg-primary text-primary-foreground font-medium;
+    @apply hover:bg-primary/90 active:scale-[0.98] transition-all;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl;
+    @apply bg-secondary text-secondary-foreground font-medium;
+    @apply hover:bg-secondary/80 active:scale-[0.98] transition-all;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl;
+    @apply text-muted-foreground font-medium;
+    @apply hover:bg-secondary hover:text-foreground transition-all;
+  }
+
+  /* Data display */
+  .data-row {
+    @apply flex items-center justify-between py-3;
+  }
+
+  .data-label {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .data-value {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  /* Empty states */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-12 text-center;
+  }
+
+  .empty-state-icon {
+    @apply w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4;
+    @apply text-muted-foreground;
+  }
+
+  .empty-state-title {
+    @apply text-lg font-medium text-foreground mb-1;
+  }
+
+  .empty-state-description {
+    @apply text-sm text-muted-foreground max-w-sm;
+  }
+
+  /* Container */
+  .container-app {
+    @apply max-w-6xl mx-auto px-4 sm:px-6;
+  }
+
+  .container-narrow {
+    @apply max-w-3xl mx-auto px-4 sm:px-6;
+  }
+
+  /* Grid layouts */
+  .grid-summary {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4;
+  }
+
+  .grid-cards {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4;
   }
 }
 
-/* Chart container styling */
-.chart-container {
-  @apply bg-card rounded-2xl p-6 shadow-sm border border-border;
+/* Animation utilities */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.chart-legend {
-  @apply flex flex-wrap gap-4 justify-center mt-4;
-}
-
-.chart-legend-item {
-  @apply flex items-center gap-2 text-sm text-muted-foreground;
-}
-
-/* Sidebar layout fixes */
-.sidebar-fixed {
-  @apply fixed left-0 top-0 h-screen w-64 bg-card shadow-lg border-r border-border z-40 overflow-y-auto;
-}
-
-.main-with-sidebar {
-  @apply ml-64 min-h-screen;
-}
-
-/* Navigation improvements */
-.nav-item {
-  @apply w-full justify-start p-3 h-auto transition-all duration-200 rounded-lg mb-1;
-}
-
-.nav-item-active {
-  @apply bg-primary/10 text-primary border-r-2 border-primary font-medium;
-}
-
-.nav-item-inactive {
-  @apply text-muted-foreground hover:bg-muted/50 hover:text-foreground;
-}
-
-/* Mobile optimizations */
-@media (max-width: 768px) {
-  .health-card {
-    @apply p-4 rounded-xl;
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-
-  .grid-health-summary {
-    @apply grid-cols-1 gap-4;
-  }
-
-  .grid-health-detailed {
-    @apply grid-cols-1 gap-6;
-  }
-
-  .sidebar-fixed {
-    @apply transform -translate-x-full transition-transform duration-300;
-  }
-
-  .sidebar-open {
-    @apply transform translate-x-0;
-  }
-
-  .main-with-sidebar {
-    @apply ml-0;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Improve scrolling behavior */
-.smooth-scroll {
-  scroll-behavior: smooth;
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
-/* Better focus states */
-.nav-item:focus {
-  @apply outline-none ring-2 ring-blue-500 ring-opacity-50;
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
 }
 
-/* Focus states for accessibility */
-.health-card:focus-within {
-  @apply ring-2 ring-primary/30;
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out;
 }
 
-button:focus-visible {
-  @apply ring-2 ring-primary/50 outline-none;
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
 }
 
-/* Additional modern utilities */
-.glass-effect {
-  @apply bg-white/80 backdrop-blur-sm;
+/* Focus states */
+.focus-ring {
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
 }
 
-.gradient-health {
-  @apply bg-gradient-to-br from-primary/90 to-accent/90;
+/* Backdrop blur for modals/sheets */
+.backdrop-blur-soft {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-.gradient-success {
-  @apply bg-gradient-to-br from-emerald-500 to-teal-600;
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.gradient-warning {
-  @apply bg-gradient-to-br from-amber-500 to-orange-600;
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-.gradient-danger {
-  @apply bg-gradient-to-br from-rose-500 to-red-600;
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .card-elevated, .card-flat {
+    @apply rounded-xl;
+  }
+
+  .grid-summary {
+    @apply gap-3;
+  }
 }
