@@ -61,13 +61,9 @@ export default function Dashboard() {
       try {
         const isAuthed = await checkAuth();
         if (!isAuthed) {
-          // Try to connect to demo
-          try {
-            await fetch('/api/fhir/demo/connect', { method: 'POST' });
-          } catch {
-            navigate('/');
-            return;
-          }
+          // Redirect to home page for password-protected demo access
+          navigate('/');
+          return;
         }
       } catch {
         navigate('/');
