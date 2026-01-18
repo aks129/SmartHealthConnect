@@ -12,7 +12,8 @@ import familyRoutes from './family-routes';
 import schedulingService from './scheduling-service';
 import notificationService from './notification-service';
 
-// Sample FHIR data for demo purposes
+// De-identified Sample FHIR data for demo purposes
+// All data is completely fictional - no PHI or real patient information
 const samplePatient = {
   resourceType: "Patient",
   id: "demo-patient-1",
@@ -20,31 +21,31 @@ const samplePatient = {
   name: [
     {
       use: "official",
-      family: "Smith",
-      given: ["John", "William"]
+      family: "Demo",
+      given: ["Alex"]
     }
   ],
   telecom: [
     {
       system: "phone",
-      value: "555-123-4567",
+      value: "(555) 000-0001",
       use: "home"
     },
     {
       system: "email",
-      value: "john.smith@example.com",
+      value: "demo.user@example.test",
       use: "work"
     }
   ],
   gender: "male",
-  birthDate: "1980-07-15",
+  birthDate: "1978-01-15",
   address: [
     {
       use: "home",
-      line: ["123 Main St"],
-      city: "Anytown",
-      state: "CA",
-      postalCode: "12345",
+      line: ["123 Demo Street"],
+      city: "Sample City",
+      state: "ST",
+      postalCode: "00000",
       country: "USA"
     }
   ],
@@ -61,13 +62,13 @@ const samplePatient = {
         ],
         text: "Medical Record Number"
       },
-      system: "http://hospital.example.org",
-      value: "MRN-7893214"
+      system: "http://demo.example.org",
+      value: "DEMO-00001"
     }
   ]
 };
 
-// Added a second sample patient for demonstration purposes
+// Second demo patient - completely de-identified
 const samplePatient2 = {
   resourceType: "Patient",
   id: "demo-patient-2",
@@ -75,31 +76,31 @@ const samplePatient2 = {
   name: [
     {
       use: "official",
-      family: "Johnson",
-      given: ["Emily", "Rose"]
+      family: "Sample",
+      given: ["Jordan"]
     }
   ],
   telecom: [
     {
       system: "phone",
-      value: "555-987-6543",
+      value: "(555) 000-0002",
       use: "mobile"
     },
     {
       system: "email",
-      value: "emily.johnson@example.com",
+      value: "sample.user@example.test",
       use: "home"
     }
   ],
   gender: "female",
-  birthDate: "1992-03-20",
+  birthDate: "1990-06-20",
   address: [
     {
       use: "home",
-      line: ["456 Oak Ave"],
-      city: "Metropolis",
-      state: "NY",
-      postalCode: "10001",
+      line: ["456 Test Avenue"],
+      city: "Example Town",
+      state: "ST",
+      postalCode: "00000",
       country: "USA"
     }
   ],
@@ -116,8 +117,8 @@ const samplePatient2 = {
         ],
         text: "Medical Record Number"
       },
-      system: "http://hospital.example.org",
-      value: "MRN-1234567"
+      system: "http://demo.example.org",
+      value: "DEMO-00002"
     }
   ]
 };
@@ -170,7 +171,7 @@ const sampleConditions = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     onsetDateTime: "2018-03-15",
     recordedDate: "2018-03-15"
@@ -219,7 +220,7 @@ const sampleConditions = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     onsetDateTime: "2019-08-10",
     recordedDate: "2019-08-10"
@@ -268,7 +269,7 @@ const sampleConditions = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     onsetDateTime: "2023-01-05",
     abatementDateTime: "2023-01-20",
@@ -318,7 +319,7 @@ const sampleConditions = [
     },
     subject: {
       reference: "Patient/demo-patient-2",
-      display: "Emily Rose Johnson"
+      display: "Jordan Sample"
     },
     onsetDateTime: "2010-05-20",
     recordedDate: "2010-05-20",
@@ -359,7 +360,7 @@ const sampleObservations = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     effectiveDateTime: "2023-03-15T10:30:00Z",
     issued: "2023-03-15T10:32:00Z",
@@ -440,7 +441,7 @@ const sampleObservations = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     effectiveDateTime: "2023-02-15T08:30:00Z",
     issued: "2023-02-15T12:45:00Z",
@@ -508,7 +509,7 @@ const sampleObservations = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     effectiveDateTime: "2023-02-15T08:30:00Z",
     issued: "2023-02-15T14:20:00Z",
@@ -570,7 +571,7 @@ const sampleObservations = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     effectiveDateTime: "2023-03-15T10:30:00Z",
     issued: "2023-03-15T10:30:00Z",
@@ -609,7 +610,7 @@ const sampleObservations = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     effectiveDateTime: "2023-03-15T10:30:00Z",
     issued: "2023-03-15T10:30:00Z",
@@ -648,7 +649,7 @@ const sampleObservations = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     effectiveDateTime: "2023-02-15T08:30:00Z",
     issued: "2023-02-15T12:45:00Z",
@@ -710,7 +711,7 @@ const sampleObservations = [
     },
     subject: {
       reference: "Patient/demo-patient-2",
-      display: "Emily Rose Johnson"
+      display: "Jordan Sample"
     },
     effectiveDateTime: "2023-03-20T09:15:00Z",
     issued: "2023-03-20T15:30:00Z",
@@ -774,7 +775,7 @@ const sampleObservations = [
     },
     subject: {
       reference: "Patient/demo-patient-2",
-      display: "Emily Rose Johnson"
+      display: "Jordan Sample"
     },
     effectiveDateTime: "2023-03-10T14:00:00Z",
     issued: "2023-03-10T14:15:00Z",
@@ -830,7 +831,7 @@ const sampleObservations = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     effectiveDateTime: "2023-03-15T10:30:00Z",
     issued: "2023-03-15T10:32:00Z",
@@ -881,7 +882,7 @@ const sampleObservations = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     effectiveDateTime: "2023-02-15T08:30:00Z",
     issued: "2023-02-15T12:45:00Z",
@@ -943,7 +944,7 @@ const sampleObservations = [
     },
     subject: {
       reference: "Patient/demo-patient-2",
-      display: "Emily Rose Johnson"
+      display: "Jordan Sample"
     },
     effectiveDateTime: "2023-03-20T09:00:00Z",
     issued: "2023-03-20T09:01:00Z",
@@ -994,7 +995,7 @@ const sampleObservations = [
     },
     subject: {
       reference: "Patient/demo-patient-2",
-      display: "Emily Rose Johnson"
+      display: "Jordan Sample"
     },
     effectiveDateTime: "2023-03-20T09:15:00Z",
     issued: "2023-03-20T15:30:00Z",
@@ -1050,12 +1051,12 @@ const sampleMedications = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     authoredOn: "2022-10-15",
     requester: {
       reference: "Practitioner/demo-practitioner-1",
-      display: "Dr. Jane Williams"
+      display: "Dr. Demo Provider"
     },
     dosageInstruction: [
       {
@@ -1116,12 +1117,12 @@ const sampleMedications = [
     },
     subject: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     authoredOn: "2022-09-05",
     requester: {
       reference: "Practitioner/demo-practitioner-1",
-      display: "Dr. Jane Williams"
+      display: "Dr. Demo Provider"
     },
     dosageInstruction: [
       {
@@ -1182,12 +1183,12 @@ const sampleMedications = [
     },
     subject: {
       reference: "Patient/demo-patient-2",
-      display: "Emily Rose Johnson"
+      display: "Jordan Sample"
     },
     authoredOn: "2023-01-20",
     requester: {
       reference: "Practitioner/demo-practitioner-2",
-      display: "Dr. Robert Johnson"
+      display: "Dr. Sample Physician"
     },
     dosageInstruction: [
       {
@@ -1270,7 +1271,7 @@ const sampleAllergies = [
     },
     patient: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     recordedDate: "2015-08-20",
     reaction: [
@@ -1333,7 +1334,7 @@ const sampleAllergies = [
     },
     patient: {
       reference: "Patient/demo-patient-2",
-      display: "Emily Rose Johnson"
+      display: "Jordan Sample"
     },
     recordedDate: "2019-03-10",
     reaction: [
@@ -1390,7 +1391,7 @@ const sampleAllergies = [
     },
     patient: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     recordedDate: "2020-06-15",
     reaction: [
@@ -1430,13 +1431,13 @@ const sampleImmunizations = [
     },
     patient: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     occurrenceDateTime: "2022-05-15T14:30:00Z",
     primarySource: true,
     location: {
       reference: "Location/demo-location-1",
-      display: "Boston Medical Center - Main Campus"
+      display: "Demo Medical Center - Main Campus"
     },
     manufacturer: {
       display: "Pfizer-BioNTech"
@@ -1482,13 +1483,13 @@ const sampleImmunizations = [
     },
     patient: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     occurrenceDateTime: "2022-11-20T11:15:00Z",
     primarySource: true,
     location: {
       reference: "Location/demo-location-2",
-      display: "Cambridge Health Alliance - Primary Care"
+      display: "Sample Health Clinic - Primary Care"
     },
     manufacturer: {
       display: "Pfizer-BioNTech"
@@ -1529,13 +1530,13 @@ const sampleImmunizations = [
     },
     patient: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     occurrenceDateTime: "2022-10-01T15:45:00Z",
     primarySource: true,
     location: {
       reference: "Location/demo-location-1",
-      display: "Boston Medical Center - Main Campus"
+      display: "Demo Medical Center - Main Campus"
     },
     manufacturer: {
       display: "Sanofi Pasteur"
@@ -1575,7 +1576,7 @@ const sampleImmunizations = [
     },
     patient: {
       reference: "Patient/demo-patient-2",
-      display: "Emily Rose Johnson"
+      display: "Jordan Sample"
     },
     occurrenceDateTime: "1980-04-10T10:00:00Z",
     primarySource: false,
@@ -1606,13 +1607,13 @@ const sampleImmunizations = [
     },
     patient: {
       reference: "Patient/demo-patient-2",
-      display: "Emily Rose Johnson"
+      display: "Jordan Sample"
     },
     occurrenceDateTime: "2021-07-22T13:20:00Z",
     primarySource: true,
     location: {
       reference: "Location/demo-location-2",
-      display: "Cambridge Health Alliance - Primary Care"
+      display: "Sample Health Clinic - Primary Care"
     },
     manufacturer: {
       display: "GlaxoSmithKline"
@@ -1652,7 +1653,7 @@ const sampleCoverages = [
     subscriberId: "12345678",
     beneficiary: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     payor: [
       {
@@ -1714,12 +1715,12 @@ const sampleClaims = [
     use: "claim",
     patient: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     created: "2023-04-15",
     provider: {
       reference: "Practitioner/demo-practitioner-1",
-      display: "Dr. Jane Williams"
+      display: "Dr. Demo Provider"
     },
     priority: {
       coding: [
@@ -1776,7 +1777,7 @@ const sampleClaims = [
     use: "claim",
     patient: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     created: "2023-05-02",
     provider: {
@@ -1833,21 +1834,21 @@ const samplePractitioners = [
     name: [
       {
         use: "official",
-        family: "Williams",
-        given: ["Jane"],
+        family: "Provider",
+        given: ["Demo"],
         prefix: ["Dr."],
-        text: "Dr. Jane Williams"
+        text: "Dr. Demo Provider"
       }
     ],
     telecom: [
       {
         system: "phone",
-        value: "555-123-4567",
+        value: "(555) 000-1001",
         use: "work"
       },
       {
         system: "email",
-        value: "jane.williams@example.org",
+        value: "provider1@demo.example.test",
         use: "work"
       }
     ],
@@ -1855,10 +1856,10 @@ const samplePractitioners = [
       {
         use: "work",
         type: "both",
-        line: ["123 Medical Blvd"],
-        city: "Boston",
-        state: "MA",
-        postalCode: "02215",
+        line: ["123 Demo Medical Blvd"],
+        city: "Sample City",
+        state: "ST",
+        postalCode: "00000",
         country: "USA"
       }
     ],
@@ -1876,7 +1877,7 @@ const samplePractitioners = [
           text: "Doctor of Medicine"
         },
         issuer: {
-          display: "Harvard Medical School"
+          display: "Sample Medical School"
         }
       },
       {
@@ -1900,21 +1901,21 @@ const samplePractitioners = [
     name: [
       {
         use: "official",
-        family: "Johnson",
-        given: ["Robert"],
+        family: "Physician",
+        given: ["Sample"],
         prefix: ["Dr."],
-        text: "Dr. Robert Johnson"
+        text: "Dr. Sample Physician"
       }
     ],
     telecom: [
       {
         system: "phone",
-        value: "555-987-6543",
+        value: "(555) 000-1002",
         use: "work"
       },
       {
         system: "email",
-        value: "robert.johnson@example.org",
+        value: "provider2@demo.example.test",
         use: "work"
       }
     ],
@@ -1922,10 +1923,10 @@ const samplePractitioners = [
       {
         use: "work",
         type: "both",
-        line: ["456 Cardiology Way"],
-        city: "Boston",
-        state: "MA",
-        postalCode: "02114",
+        line: ["456 Demo Cardiology Way"],
+        city: "Sample City",
+        state: "ST",
+        postalCode: "00000",
         country: "USA"
       }
     ],
@@ -1964,21 +1965,21 @@ const samplePractitioners = [
     name: [
       {
         use: "official",
-        family: "Smith",
-        given: ["Sarah"],
+        family: "Doctor",
+        given: ["Test"],
         prefix: ["Dr."],
-        text: "Dr. Sarah Smith"
+        text: "Dr. Test Doctor"
       }
     ],
     telecom: [
       {
         system: "phone",
-        value: "555-456-7890",
+        value: "(555) 000-1003",
         use: "work"
       },
       {
         system: "email",
-        value: "sarah.smith@example.org",
+        value: "provider3@demo.example.test",
         use: "work"
       }
     ],
@@ -1986,10 +1987,10 @@ const samplePractitioners = [
       {
         use: "work",
         type: "both",
-        line: ["789 Neurology Center"],
-        city: "Cambridge",
-        state: "MA",
-        postalCode: "02139",
+        line: ["789 Demo Neurology Center"],
+        city: "Example Town",
+        state: "ST",
+        postalCode: "00000",
         country: "USA"
       }
     ],
@@ -2023,7 +2024,7 @@ const samplePractitioners = [
   }
 ];
 
-// Sample Organizations
+// Sample Organizations - De-identified
 const sampleOrganizations = [
   {
     resourceType: "Organization",
@@ -2041,16 +2042,16 @@ const sampleOrganizations = [
         text: "Healthcare Provider"
       }
     ],
-    name: "Boston Medical Center",
+    name: "Demo Medical Center",
     telecom: [
       {
         system: "phone",
-        value: "617-555-1000",
+        value: "(555) 000-2001",
         use: "work"
       },
       {
         system: "email",
-        value: "info@bostonmedical.example.org",
+        value: "info@demo-medical.example.test",
         use: "work"
       }
     ],
@@ -2058,10 +2059,10 @@ const sampleOrganizations = [
       {
         use: "work",
         type: "both",
-        line: ["1 Medical Center Dr"],
-        city: "Boston",
-        state: "MA",
-        postalCode: "02118",
+        line: ["1 Demo Medical Center Dr"],
+        city: "Sample City",
+        state: "ST",
+        postalCode: "00000",
         country: "USA"
       }
     ]
@@ -2082,16 +2083,16 @@ const sampleOrganizations = [
         text: "Healthcare Provider"
       }
     ],
-    name: "Cambridge Health Alliance",
+    name: "Sample Health Clinic",
     telecom: [
       {
         system: "phone",
-        value: "617-555-2000",
+        value: "(555) 000-2002",
         use: "work"
       },
       {
         system: "email",
-        value: "info@cambridgehealth.example.org",
+        value: "info@sample-health.example.test",
         use: "work"
       }
     ],
@@ -2099,24 +2100,24 @@ const sampleOrganizations = [
       {
         use: "work",
         type: "both",
-        line: ["1493 Cambridge St"],
-        city: "Cambridge",
-        state: "MA",
-        postalCode: "02139",
+        line: ["456 Demo Healthcare St"],
+        city: "Example Town",
+        state: "ST",
+        postalCode: "00000",
         country: "USA"
       }
     ]
   }
 ];
 
-// Sample Locations
+// Sample Locations - De-identified
 const sampleLocations = [
   {
     resourceType: "Location",
     id: "demo-location-1",
     status: "active",
-    name: "Boston Medical Center - Main Campus",
-    description: "Main campus of Boston Medical Center",
+    name: "Demo Medical Center - Main Campus",
+    description: "Main campus of Demo Medical Center",
     mode: "instance",
     type: [
       {
@@ -2133,34 +2134,34 @@ const sampleLocations = [
     telecom: [
       {
         system: "phone",
-        value: "617-555-1000",
+        value: "(555) 000-2001",
         use: "work"
       }
     ],
     address: {
       use: "work",
       type: "both",
-      line: ["1 Medical Center Dr"],
-      city: "Boston",
-      state: "MA",
-      postalCode: "02118",
+      line: ["1 Demo Medical Center Dr"],
+      city: "Sample City",
+      state: "ST",
+      postalCode: "00000",
       country: "USA"
     },
     position: {
-      longitude: -71.0695,
-      latitude: 42.3355
+      longitude: 0.0,
+      latitude: 0.0
     },
     managingOrganization: {
       reference: "Organization/demo-organization-1",
-      display: "Boston Medical Center"
+      display: "Demo Medical Center"
     }
   },
   {
     resourceType: "Location",
     id: "demo-location-2",
     status: "active",
-    name: "Cambridge Health Alliance - Primary Care",
-    description: "Primary Care facility of Cambridge Health Alliance",
+    name: "Sample Health Clinic - Primary Care",
+    description: "Primary Care facility of Sample Health Clinic",
     mode: "instance",
     type: [
       {
@@ -2177,26 +2178,26 @@ const sampleLocations = [
     telecom: [
       {
         system: "phone",
-        value: "617-555-2100",
+        value: "(555) 000-2002",
         use: "work"
       }
     ],
     address: {
       use: "work",
       type: "both",
-      line: ["1493 Cambridge St", "Suite 200"],
-      city: "Cambridge",
-      state: "MA",
-      postalCode: "02139",
+      line: ["456 Demo Healthcare St", "Suite 200"],
+      city: "Example Town",
+      state: "ST",
+      postalCode: "00000",
       country: "USA"
     },
     position: {
-      longitude: -71.1060,
-      latitude: 42.3730
+      longitude: 0.0,
+      latitude: 0.0
     },
     managingOrganization: {
       reference: "Organization/demo-organization-2",
-      display: "Cambridge Health Alliance"
+      display: "Sample Health Clinic"
     }
   }
 ];
@@ -2246,7 +2247,7 @@ const sampleAppointments = [
       {
         actor: {
           reference: "Patient/demo-patient-1",
-          display: "John William Smith"
+          display: "Alex Demo"
         },
         required: "required",
         status: "accepted"
@@ -2254,7 +2255,7 @@ const sampleAppointments = [
       {
         actor: {
           reference: "Practitioner/demo-practitioner-1",
-          display: "Dr. Jane Williams"
+          display: "Dr. Demo Provider"
         },
         required: "required",
         status: "accepted"
@@ -2262,7 +2263,7 @@ const sampleAppointments = [
       {
         actor: {
           reference: "Location/demo-location-1",
-          display: "Boston Medical Center - Main Campus"
+          display: "Demo Medical Center - Main Campus"
         },
         required: "required",
         status: "accepted"
@@ -2273,7 +2274,7 @@ const sampleAppointments = [
       {
         location: {
           reference: "Location/demo-location-1",
-          display: "Boston Medical Center - Main Campus"
+          display: "Demo Medical Center - Main Campus"
         },
         status: "active"
       }
@@ -2322,7 +2323,7 @@ const sampleAppointments = [
       {
         actor: {
           reference: "Patient/demo-patient-1",
-          display: "John William Smith"
+          display: "Alex Demo"
         },
         required: "required",
         status: "accepted"
@@ -2330,7 +2331,7 @@ const sampleAppointments = [
       {
         actor: {
           reference: "Practitioner/demo-practitioner-2",
-          display: "Dr. Robert Johnson"
+          display: "Dr. Sample Physician"
         },
         required: "required",
         status: "accepted"
@@ -2338,7 +2339,7 @@ const sampleAppointments = [
       {
         actor: {
           reference: "Location/demo-location-2",
-          display: "Cambridge Health Alliance - Primary Care"
+          display: "Sample Health Clinic - Primary Care"
         },
         required: "required",
         status: "accepted"
@@ -2349,7 +2350,7 @@ const sampleAppointments = [
       {
         location: {
           reference: "Location/demo-location-2",
-          display: "Cambridge Health Alliance - Primary Care"
+          display: "Sample Health Clinic - Primary Care"
         },
         status: "active"
       }
@@ -2398,7 +2399,7 @@ const sampleAppointments = [
       {
         actor: {
           reference: "Patient/demo-patient-2",
-          display: "Emily Rose Johnson"
+          display: "Jordan Sample"
         },
         required: "required",
         status: "accepted"
@@ -2406,7 +2407,7 @@ const sampleAppointments = [
       {
         actor: {
           reference: "Practitioner/demo-practitioner-1",
-          display: "Dr. Jane Williams"
+          display: "Dr. Demo Provider"
         },
         required: "required",
         status: "accepted"
@@ -2414,7 +2415,7 @@ const sampleAppointments = [
       {
         actor: {
           reference: "Location/demo-location-1",
-          display: "Boston Medical Center - Main Campus"
+          display: "Demo Medical Center - Main Campus"
         },
         required: "required",
         status: "accepted"
@@ -2425,7 +2426,7 @@ const sampleAppointments = [
       {
         location: {
           reference: "Location/demo-location-1",
-          display: "Boston Medical Center - Main Campus"
+          display: "Demo Medical Center - Main Campus"
         },
         status: "active"
       }
@@ -2444,11 +2445,11 @@ const samplePractitionerRoles = [
     },
     practitioner: {
       reference: "Practitioner/demo-practitioner-1",
-      display: "Dr. Jane Williams"
+      display: "Dr. Demo Provider"
     },
     organization: {
       reference: "Organization/demo-organization-1",
-      display: "Boston Medical Center"
+      display: "Demo Medical Center"
     },
     code: [
       {
@@ -2477,7 +2478,7 @@ const samplePractitionerRoles = [
     location: [
       {
         reference: "Location/demo-location-1",
-        display: "Boston Medical Center - Main Campus"
+        display: "Demo Medical Center - Main Campus"
       }
     ],
     telecom: [
@@ -2509,11 +2510,11 @@ const samplePractitionerRoles = [
     },
     practitioner: {
       reference: "Practitioner/demo-practitioner-2",
-      display: "Dr. Robert Johnson"
+      display: "Dr. Sample Physician"
     },
     organization: {
       reference: "Organization/demo-organization-2",
-      display: "Cambridge Health Alliance"
+      display: "Sample Health Clinic"
     },
     code: [
       {
@@ -2542,7 +2543,7 @@ const samplePractitionerRoles = [
     location: [
       {
         reference: "Location/demo-location-2",
-        display: "Cambridge Health Alliance - Primary Care"
+        display: "Sample Health Clinic - Primary Care"
       }
     ],
     telecom: [
@@ -2584,7 +2585,7 @@ const sampleExplanationOfBenefits = [
     use: "claim",
     patient: {
       reference: "Patient/demo-patient-1",
-      display: "John William Smith"
+      display: "Alex Demo"
     },
     created: "2023-04-16",
     insurer: {
@@ -2593,7 +2594,7 @@ const sampleExplanationOfBenefits = [
     },
     provider: {
       reference: "Practitioner/demo-practitioner-1",
-      display: "Dr. Jane Williams"
+      display: "Dr. Demo Provider"
     },
     outcome: "complete",
     insurance: [
@@ -2988,9 +2989,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register user profile and settings routes
   await registerUserRoutes(app);
 
-  // Demo connection endpoint
+  // Demo connection endpoint with password protection
+  const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'SmartHealth2025';
+
   app.post('/api/fhir/demo/connect', async (req: Request, res: Response) => {
     try {
+      const { password } = req.body;
+
+      // Validate password
+      if (!password || password !== DEMO_PASSWORD) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid demo password'
+        });
+      }
+
       // Create a demo FHIR session
       const sessionData = {
         provider: 'demo',

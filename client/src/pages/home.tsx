@@ -1,5 +1,16 @@
+import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ModeToggle } from "@/components/mode-toggle";
 import {
   Heart,
@@ -11,19 +22,52 @@ import {
   CheckCircle2,
   Sparkles,
   Play,
-  ChevronRight
+  ChevronRight,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 
 export default function Home() {
   const [, setLocation] = useLocation();
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleDemoClick = () => {
+    setShowPasswordDialog(true);
+    setPassword('');
+    setError('');
+  };
 
   const handleDemoConnect = async () => {
-    try {
-      await fetch('/api/fhir/demo/connect', { method: 'POST' });
-    } catch (e) {
-      console.warn('Demo connect failed:', e);
+    if (!password.trim()) {
+      setError('Please enter the demo password');
+      return;
     }
-    window.location.href = '/dashboard';
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/fhir/demo/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.message || 'Invalid password');
+        setIsLoading(false);
+        return;
+      }
+
+      window.location.href = '/dashboard';
+    } catch (e) {
+      setError('Failed to connect. Please try again.');
+      setIsLoading(false);
+    }
   };
 
   const features = [
@@ -80,7 +124,7 @@ export default function Home() {
 
           <div className="flex items-center gap-2">
             <ModeToggle />
-            <Button onClick={handleDemoConnect}>
+            <Button onClick={handleDemoClick}>
               Try Demo
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
@@ -108,7 +152,7 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={handleDemoConnect} className="text-base px-8">
+              <Button size="lg" onClick={handleDemoClick} className="text-base px-8">
                 <Play className="w-5 h-5 mr-2" />
                 Explore Demo
               </Button>
@@ -138,7 +182,7 @@ export default function Home() {
               <div
                 key={index}
                 className="card-elevated p-6 hover:border-primary/20 transition-all cursor-pointer"
-                onClick={handleDemoConnect}
+                onClick={handleDemoClick}
               >
                 <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-4`}>
                   <feature.icon className={`w-6 h-6 ${feature.color}`} />
@@ -180,7 +224,7 @@ export default function Home() {
                   ))}
                 </ul>
 
-                <Button size="lg" onClick={handleDemoConnect}>
+                <Button size="lg" onClick={handleDemoClick}>
                   <Play className="w-5 h-5 mr-2" />
                   Launch Demo
                 </Button>
@@ -238,6 +282,50 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Password Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="w-5 h-5 text-primary" />
+              Demo Access
+            </DialogTitle>
+            <DialogDescription>
+              Enter the demo password to access the health records preview.
+              This demo uses de-identified sample data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter demo password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleDemoConnect()}
+                autoFocus
+              />
+            </div>
+            {error && (
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <AlertCircle className="w-4 h-4" />
+                {error}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleDemoConnect} disabled={isLoading}>
+              {isLoading ? 'Connecting...' : 'Access Demo'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
