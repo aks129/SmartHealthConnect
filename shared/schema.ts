@@ -1041,6 +1041,50 @@ export type InsertHealthDigest = z.infer<typeof insertHealthDigestSchema>;
 export type HealthDigest = typeof healthDigests.$inferSelect;
 
 // ============================================
+// HIPAA Audit Logs - Required for compliance
+// ============================================
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id"),
+  userEmail: text("user_email"),
+  action: text("action").notNull(), // CREATE, READ, UPDATE, DELETE, ACCESS, EXPORT
+  resourceType: text("resource_type").notNull(), // PATIENT, CONDITION, OBSERVATION, etc.
+  resourceId: text("resource_id"),
+  ipAddress: text("ip_address").notNull(),
+  userAgent: text("user_agent"),
+  endpoint: text("endpoint").notNull(),
+  method: text("method").notNull(),
+  statusCode: integer("status_code").notNull(),
+  success: boolean("success").notNull(),
+  errorMessage: text("error_message"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+});
+
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+
+// ============================================
+// Refresh Tokens - For secure token rotation
+// ============================================
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  revokedAt: timestamp("revoked_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  userAgent: text("user_agent"),
+  ipAddress: text("ip_address"),
+});
+
+export type RefreshToken = typeof refreshTokens.$inferSelect;
+
+// ============================================
 // Zod Schemas for API Validation
 // ============================================
 
