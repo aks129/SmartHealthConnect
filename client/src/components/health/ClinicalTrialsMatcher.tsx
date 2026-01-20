@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   FlaskConical,
   MapPin,
@@ -23,9 +24,14 @@ import {
   Pill,
   Activity,
   Heart,
-  Brain
+  Brain,
+  Loader2,
+  RefreshCw,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { Condition, MedicationRequest } from '@shared/schema';
+import { useClinicalTrials, type ClinicalTrial as APIClinicalTrial } from '@/hooks/use-external-apis';
 
 interface ClinicalTrialsMatcherProps {
   conditions?: Condition[];
@@ -405,8 +411,38 @@ export function ClinicalTrialsMatcher({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPhase, setFilterPhase] = useState<string>('all');
   const [selectedTrial, setSelectedTrial] = useState<ClinicalTrial | null>(null);
+  const [useRealApi, setUseRealApi] = useState(true);
 
-  // Extract patient condition codes and text
+  // Extract patient condition codes and text for API search
+  const conditionSearchTerms = useMemo(() => {
+    const terms: string[] = [];
+    conditions.forEach(condition => {
+      const text = condition.code?.text ||
+        condition.code?.coding?.[0]?.display || '';
+      if (text) terms.push(text);
+
+      const code = condition.code?.coding?.[0]?.code;
+      if (code && CONDITION_SEARCH_TERMS[code]) {
+        terms.push(CONDITION_SEARCH_TERMS[code][0]);
+      }
+    });
+    return Array.from(new Set(terms)).slice(0, 3); // Limit to top 3 conditions
+  }, [conditions]);
+
+  // Fetch real clinical trials data from API
+  const {
+    data: apiTrialsData,
+    isLoading: isLoadingTrials,
+    isError: isApiError,
+    refetch: refetchTrials
+  } = useClinicalTrials({
+    conditions: conditionSearchTerms,
+    status: ['RECRUITING', 'ACTIVE_NOT_RECRUITING'],
+    pageSize: 20,
+    enabled: useRealApi && conditionSearchTerms.length > 0
+  });
+
+  // Extract patient condition codes and text for matching
   const patientConditions = useMemo(() => {
     const conditionTerms: string[] = [];
     conditions.forEach(condition => {
@@ -424,9 +460,54 @@ export function ClinicalTrialsMatcher({
     return Array.from(new Set(conditionTerms));
   }, [conditions]);
 
+  // Transform API trials to our internal format
+  const apiTrials = useMemo((): ClinicalTrial[] => {
+    if (!apiTrialsData?.trials) return [];
+
+    return apiTrialsData.trials.map((trial, index): ClinicalTrial => ({
+      id: `api-${trial.nctId}`,
+      nctId: trial.nctId,
+      title: trial.officialTitle || trial.briefTitle,
+      shortTitle: trial.briefTitle,
+      sponsor: trial.sponsor,
+      phase: (trial.phase?.includes('3') ? 'Phase 3' :
+              trial.phase?.includes('2') ? 'Phase 2' :
+              trial.phase?.includes('1') ? 'Phase 1' :
+              trial.phase?.includes('4') ? 'Phase 4' : 'Not Applicable') as ClinicalTrial['phase'],
+      status: (trial.status === 'RECRUITING' ? 'Recruiting' :
+               trial.status === 'ACTIVE_NOT_RECRUITING' ? 'Active, not recruiting' :
+               trial.status === 'ENROLLING_BY_INVITATION' ? 'Enrolling by invitation' :
+               'Recruiting') as ClinicalTrial['status'],
+      conditions: trial.conditions,
+      interventions: trial.interventions.map(i => ({ type: i.type, name: i.name })),
+      eligibility: {
+        minAge: parseInt(trial.eligibility.minAge) || 18,
+        maxAge: parseInt(trial.eligibility.maxAge) || 99,
+        gender: (trial.eligibility.sex === 'MALE' ? 'Male' :
+                 trial.eligibility.sex === 'FEMALE' ? 'Female' : 'All') as ClinicalTrial['eligibility']['gender'],
+        criteria: trial.eligibility.criteria.split('\n').filter(c => c.includes('Inclusion')).slice(0, 5),
+        exclusions: trial.eligibility.criteria.split('\n').filter(c => c.includes('Exclusion')).slice(0, 3)
+      },
+      locations: trial.locations.slice(0, 5).map(l => ({
+        facility: l.facility,
+        city: l.city,
+        state: l.state,
+        distance: undefined
+      })),
+      startDate: trial.startDate,
+      estimatedCompletion: trial.completionDate,
+      enrollment: trial.enrollmentCount,
+      description: trial.description,
+      whyItMatters: `Access to potentially new treatments for ${trial.conditions[0] || 'your condition'}. Contact the study team for more information.`
+    }));
+  }, [apiTrialsData]);
+
   // Match and score trials based on patient data
+  // Use API trials if available and enabled, otherwise fallback to sample data
+  const trialsToScore = useRealApi && apiTrials.length > 0 ? apiTrials : SAMPLE_TRIALS;
+
   const matchedTrials = useMemo(() => {
-    return SAMPLE_TRIALS.map(trial => {
+    return trialsToScore.map(trial => {
       let score = 0;
       const matchReasons: string[] = [];
 
@@ -487,7 +568,7 @@ export function ClinicalTrialsMatcher({
         matchReasons: Array.from(new Set(matchReasons))
       };
     }).sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
-  }, [patientConditions, patientAge, patientGender]);
+  }, [trialsToScore, patientConditions, patientAge, patientGender]);
 
   // Filter trials based on search and phase
   const filteredTrials = useMemo(() => {
@@ -553,6 +634,10 @@ export function ClinicalTrialsMatcher({
     }
   };
 
+  // Determine data source
+  const isUsingLiveData = useRealApi && apiTrials.length > 0;
+  const totalApiTrials = apiTrialsData?.totalCount || 0;
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-4">
@@ -561,13 +646,58 @@ export function ClinicalTrialsMatcher({
             <FlaskConical className="w-5 h-5 text-primary" />
             <CardTitle>Clinical Trials & New Treatments</CardTitle>
           </div>
-          <Badge variant="outline" className="bg-primary/5">
-            <Sparkles className="w-3 h-3 mr-1" />
-            Personalized Matches
-          </Badge>
+          <div className="flex items-center gap-2">
+            {/* Data source indicator */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setUseRealApi(!useRealApi)}
+              title={useRealApi ? "Switch to demo data" : "Switch to live API"}
+            >
+              {isUsingLiveData ? (
+                <>
+                  <Wifi className="w-3 h-3 mr-1 text-emerald-500" />
+                  Live
+                </>
+              ) : isLoadingTrials ? (
+                <>
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  Loading
+                </>
+              ) : isApiError ? (
+                <>
+                  <WifiOff className="w-3 h-3 mr-1 text-amber-500" />
+                  Demo
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-3 h-3 mr-1 text-muted-foreground" />
+                  Demo
+                </>
+              )}
+            </Button>
+            {isUsingLiveData && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2"
+                onClick={() => refetchTrials()}
+                title="Refresh from ClinicalTrials.gov"
+              >
+                <RefreshCw className="w-3 h-3" />
+              </Button>
+            )}
+            <Badge variant="outline" className="bg-primary/5">
+              <Sparkles className="w-3 h-3 mr-1" />
+              Personalized Matches
+            </Badge>
+          </div>
         </div>
         <CardDescription>
-          Discover research opportunities and new therapies matched to your health profile
+          {isUsingLiveData
+            ? `Found ${totalApiTrials} trials from ClinicalTrials.gov matching your conditions`
+            : 'Discover research opportunities and new therapies matched to your health profile'}
         </CardDescription>
       </CardHeader>
 

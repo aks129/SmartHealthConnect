@@ -11,6 +11,7 @@ import { registerUserRoutes } from './user-routes';
 import familyRoutes from './family-routes';
 import schedulingService from './scheduling-service';
 import notificationService from './notification-service';
+import externalApiRoutes from './external-api-routes';
 
 // De-identified Sample FHIR data for demo purposes
 // All data is completely fictional - no PHI or real patient information
@@ -3876,6 +3877,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/family', familyRoutes);
   app.use('/api/scheduling', schedulingService);
   app.use('/api/notifications', notificationService);
+
+  // Register external API routes (ClinicalTrials.gov, OpenFDA, NPI Registry)
+  app.use('/api/external', externalApiRoutes);
 
   return httpServer;
 }
