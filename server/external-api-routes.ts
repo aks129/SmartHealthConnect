@@ -226,32 +226,6 @@ router.get('/providers/search', async (req: Request, res: Response) => {
 });
 
 /**
- * Get provider by NPI number
- * GET /api/external/providers/:npi
- */
-router.get('/providers/:npi', async (req: Request, res: Response) => {
-  try {
-    const { npi } = req.params;
-
-    // Validate NPI format (10 digits)
-    if (!/^\d{10}$/.test(npi)) {
-      return res.status(400).json({ error: 'Invalid NPI format. Must be 10 digits.' });
-    }
-
-    const provider = await getProviderByNPI(npi);
-
-    if (!provider) {
-      return res.status(404).json({ error: 'Provider not found' });
-    }
-
-    res.json(provider);
-  } catch (error) {
-    console.error('[External API] Get provider error:', error);
-    res.status(500).json({ error: 'Failed to get provider' });
-  }
-});
-
-/**
  * Find specialists by specialty and location
  * GET /api/external/providers/specialists
  *
@@ -261,6 +235,9 @@ router.get('/providers/:npi', async (req: Request, res: Response) => {
  * - state: state (optional)
  * - postalCode: ZIP code (optional)
  * - limit: max results (default 10)
+ *
+ * NOTE: This route MUST be defined before /providers/:npi to avoid the
+ * parameterized route catching "specialists" as an NPI value.
  */
 router.get('/providers/specialists', async (req: Request, res: Response) => {
   try {
@@ -303,6 +280,35 @@ router.get('/providers/specialties', (_req: Request, res: Response) => {
     specialties: SPECIALTY_MAP,
     description: 'Common specialty terms mapped to NPI taxonomy descriptions'
   });
+});
+
+/**
+ * Get provider by NPI number
+ * GET /api/external/providers/:npi
+ *
+ * NOTE: This parameterized route MUST be defined after all specific
+ * /providers/* routes to avoid matching "specialists" or "specialties".
+ */
+router.get('/providers/:npi', async (req: Request, res: Response) => {
+  try {
+    const { npi } = req.params;
+
+    // Validate NPI format (10 digits)
+    if (!/^\d{10}$/.test(npi)) {
+      return res.status(400).json({ error: 'Invalid NPI format. Must be 10 digits.' });
+    }
+
+    const provider = await getProviderByNPI(npi);
+
+    if (!provider) {
+      return res.status(404).json({ error: 'Provider not found' });
+    }
+
+    res.json(provider);
+  } catch (error) {
+    console.error('[External API] Get provider error:', error);
+    res.status(500).json({ error: 'Failed to get provider' });
+  }
 });
 
 // ============================================
