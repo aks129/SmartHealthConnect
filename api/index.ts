@@ -1,7 +1,48 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import axios from 'axios';
 
 // Simple in-memory session storage for demo
 let demoSession: any = null;
+
+// NPI Registry API
+const NPI_REGISTRY_BASE = 'https://npiregistry.cms.hhs.gov/api';
+
+// bioRxiv/medRxiv API
+const BIORXIV_API_BASE = 'https://api.biorxiv.org';
+
+// Condition to research keywords mapping
+const CONDITION_RESEARCH_KEYWORDS: Record<string, string[]> = {
+  'diabetes': ['diabetes', 'glycemic', 'insulin', 'HbA1c', 'glucose', 'metformin'],
+  'hypertension': ['hypertension', 'blood pressure', 'antihypertensive', 'cardiovascular'],
+  'heart disease': ['cardiovascular', 'cardiac', 'heart failure', 'coronary', 'myocardial'],
+  'asthma': ['asthma', 'bronchial', 'respiratory', 'inhaler', 'bronchodilator'],
+  'copd': ['COPD', 'pulmonary', 'emphysema', 'chronic obstructive'],
+};
+
+// Specialty mappings for NPI search
+const SPECIALTY_MAP: Record<string, string> = {
+  'family medicine': 'Family Medicine',
+  'internal medicine': 'Internal Medicine',
+  'pediatrics': 'Pediatrics',
+  'cardiology': 'Cardiovascular Disease',
+  'dermatology': 'Dermatology',
+  'gastroenterology': 'Gastroenterology',
+  'neurology': 'Neurology',
+  'ophthalmology': 'Ophthalmology',
+  'orthopedic surgery': 'Orthopaedic Surgery',
+  'psychiatry': 'Psychiatry & Neurology',
+  'pulmonary disease': 'Pulmonary Disease',
+  'urology': 'Urology',
+  'oncology': 'Hematology & Oncology',
+  'endocrinology': 'Endocrinology, Diabetes & Metabolism',
+  'nephrology': 'Nephrology',
+  'rheumatology': 'Rheumatology',
+};
+
+function normalizeSpecialty(input: string): string {
+  const lower = input.toLowerCase();
+  return SPECIALTY_MAP[lower] || input;
+}
 
 // Vercel serverless function handler
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -479,6 +520,180 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(careGaps);
       } else {
         return res.status(401).json({ message: 'No active FHIR session' });
+      }
+    }
+
+    // ============================================
+    // External Healthcare API Routes
+    // ============================================
+
+    // Provider specialists search - NPI Registry
+    if (req.method === 'GET' && req.url?.startsWith('/api/external/providers/specialists')) {
+      try {
+        const url = new URL(req.url, 'http://localhost');
+        const specialty = url.searchParams.get('specialty');
+
+        if (!specialty) {
+          return res.status(400).json({
+            error: 'specialty parameter is required',
+            availableSpecialties: Object.keys(SPECIALTY_MAP)
+          });
+        }
+
+        const city = url.searchParams.get('city');
+        const state = url.searchParams.get('state');
+        const postalCode = url.searchParams.get('postalCode');
+        const limit = parseInt(url.searchParams.get('limit') || '10');
+
+        const queryParams: Record<string, string | number> = {
+          version: '2.1',
+          limit: limit,
+          taxonomy_description: normalizeSpecialty(specialty),
+        };
+
+        if (city) queryParams.city = city;
+        if (state) queryParams.state = state;
+        if (postalCode) queryParams.postal_code = postalCode;
+
+        const response = await axios.get(`${NPI_REGISTRY_BASE}/`, {
+          params: queryParams,
+          timeout: 10000,
+        });
+
+        // Transform NPI API results
+        const providers = (response.data.results || []).map((result: any) => {
+          const basic = result.basic || {};
+          return {
+            npi: result.number,
+            type: result.enumeration_type === 'NPI-1' ? 'individual' : 'organization',
+            name: {
+              first: basic.first_name,
+              last: basic.last_name,
+              middle: basic.middle_name,
+              credential: basic.credential,
+              organizationName: basic.organization_name,
+            },
+            specialties: (result.taxonomies || []).map((t: any) => ({
+              code: t.code,
+              description: t.desc,
+              isPrimary: t.primary,
+              state: t.state,
+              licenseNumber: t.license,
+            })),
+            addresses: (result.addresses || []).map((a: any) => ({
+              type: a.address_purpose === 'MAILING' ? 'mailing' : 'practice',
+              line1: a.address_1,
+              line2: a.address_2,
+              city: a.city,
+              state: a.state,
+              postalCode: a.postal_code,
+              country: a.country_code,
+              phone: a.telephone_number,
+              fax: a.fax_number,
+            })),
+            identifiers: (result.identifiers || []).map((i: any) => ({
+              type: i.desc,
+              identifier: i.identifier,
+              state: i.state,
+              issuer: i.issuer,
+            })),
+            enumerationDate: basic.enumeration_date || '',
+            lastUpdated: basic.last_updated || '',
+            status: basic.status === 'A' ? 'active' : 'deactivated',
+          };
+        }).filter((p: any) =>
+          p.status === 'active' &&
+          p.addresses.some((a: any) => a.type === 'practice')
+        );
+
+        return res.status(200).json({
+          specialty: normalizeSpecialty(specialty),
+          location: { city, state, postalCode },
+          providers,
+          totalCount: providers.length
+        });
+      } catch (error) {
+        console.error('[External API] Provider search error:', error);
+        return res.status(500).json({ error: 'Failed to find specialists' });
+      }
+    }
+
+    // Provider specialties list
+    if (req.method === 'GET' && req.url === '/api/external/providers/specialties') {
+      return res.status(200).json({
+        specialties: SPECIALTY_MAP,
+        description: 'Common specialty terms mapped to NPI taxonomy descriptions'
+      });
+    }
+
+    // Research preprints by condition
+    if (req.method === 'GET' && req.url?.startsWith('/api/external/research/condition/')) {
+      try {
+        const urlPath = req.url.split('?')[0];
+        const condition = decodeURIComponent(urlPath.replace('/api/external/research/condition/', ''));
+        const lowerCondition = condition.toLowerCase();
+
+        // Find matching keywords for the condition
+        let keywords: string[] = [];
+        for (const [key, terms] of Object.entries(CONDITION_RESEARCH_KEYWORDS)) {
+          if (lowerCondition.includes(key) || key.includes(lowerCondition)) {
+            keywords = terms;
+            break;
+          }
+        }
+
+        if (keywords.length === 0) {
+          keywords = [condition];
+        }
+
+        const url = new URL(req.url, 'http://localhost');
+        const server = (url.searchParams.get('server') as 'biorxiv' | 'medrxiv') || 'medrxiv';
+
+        // Fetch recent preprints from bioRxiv/medRxiv
+        const end = new Date();
+        const start = new Date();
+        start.setDate(start.getDate() - 30);
+        const interval = `${start.toISOString().split('T')[0]}/${end.toISOString().split('T')[0]}`;
+
+        const preprintResponse = await axios.get(
+          `${BIORXIV_API_BASE}/details/${server}/${interval}/0/json`,
+          { timeout: 15000 }
+        );
+
+        // Filter articles by keywords
+        const lowerKeywords = keywords.map(k => k.toLowerCase());
+        const articles = (preprintResponse.data.collection || [])
+          .filter((article: any) => {
+            const searchText = `${article.title} ${article.abstract}`.toLowerCase();
+            return lowerKeywords.some(keyword => searchText.includes(keyword));
+          })
+          .slice(0, 15)
+          .map((article: any) => ({
+            doi: article.doi,
+            title: article.title,
+            authors: article.authors,
+            authorList: article.authors.split(';').map((a: string) => a.trim()).filter(Boolean),
+            abstract: article.abstract,
+            category: article.category,
+            date: article.date,
+            server: article.server,
+            version: article.version,
+            type: article.type,
+            license: article.license,
+            published: article.published,
+            url: `https://doi.org/${article.doi}`,
+          }));
+
+        return res.status(200).json({
+          condition,
+          keywords,
+          server,
+          articles,
+          totalCount: articles.length
+        });
+      } catch (error) {
+        console.error('[External API] Research search error:', error);
+        return res.status(500).json({ error: 'Failed to search research for condition' });
       }
     }
 
