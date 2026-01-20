@@ -5,6 +5,7 @@
  * - ClinicalTrials.gov - Clinical trial search
  * - OpenFDA - Drug information and interactions
  * - NPI Registry - Provider search
+ * - bioRxiv/medRxiv - Research preprints
  */
 
 import { Router, Request, Response } from 'express';
@@ -12,6 +13,7 @@ import { z } from 'zod';
 import { searchClinicalTrials, getTrialByNctId, mapConditionToSearchTerms } from './integrations/clinicaltrials';
 import { searchDrug, checkDrugInteractions, getAdverseEvents } from './integrations/openfda';
 import { searchProviders, getProviderByNPI, findSpecialists, normalizeSpecialty, SPECIALTY_MAP } from './integrations/npi';
+import { searchPreprints, searchPreprintsByKeyword, getPreprintByDOI, CONDITION_RESEARCH_KEYWORDS } from './integrations/biorxiv';
 
 const router = Router();
 
@@ -300,6 +302,146 @@ router.get('/providers/specialties', (_req: Request, res: Response) => {
   res.json({
     specialties: SPECIALTY_MAP,
     description: 'Common specialty terms mapped to NPI taxonomy descriptions'
+  });
+});
+
+// ============================================
+// Research Preprints API (bioRxiv/medRxiv)
+// ============================================
+
+/**
+ * Search recent preprints
+ * GET /api/external/research/preprints
+ *
+ * Query params:
+ * - server: 'biorxiv' | 'medrxiv' (default: medrxiv)
+ * - interval: date range (e.g., '2024-01-01/2024-01-15')
+ * - pageSize: number of results (default 30)
+ */
+router.get('/research/preprints', async (req: Request, res: Response) => {
+  try {
+    const server = (req.query.server as 'biorxiv' | 'medrxiv') || 'medrxiv';
+    const interval = req.query.interval as string | undefined;
+    const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 30;
+
+    const results = await searchPreprints({ server, interval, pageSize });
+
+    res.json(results);
+  } catch (error) {
+    console.error('[External API] Preprint search error:', error);
+    res.status(500).json({ error: 'Failed to search preprints' });
+  }
+});
+
+/**
+ * Search preprints by keywords
+ * GET /api/external/research/search
+ *
+ * Query params:
+ * - keywords: comma-separated keywords
+ * - server: 'biorxiv' | 'medrxiv' (default: medrxiv)
+ * - limit: max results (default 20)
+ */
+router.get('/research/search', async (req: Request, res: Response) => {
+  try {
+    const keywordsParam = req.query.keywords as string;
+    if (!keywordsParam) {
+      return res.status(400).json({ error: 'keywords parameter is required' });
+    }
+
+    const keywords = keywordsParam.split(',').map(k => k.trim()).filter(Boolean);
+    const server = (req.query.server as 'biorxiv' | 'medrxiv') || 'medrxiv';
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+
+    const articles = await searchPreprintsByKeyword({ keywords, server, limit });
+
+    res.json({
+      keywords,
+      server,
+      articles,
+      totalCount: articles.length
+    });
+  } catch (error) {
+    console.error('[External API] Preprint keyword search error:', error);
+    res.status(500).json({ error: 'Failed to search preprints' });
+  }
+});
+
+/**
+ * Search preprints by health condition
+ * GET /api/external/research/condition/:condition
+ */
+router.get('/research/condition/:condition', async (req: Request, res: Response) => {
+  try {
+    const { condition } = req.params;
+    const lowerCondition = condition.toLowerCase();
+
+    // Find matching keywords for the condition
+    let keywords: string[] = [];
+    for (const [key, terms] of Object.entries(CONDITION_RESEARCH_KEYWORDS)) {
+      if (lowerCondition.includes(key) || key.includes(lowerCondition)) {
+        keywords = terms;
+        break;
+      }
+    }
+
+    if (keywords.length === 0) {
+      // Use condition name as keyword if no mapping found
+      keywords = [condition];
+    }
+
+    const server = (req.query.server as 'biorxiv' | 'medrxiv') || 'medrxiv';
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 15;
+
+    const articles = await searchPreprintsByKeyword({ keywords, server, limit });
+
+    res.json({
+      condition,
+      keywords,
+      server,
+      articles,
+      totalCount: articles.length
+    });
+  } catch (error) {
+    console.error('[External API] Condition research search error:', error);
+    res.status(500).json({ error: 'Failed to search research for condition' });
+  }
+});
+
+/**
+ * Get preprint by DOI
+ * GET /api/external/research/doi/:doi
+ */
+router.get('/research/doi/*', async (req: Request, res: Response) => {
+  try {
+    // DOI is in the path after /doi/
+    const doi = req.params[0];
+
+    if (!doi) {
+      return res.status(400).json({ error: 'DOI is required' });
+    }
+
+    const article = await getPreprintByDOI(doi);
+
+    if (!article) {
+      return res.status(404).json({ error: 'Preprint not found' });
+    }
+
+    res.json(article);
+  } catch (error) {
+    console.error('[External API] Get preprint error:', error);
+    res.status(500).json({ error: 'Failed to get preprint' });
+  }
+});
+
+/**
+ * Get available condition-to-keyword mappings
+ * GET /api/external/research/keywords
+ */
+router.get('/research/keywords', (_req: Request, res: Response) => {
+  res.json({
+    conditions: CONDITION_RESEARCH_KEYWORDS,
+    description: 'Health conditions mapped to research keywords for preprint search'
   });
 });
 

@@ -362,3 +362,99 @@ export function useSpecialties() {
     staleTime: Infinity, // Never expires (static data)
   });
 }
+
+// ============================================
+// Research Preprints (bioRxiv/medRxiv) Hooks
+// ============================================
+
+export interface PreprintArticle {
+  doi: string;
+  title: string;
+  authors: string;
+  authorList: string[];
+  abstract: string;
+  category: string;
+  date: string;
+  server: 'biorxiv' | 'medrxiv';
+  version: string;
+  type: string;
+  license: string;
+  published: string;
+  url: string;
+}
+
+interface ResearchSearchParams {
+  keywords: string[];
+  server?: 'biorxiv' | 'medrxiv';
+  limit?: number;
+  enabled?: boolean;
+}
+
+export function useResearchSearch({
+  keywords,
+  server = 'medrxiv',
+  limit = 20,
+  enabled = true,
+}: ResearchSearchParams) {
+  return useQuery({
+    queryKey: ['research-search', keywords, server, limit],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.set('keywords', keywords.join(','));
+      params.set('server', server);
+      params.set('limit', limit.toString());
+
+      const response = await fetch(`/api/external/research/search?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to search research');
+      }
+      return response.json() as Promise<{
+        keywords: string[];
+        server: string;
+        articles: PreprintArticle[];
+        totalCount: number;
+      }>;
+    },
+    enabled: enabled && keywords.length > 0,
+    staleTime: 60 * 60 * 1000, // 1 hour
+  });
+}
+
+export function useConditionResearch(condition: string, server: 'biorxiv' | 'medrxiv' = 'medrxiv', enabled = true) {
+  return useQuery({
+    queryKey: ['condition-research', condition, server],
+    queryFn: async () => {
+      const response = await fetch(`/api/external/research/condition/${encodeURIComponent(condition)}?server=${server}`);
+      if (!response.ok) {
+        throw new Error('Failed to search condition research');
+      }
+      return response.json() as Promise<{
+        condition: string;
+        keywords: string[];
+        server: string;
+        articles: PreprintArticle[];
+        totalCount: number;
+      }>;
+    },
+    enabled: enabled && !!condition,
+    staleTime: 60 * 60 * 1000, // 1 hour
+  });
+}
+
+export function useRecentPreprints(server: 'biorxiv' | 'medrxiv' = 'medrxiv', pageSize = 20, enabled = true) {
+  return useQuery({
+    queryKey: ['recent-preprints', server, pageSize],
+    queryFn: async () => {
+      const response = await fetch(`/api/external/research/preprints?server=${server}&pageSize=${pageSize}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch preprints');
+      }
+      return response.json() as Promise<{
+        articles: PreprintArticle[];
+        totalCount: number;
+      }>;
+    },
+    enabled,
+    staleTime: 60 * 60 * 1000, // 1 hour
+  });
+}
