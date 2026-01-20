@@ -120,9 +120,26 @@ This document outlines the integration of real healthcare APIs into SmartHealthC
 3. **Audit Logging**: All external API calls logged for compliance
 4. **Error Handling**: Graceful fallback to sample data on API failure
 
+## Dashboard Integration
+
+All components are now integrated into the main dashboard (`client/src/pages/dashboard.tsx`) with dedicated tabs:
+
+| Tab | Component | Purpose |
+|-----|-----------|---------|
+| Summary | ExecutiveSummary | Caregiver-focused health overview |
+| Timeline | LongitudinalTimeline | Health trends over time |
+| Navigator | HealthNavigator | Care coordination & guidance |
+| Medications | MedicationHub + DrugInteractionChecker | Drug management & safety |
+| Trials | ClinicalTrialsMatcher | Live clinical trial matching |
+| Research | ResearchInsights | medRxiv preprint research |
+| Providers | ProviderFinder | NPI Registry provider search |
+| Insurance | PriorAuthWorkflow | Prior authorization tracking |
+| Care Gaps | Care gap display | Preventive care reminders |
+| All Data | Overview | Complete health record view |
+
 ## Next Steps
 
-1. **Prior Authorization Workflow**: Enhance HealthNavigator with insurance API integration
-2. **Research Insights**: Add bioRxiv/medRxiv connector for latest research
-3. **Provider Scheduling**: Connect ProviderFinder with appointment booking
-4. **FHIR Export**: Allow patients to export data in FHIR format
+1. **Provider Scheduling**: Connect ProviderFinder with appointment booking
+2. **FHIR Export**: Allow patients to export data in FHIR format
+3. **Payer API Integration**: Connect PriorAuthWorkflow to real insurance APIs
+4. **Mobile Optimization**: Responsive improvements for mobile users

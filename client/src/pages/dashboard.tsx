@@ -12,6 +12,10 @@ import { LongitudinalTimeline } from '@/components/health/LongitudinalTimeline';
 import { HealthNavigator } from '@/components/health/HealthNavigator';
 import { MedicationHub } from '@/components/health/MedicationHub';
 import { ClinicalTrialsMatcher } from '@/components/health/ClinicalTrialsMatcher';
+import { DrugInteractionChecker } from '@/components/medications/DrugInteractionChecker';
+import { ProviderFinder } from '@/components/provider/ProviderFinder';
+import { PriorAuthWorkflow } from '@/components/insurance/PriorAuthWorkflow';
+import { ResearchInsights } from '@/components/research/ResearchInsights';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import {
   Heart,
@@ -35,7 +39,10 @@ import {
   LayoutDashboard,
   LineChart,
   Compass,
-  FlaskConical
+  FlaskConical,
+  Shield,
+  Stethoscope,
+  BookOpen
 } from 'lucide-react';
 import {
   Tooltip,
@@ -386,6 +393,18 @@ export default function Dashboard() {
               <FlaskConical className="w-4 h-4 mr-2" />
               Trials
             </TabsTrigger>
+            <TabsTrigger value="research" className="data-[state=active]:bg-background">
+              <BookOpen className="w-4 h-4 mr-2" />
+              Research
+            </TabsTrigger>
+            <TabsTrigger value="providers" className="data-[state=active]:bg-background">
+              <Stethoscope className="w-4 h-4 mr-2" />
+              Providers
+            </TabsTrigger>
+            <TabsTrigger value="insurance" className="data-[state=active]:bg-background">
+              <Shield className="w-4 h-4 mr-2" />
+              Insurance
+            </TabsTrigger>
             <TabsTrigger value="care-gaps" className="data-[state=active]:bg-background relative">
               <AlertTriangle className="w-4 h-4 mr-2" />
               Care Gaps
@@ -436,12 +455,13 @@ export default function Dashboard() {
           </TabsContent>
 
           {/* Medications Tab - Comprehensive Medication Hub (Pillar 4) */}
-          <TabsContent value="medications" className="animate-fade-in">
+          <TabsContent value="medications" className="animate-fade-in space-y-6">
             <MedicationHub
               medications={medications}
               conditions={conditions}
               allergies={allergies}
             />
+            <DrugInteractionChecker medications={medications} />
           </TabsContent>
 
           {/* Trials Tab - Clinical Trials & New Treatments (Pillar 3) */}
@@ -452,6 +472,21 @@ export default function Dashboard() {
               patientAge={patientAge}
               patientGender={patient?.gender}
             />
+          </TabsContent>
+
+          {/* Research Tab - Latest Medical Research */}
+          <TabsContent value="research" className="animate-fade-in">
+            <ResearchInsights conditions={conditions} />
+          </TabsContent>
+
+          {/* Providers Tab - Find Healthcare Specialists */}
+          <TabsContent value="providers" className="animate-fade-in">
+            <ProviderFinder />
+          </TabsContent>
+
+          {/* Insurance Tab - Prior Auth & Coverage */}
+          <TabsContent value="insurance" className="animate-fade-in">
+            <PriorAuthWorkflow />
           </TabsContent>
 
           {/* Overview Tab - All Data */}
