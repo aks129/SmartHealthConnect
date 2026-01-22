@@ -137,3 +137,41 @@ Optional:
 3. **No Database Required**: Falls back to MemStorage for demo/development
 4. **Windows Compatible**: Server uses standard listen() without reusePort option
 5. **Express Route Order**: Specific routes (e.g., `/providers/specialists`) must be defined BEFORE parameterized routes (e.g., `/providers/:npi`) to avoid incorrect matching
+
+### MCP Server (Claude Integration)
+
+The `mcp-server/` directory contains an MCP (Model Context Protocol) server that exposes SmartHealthConnect functionality to Claude Desktop and other MCP clients.
+
+**Setup:**
+
+```bash
+cd mcp-server
+npm install
+npm run build
+```
+
+**Available Tools:**
+
+- Health: `get_health_summary`, `get_conditions`, `get_medications`, `get_vitals`, `get_allergies`
+- Family: `get_family_members`, `get_family_health_overview`
+- Care: `get_care_gaps`, `get_care_plans`, `generate_care_plan`
+- Providers: `find_specialists`
+- Research: `find_clinical_trials`, `get_research_insights`
+- Journal: `get_health_journal`, `add_journal_entry`
+- Appointments: `get_appointment_preps`, `generate_appointment_prep`
+
+**Claude Desktop Config** (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "smarthealthconnect": {
+      "command": "node",
+      "args": ["/path/to/mcp-server/dist/index.js"],
+      "env": {
+        "SMARTHEALTHCONNECT_API_URL": "http://localhost:5000"
+      }
+    }
+  }
+}
+```
