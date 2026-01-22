@@ -1153,3 +1153,165 @@ export const healthAlertInputSchema = z.object({
   metadata: z.record(z.any()).optional(),
   scheduledFor: z.string().optional(),
 });
+
+// ============================================
+// Health Journal - Symptom & Mood Tracking
+// ============================================
+
+export const healthJournalEntries = pgTable("health_journal_entries", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").references(() => familyMembers.id).notNull(),
+  entryDate: text("entry_date").notNull(), // ISO date string
+  entryTime: text("entry_time"), // Time of entry
+  entryType: text("entry_type").notNull(), // 'symptom', 'mood', 'activity', 'medication', 'meal', 'sleep', 'note'
+  title: text("title"),
+  content: text("content"),
+  // Structured data for different entry types
+  symptoms: jsonb("symptoms"), // Array of { name, severity (1-10), location, duration }
+  mood: integer("mood"), // 1-10 scale
+  moodTags: jsonb("mood_tags"), // Array of mood descriptors ['anxious', 'calm', 'energetic']
+  sleepHours: integer("sleep_hours"),
+  sleepQuality: integer("sleep_quality"), // 1-10
+  activityType: text("activity_type"),
+  activityDuration: integer("activity_duration"), // minutes
+  activityIntensity: text("activity_intensity"), // 'light', 'moderate', 'vigorous'
+  // Medication tracking
+  medicationsTaken: jsonb("medications_taken"), // Array of { name, dose, time, missed: boolean }
+  // Correlations (AI-populated)
+  aiCorrelations: jsonb("ai_correlations"), // { relatedConditions, possibleTriggers, patterns }
+  // Metadata
+  tags: jsonb("tags"), // Custom tags
+  attachments: jsonb("attachments"), // Array of { type, url, name }
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertHealthJournalEntrySchema = createInsertSchema(healthJournalEntries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertHealthJournalEntry = z.infer<typeof insertHealthJournalEntrySchema>;
+export type HealthJournalEntry = typeof healthJournalEntries.$inferSelect;
+
+// Health journal input validation
+export const healthJournalInputSchema = z.object({
+  familyMemberId: z.number(),
+  entryDate: z.string(),
+  entryTime: z.string().optional(),
+  entryType: z.enum(['symptom', 'mood', 'activity', 'medication', 'meal', 'sleep', 'note']),
+  title: z.string().optional(),
+  content: z.string().optional(),
+  symptoms: z.array(z.object({
+    name: z.string(),
+    severity: z.number().min(1).max(10),
+    location: z.string().optional(),
+    duration: z.string().optional(),
+  })).optional(),
+  mood: z.number().min(1).max(10).optional(),
+  moodTags: z.array(z.string()).optional(),
+  sleepHours: z.number().optional(),
+  sleepQuality: z.number().min(1).max(10).optional(),
+  activityType: z.string().optional(),
+  activityDuration: z.number().optional(),
+  activityIntensity: z.enum(['light', 'moderate', 'vigorous']).optional(),
+  medicationsTaken: z.array(z.object({
+    name: z.string(),
+    dose: z.string().optional(),
+    time: z.string().optional(),
+    missed: z.boolean().optional(),
+  })).optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+// ============================================
+// Care Plans - AI-Generated Management Plans
+// ============================================
+
+export const carePlans = pgTable("care_plans", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").references(() => familyMembers.id).notNull(),
+  conditionId: text("condition_id"), // Reference to FHIR Condition
+  conditionName: text("condition_name").notNull(),
+  title: text("title").notNull(),
+  summary: text("summary"), // Brief AI-generated summary
+  status: text("status").default("active"), // 'draft', 'active', 'completed', 'on_hold'
+  // Plan content
+  goals: jsonb("goals"), // Array of { goal, targetDate, metrics, status }
+  interventions: jsonb("interventions"), // Array of { type, description, frequency, responsible }
+  monitoringPlan: jsonb("monitoring_plan"), // What to track, frequency, warning signs
+  medications: jsonb("medications"), // Medication regimen with instructions
+  lifestyle: jsonb("lifestyle"), // Diet, exercise, sleep recommendations
+  warningSignsToWatch: jsonb("warning_signs"), // Array of symptoms to watch for
+  whenToSeekCare: text("when_to_seek_care"), // When to contact provider
+  // Provider info
+  primaryProvider: text("primary_provider"),
+  careTeam: jsonb("care_team"), // Array of { name, role, contact }
+  // AI metadata
+  aiGenerated: boolean("ai_generated").default(true),
+  aiModel: text("ai_model"),
+  sourceEvidence: jsonb("source_evidence"), // Clinical guidelines, research cited
+  lastReviewedAt: timestamp("last_reviewed_at"),
+  nextReviewDate: text("next_review_date"),
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertCarePlanSchema = createInsertSchema(carePlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCarePlan = z.infer<typeof insertCarePlanSchema>;
+export type CarePlan = typeof carePlans.$inferSelect;
+
+// Care plan input validation
+export const carePlanInputSchema = z.object({
+  familyMemberId: z.number(),
+  conditionId: z.string().optional(),
+  conditionName: z.string(),
+  title: z.string().optional(),
+});
+
+// ============================================
+// Appointment Preparation Summaries
+// ============================================
+
+export const appointmentPrepSummaries = pgTable("appointment_prep_summaries", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").references(() => familyMembers.id).notNull(),
+  appointmentId: integer("appointment_id").references(() => scheduledAppointments.id),
+  appointmentDate: text("appointment_date").notNull(),
+  providerName: text("provider_name"),
+  visitType: text("visit_type"), // 'routine', 'follow_up', 'specialist', 'urgent'
+  // Summary content
+  recentChanges: jsonb("recent_changes"), // Array of notable changes since last visit
+  currentMedications: jsonb("current_medications"), // Medication list with adherence notes
+  activeConditions: jsonb("active_conditions"), // Current conditions with status
+  recentLabResults: jsonb("recent_lab_results"), // Key lab values
+  vitalsTrend: jsonb("vitals_trend"), // Recent vital sign trends
+  questionsToAsk: jsonb("questions_to_ask"), // AI-suggested questions for provider
+  symptomsToReport: jsonb("symptoms_to_report"), // Recent journal entries relevant
+  // Export options
+  exportFormat: text("export_format"), // 'pdf', 'text', 'share_link'
+  exportedAt: timestamp("exported_at"),
+  shareLink: text("share_link"),
+  shareLinkExpiry: timestamp("share_link_expiry"),
+  // AI metadata
+  aiGenerated: boolean("ai_generated").default(true),
+  generatedAt: timestamp("generated_at").defaultNow(),
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAppointmentPrepSummarySchema = createInsertSchema(appointmentPrepSummaries).omit({
+  id: true,
+  generatedAt: true,
+  createdAt: true,
+});
+
+export type InsertAppointmentPrepSummary = z.infer<typeof insertAppointmentPrepSummarySchema>;
+export type AppointmentPrepSummary = typeof appointmentPrepSummaries.$inferSelect;

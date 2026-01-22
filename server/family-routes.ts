@@ -6,14 +6,22 @@ import {
   healthNarratives,
   healthGoals,
   actionItems,
+  healthJournalEntries,
+  carePlans,
+  appointmentPrepSummaries,
   familyMemberInputSchema,
   healthGoalInputSchema,
   actionItemInputSchema,
   narrativeRequestSchema,
+  healthJournalInputSchema,
+  carePlanInputSchema,
   type FamilyMember,
   type HealthNarrative,
   type HealthGoal,
   type ActionItem,
+  type HealthJournalEntry,
+  type CarePlan,
+  type AppointmentPrepSummary,
 } from '@shared/schema';
 import { generateHealthNarrative } from './narrative-service';
 
@@ -591,6 +599,467 @@ router.get('/summary', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching family summary:', error);
     res.status(500).json({ error: 'Failed to fetch family summary' });
+  }
+});
+
+// ============================================
+// Health Journal Entries
+// ============================================
+
+// Get journal entries for a family member
+router.get('/:memberId/journal', async (req: Request, res: Response) => {
+  try {
+    const memberId = parseInt(req.params.memberId);
+    const { type, startDate, endDate } = req.query;
+
+    let entries = await db
+      .select()
+      .from(healthJournalEntries)
+      .where(eq(healthJournalEntries.familyMemberId, memberId))
+      .orderBy(desc(healthJournalEntries.entryDate), desc(healthJournalEntries.entryTime));
+
+    // Filter by type if provided
+    if (type && typeof type === 'string') {
+      entries = entries.filter((e: HealthJournalEntry) => e.entryType === type);
+    }
+
+    // Filter by date range if provided
+    if (startDate && typeof startDate === 'string') {
+      entries = entries.filter((e: HealthJournalEntry) => e.entryDate >= startDate);
+    }
+    if (endDate && typeof endDate === 'string') {
+      entries = entries.filter((e: HealthJournalEntry) => e.entryDate <= endDate);
+    }
+
+    res.json(entries);
+  } catch (error) {
+    console.error('Error fetching journal entries:', error);
+    res.status(500).json({ error: 'Failed to fetch journal entries' });
+  }
+});
+
+// Create journal entry
+router.post('/:memberId/journal', async (req: Request, res: Response) => {
+  try {
+    const memberId = parseInt(req.params.memberId);
+    const validation = healthJournalInputSchema.safeParse({ ...req.body, familyMemberId: memberId });
+
+    if (!validation.success) {
+      return res.status(400).json({ error: validation.error.errors });
+    }
+
+    const [newEntry] = await db
+      .insert(healthJournalEntries)
+      .values(validation.data)
+      .returning();
+
+    res.status(201).json(newEntry);
+  } catch (error) {
+    console.error('Error creating journal entry:', error);
+    res.status(500).json({ error: 'Failed to create journal entry' });
+  }
+});
+
+// Update journal entry
+router.put('/journal/:id', async (req: Request, res: Response) => {
+  try {
+    const entryId = parseInt(req.params.id);
+    const updates = req.body;
+
+    const [updated] = await db
+      .update(healthJournalEntries)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(healthJournalEntries.id, entryId))
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Journal entry not found' });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Error updating journal entry:', error);
+    res.status(500).json({ error: 'Failed to update journal entry' });
+  }
+});
+
+// Delete journal entry
+router.delete('/journal/:id', async (req: Request, res: Response) => {
+  try {
+    const entryId = parseInt(req.params.id);
+
+    const [deleted] = await db
+      .delete(healthJournalEntries)
+      .where(eq(healthJournalEntries.id, entryId))
+      .returning();
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Journal entry not found' });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting journal entry:', error);
+    res.status(500).json({ error: 'Failed to delete journal entry' });
+  }
+});
+
+// ============================================
+// Care Plans
+// ============================================
+
+// Get care plans for a family member
+router.get('/:memberId/care-plans', async (req: Request, res: Response) => {
+  try {
+    const memberId = parseInt(req.params.memberId);
+    const { status } = req.query;
+
+    let plans = await db
+      .select()
+      .from(carePlans)
+      .where(eq(carePlans.familyMemberId, memberId))
+      .orderBy(desc(carePlans.createdAt));
+
+    // Filter by status if provided
+    if (status && typeof status === 'string') {
+      plans = plans.filter((p: CarePlan) => p.status === status);
+    }
+
+    res.json(plans);
+  } catch (error) {
+    console.error('Error fetching care plans:', error);
+    res.status(500).json({ error: 'Failed to fetch care plans' });
+  }
+});
+
+// Get single care plan
+router.get('/care-plans/:id', async (req: Request, res: Response) => {
+  try {
+    const planId = parseInt(req.params.id);
+
+    const [plan] = await db
+      .select()
+      .from(carePlans)
+      .where(eq(carePlans.id, planId))
+      .limit(1);
+
+    if (!plan) {
+      return res.status(404).json({ error: 'Care plan not found' });
+    }
+
+    res.json(plan);
+  } catch (error) {
+    console.error('Error fetching care plan:', error);
+    res.status(500).json({ error: 'Failed to fetch care plan' });
+  }
+});
+
+// Generate AI care plan
+router.post('/:memberId/care-plans/generate', async (req: Request, res: Response) => {
+  try {
+    const memberId = parseInt(req.params.memberId);
+    const { conditionName, memberName } = req.body;
+
+    if (!conditionName) {
+      return res.status(400).json({ error: 'Condition name is required' });
+    }
+
+    // Generate AI care plan (in a real implementation, this would call OpenAI)
+    // For now, return a comprehensive template
+    const generatedPlan = {
+      familyMemberId: memberId,
+      conditionName,
+      title: `${conditionName} Management Plan`,
+      summary: `Comprehensive care plan for managing ${conditionName} for ${memberName || 'patient'}. This plan includes evidence-based goals, interventions, and monitoring recommendations.`,
+      status: 'active',
+      goals: [
+        {
+          id: `goal-${Date.now()}-1`,
+          goal: `Achieve optimal control of ${conditionName} symptoms`,
+          targetDate: '3 months',
+          metrics: ['Symptom severity score', 'Quality of life assessment'],
+          status: 'not_started',
+        },
+        {
+          id: `goal-${Date.now()}-2`,
+          goal: 'Maintain medication adherence above 90%',
+          targetDate: 'Ongoing',
+          metrics: ['Medication adherence tracking'],
+          status: 'not_started',
+        },
+      ],
+      interventions: [
+        {
+          id: `int-${Date.now()}-1`,
+          type: 'medication',
+          description: 'Follow prescribed medication regimen',
+          frequency: 'As prescribed',
+          responsible: 'Patient',
+        },
+        {
+          id: `int-${Date.now()}-2`,
+          type: 'monitoring',
+          description: 'Regular symptom monitoring and journaling',
+          frequency: 'Daily',
+          responsible: 'Patient',
+        },
+        {
+          id: `int-${Date.now()}-3`,
+          type: 'lifestyle',
+          description: 'Implement recommended lifestyle modifications',
+          frequency: 'Daily',
+          responsible: 'Patient',
+        },
+      ],
+      monitoringPlan: [
+        {
+          metric: 'Symptom severity',
+          frequency: 'Daily',
+          target: 'Minimal symptoms',
+          warningThreshold: 'Severe or worsening symptoms',
+        },
+      ],
+      lifestyle: {
+        diet: ['Follow balanced, nutritious diet', 'Stay well hydrated'],
+        exercise: ['Engage in appropriate physical activity as tolerated'],
+        sleep: ['Maintain consistent sleep schedule', 'Aim for 7-8 hours of sleep'],
+      },
+      warningSignsToWatch: [
+        'Sudden worsening of symptoms',
+        'New or unusual symptoms',
+        'Symptoms not responding to treatment',
+      ],
+      whenToSeekCare: 'Contact your healthcare provider if symptoms worsen significantly, if you experience new concerning symptoms, or if current treatments are not effective.',
+      careTeam: [],
+      aiGenerated: true,
+      aiModel: 'template-v1',
+    };
+
+    const [newPlan] = await db
+      .insert(carePlans)
+      .values(generatedPlan)
+      .returning();
+
+    res.status(201).json(newPlan);
+  } catch (error) {
+    console.error('Error generating care plan:', error);
+    res.status(500).json({ error: 'Failed to generate care plan' });
+  }
+});
+
+// Create care plan manually
+router.post('/:memberId/care-plans', async (req: Request, res: Response) => {
+  try {
+    const memberId = parseInt(req.params.memberId);
+    const validation = carePlanInputSchema.safeParse({ ...req.body, familyMemberId: memberId });
+
+    if (!validation.success) {
+      return res.status(400).json({ error: validation.error.errors });
+    }
+
+    const [newPlan] = await db
+      .insert(carePlans)
+      .values(validation.data)
+      .returning();
+
+    res.status(201).json(newPlan);
+  } catch (error) {
+    console.error('Error creating care plan:', error);
+    res.status(500).json({ error: 'Failed to create care plan' });
+  }
+});
+
+// Update care plan
+router.put('/care-plans/:id', async (req: Request, res: Response) => {
+  try {
+    const planId = parseInt(req.params.id);
+    const updates = req.body;
+
+    const [updated] = await db
+      .update(carePlans)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(carePlans.id, planId))
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Care plan not found' });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Error updating care plan:', error);
+    res.status(500).json({ error: 'Failed to update care plan' });
+  }
+});
+
+// Update care plan goal status
+router.patch('/care-plans/:planId/goals/:goalId', async (req: Request, res: Response) => {
+  try {
+    const planId = parseInt(req.params.planId);
+    const { goalId } = req.params;
+    const { status } = req.body;
+
+    // Fetch current plan
+    const [plan] = await db
+      .select()
+      .from(carePlans)
+      .where(eq(carePlans.id, planId))
+      .limit(1);
+
+    if (!plan) {
+      return res.status(404).json({ error: 'Care plan not found' });
+    }
+
+    // Update goal status in the goals array
+    const goals = (plan.goals as any[]) || [];
+    const updatedGoals = goals.map(goal =>
+      goal.id === goalId ? { ...goal, status } : goal
+    );
+
+    const [updated] = await db
+      .update(carePlans)
+      .set({ goals: updatedGoals, updatedAt: new Date() })
+      .where(eq(carePlans.id, planId))
+      .returning();
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Error updating goal status:', error);
+    res.status(500).json({ error: 'Failed to update goal status' });
+  }
+});
+
+// Delete care plan
+router.delete('/care-plans/:id', async (req: Request, res: Response) => {
+  try {
+    const planId = parseInt(req.params.id);
+
+    const [deleted] = await db
+      .delete(carePlans)
+      .where(eq(carePlans.id, planId))
+      .returning();
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Care plan not found' });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting care plan:', error);
+    res.status(500).json({ error: 'Failed to delete care plan' });
+  }
+});
+
+// ============================================
+// Appointment Prep Summaries
+// ============================================
+
+// Get appointment prep summaries for a family member
+router.get('/:memberId/appointment-prep', async (req: Request, res: Response) => {
+  try {
+    const memberId = parseInt(req.params.memberId);
+
+    const summaries = await db
+      .select()
+      .from(appointmentPrepSummaries)
+      .where(eq(appointmentPrepSummaries.familyMemberId, memberId))
+      .orderBy(desc(appointmentPrepSummaries.appointmentDate));
+
+    res.json(summaries);
+  } catch (error) {
+    console.error('Error fetching appointment prep summaries:', error);
+    res.status(500).json({ error: 'Failed to fetch appointment prep summaries' });
+  }
+});
+
+// Generate appointment prep summary
+router.post('/:memberId/appointment-prep/generate', async (req: Request, res: Response) => {
+  try {
+    const memberId = parseInt(req.params.memberId);
+    const { appointmentDate, appointmentType, providerName, concerns } = req.body;
+
+    if (!appointmentDate || !appointmentType) {
+      return res.status(400).json({ error: 'Appointment date and type are required' });
+    }
+
+    // In a real implementation, this would gather FHIR data and generate with AI
+    // For now, return a template
+    const generatedSummary = {
+      familyMemberId: memberId,
+      appointmentDate,
+      appointmentType,
+      providerName: providerName || 'Healthcare Provider',
+      // Summary sections
+      currentMedications: [],
+      recentChanges: [],
+      questionsToAsk: concerns ? concerns.split('\n').filter((c: string) => c.trim()) : [
+        'What are the next steps for my care?',
+        'Are there any lifestyle changes I should make?',
+        'When should I follow up?',
+      ],
+      vitalsSummary: {
+        note: 'Vitals will be measured at appointment',
+      },
+      symptomsSummary: {
+        note: 'Please prepare to discuss any symptoms you have been experiencing',
+      },
+      aiGenerated: true,
+      aiModel: 'template-v1',
+    };
+
+    const [newSummary] = await db
+      .insert(appointmentPrepSummaries)
+      .values(generatedSummary)
+      .returning();
+
+    res.status(201).json(newSummary);
+  } catch (error) {
+    console.error('Error generating appointment prep:', error);
+    res.status(500).json({ error: 'Failed to generate appointment prep' });
+  }
+});
+
+// Update appointment prep summary
+router.put('/appointment-prep/:id', async (req: Request, res: Response) => {
+  try {
+    const summaryId = parseInt(req.params.id);
+    const updates = req.body;
+
+    const [updated] = await db
+      .update(appointmentPrepSummaries)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(appointmentPrepSummaries.id, summaryId))
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Appointment prep summary not found' });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Error updating appointment prep:', error);
+    res.status(500).json({ error: 'Failed to update appointment prep' });
+  }
+});
+
+// Delete appointment prep summary
+router.delete('/appointment-prep/:id', async (req: Request, res: Response) => {
+  try {
+    const summaryId = parseInt(req.params.id);
+
+    const [deleted] = await db
+      .delete(appointmentPrepSummaries)
+      .where(eq(appointmentPrepSummaries.id, summaryId))
+      .returning();
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Appointment prep summary not found' });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting appointment prep:', error);
+    res.status(500).json({ error: 'Failed to delete appointment prep' });
   }
 });
 

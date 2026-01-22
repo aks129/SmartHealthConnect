@@ -4,6 +4,24 @@ import axios from 'axios';
 // Simple in-memory session storage for demo
 let demoSession: any = null;
 
+// In-memory storage for family data (demo purposes)
+let demoFamilyMembers: any[] = [
+  {
+    id: 1,
+    userId: 1,
+    name: 'Self',
+    relationship: 'self',
+    dateOfBirth: '1985-06-15',
+    gender: 'Male',
+    isPrimary: true,
+    createdAt: new Date().toISOString(),
+  }
+];
+
+let demoJournalEntries: any[] = [];
+let demoCarePlans: any[] = [];
+let demoAppointmentPrep: any[] = [];
+
 // NPI Registry API
 const NPI_REGISTRY_BASE = 'https://npiregistry.cms.hhs.gov/api';
 
@@ -695,6 +713,223 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('[External API] Research search error:', error);
         return res.status(500).json({ error: 'Failed to search research for condition' });
       }
+    }
+
+    // ============================================
+    // Family API Routes (In-memory demo data)
+    // ============================================
+
+    // Get all family members
+    if (req.method === 'GET' && req.url === '/api/family/members') {
+      return res.status(200).json(demoFamilyMembers);
+    }
+
+    // Get single family member
+    if (req.method === 'GET' && req.url?.match(/^\/api\/family\/members\/\d+$/)) {
+      const memberId = parseInt(req.url.split('/').pop() || '0');
+      const member = demoFamilyMembers.find(m => m.id === memberId);
+      if (member) {
+        return res.status(200).json(member);
+      }
+      return res.status(404).json({ error: 'Family member not found' });
+    }
+
+    // Create family member
+    if (req.method === 'POST' && req.url === '/api/family/members') {
+      const newMember = {
+        id: demoFamilyMembers.length + 1,
+        userId: 1,
+        ...req.body,
+        createdAt: new Date().toISOString(),
+      };
+      demoFamilyMembers.push(newMember);
+      return res.status(201).json(newMember);
+    }
+
+    // Get journal entries for a family member
+    if (req.method === 'GET' && req.url?.match(/^\/api\/family\/\d+\/journal/)) {
+      const urlPath = req.url.split('?')[0];
+      const memberId = parseInt(urlPath.split('/')[3]);
+      const entries = demoJournalEntries.filter(e => e.familyMemberId === memberId);
+      return res.status(200).json(entries);
+    }
+
+    // Create journal entry
+    if (req.method === 'POST' && req.url?.match(/^\/api\/family\/\d+\/journal$/)) {
+      const memberId = parseInt(req.url.split('/')[3]);
+      const newEntry = {
+        id: demoJournalEntries.length + 1,
+        familyMemberId: memberId,
+        ...req.body,
+        createdAt: new Date().toISOString(),
+      };
+      demoJournalEntries.push(newEntry);
+      return res.status(201).json(newEntry);
+    }
+
+    // Get care plans for a family member
+    if (req.method === 'GET' && req.url?.match(/^\/api\/family\/\d+\/care-plans/)) {
+      const urlPath = req.url.split('?')[0];
+      const memberId = parseInt(urlPath.split('/')[3]);
+      const plans = demoCarePlans.filter(p => p.familyMemberId === memberId);
+      return res.status(200).json(plans);
+    }
+
+    // Generate AI care plan
+    if (req.method === 'POST' && req.url?.match(/^\/api\/family\/\d+\/care-plans\/generate$/)) {
+      const memberId = parseInt(req.url.split('/')[3]);
+      const { conditionName, memberName } = req.body;
+
+      const newPlan = {
+        id: demoCarePlans.length + 1,
+        familyMemberId: memberId,
+        conditionName,
+        title: `${conditionName} Management Plan`,
+        summary: `Comprehensive care plan for managing ${conditionName} for ${memberName || 'patient'}.`,
+        status: 'active',
+        goals: [
+          {
+            id: `goal-${Date.now()}-1`,
+            goal: `Achieve optimal control of ${conditionName} symptoms`,
+            targetDate: '3 months',
+            status: 'not_started',
+          },
+          {
+            id: `goal-${Date.now()}-2`,
+            goal: 'Maintain medication adherence above 90%',
+            targetDate: 'Ongoing',
+            status: 'not_started',
+          },
+        ],
+        interventions: [
+          {
+            id: `int-${Date.now()}-1`,
+            type: 'medication',
+            description: 'Follow prescribed medication regimen',
+            frequency: 'As prescribed',
+            responsible: 'Patient',
+          },
+          {
+            id: `int-${Date.now()}-2`,
+            type: 'monitoring',
+            description: 'Regular symptom monitoring and journaling',
+            frequency: 'Daily',
+            responsible: 'Patient',
+          },
+        ],
+        monitoringPlan: [
+          {
+            metric: 'Symptom severity',
+            frequency: 'Daily',
+            target: 'Minimal symptoms',
+          },
+        ],
+        lifestyle: {
+          diet: ['Follow balanced, nutritious diet', 'Stay well hydrated'],
+          exercise: ['Engage in appropriate physical activity as tolerated'],
+          sleep: ['Maintain consistent sleep schedule', 'Aim for 7-8 hours of sleep'],
+        },
+        warningSignsToWatch: [
+          'Sudden worsening of symptoms',
+          'New or unusual symptoms',
+        ],
+        whenToSeekCare: 'Contact your healthcare provider if symptoms worsen significantly.',
+        careTeam: [],
+        aiGenerated: true,
+        aiModel: 'template-v1',
+        createdAt: new Date().toISOString(),
+      };
+
+      demoCarePlans.push(newPlan);
+      return res.status(201).json(newPlan);
+    }
+
+    // Create care plan manually
+    if (req.method === 'POST' && req.url?.match(/^\/api\/family\/\d+\/care-plans$/)) {
+      const memberId = parseInt(req.url.split('/')[3]);
+      const newPlan = {
+        id: demoCarePlans.length + 1,
+        familyMemberId: memberId,
+        ...req.body,
+        createdAt: new Date().toISOString(),
+      };
+      demoCarePlans.push(newPlan);
+      return res.status(201).json(newPlan);
+    }
+
+    // Update care plan goal status
+    if (req.method === 'PATCH' && req.url?.match(/^\/api\/care-plans\/\d+\/goals\/[\w-]+$/)) {
+      const urlParts = req.url.split('/');
+      const planId = parseInt(urlParts[3]);
+      const goalId = urlParts[5];
+      const { status } = req.body;
+
+      const plan = demoCarePlans.find(p => p.id === planId);
+      if (!plan) {
+        return res.status(404).json({ error: 'Care plan not found' });
+      }
+
+      plan.goals = (plan.goals || []).map((goal: any) =>
+        goal.id === goalId ? { ...goal, status } : goal
+      );
+      plan.updatedAt = new Date().toISOString();
+
+      return res.status(200).json(plan);
+    }
+
+    // Get appointment prep summaries
+    if (req.method === 'GET' && req.url?.match(/^\/api\/family\/\d+\/appointment-prep/)) {
+      const memberId = parseInt(req.url.split('/')[3]);
+      const summaries = demoAppointmentPrep.filter(s => s.familyMemberId === memberId);
+      return res.status(200).json(summaries);
+    }
+
+    // Generate appointment prep summary
+    if (req.method === 'POST' && req.url?.match(/^\/api\/family\/\d+\/appointment-prep\/generate$/)) {
+      const memberId = parseInt(req.url.split('/')[3]);
+      const { appointmentDate, visitType, providerName, concerns } = req.body;
+
+      const newSummary = {
+        id: demoAppointmentPrep.length + 1,
+        familyMemberId: memberId,
+        appointmentId: null,
+        appointmentDate,
+        visitType: visitType || 'General',
+        providerName: providerName || 'Healthcare Provider',
+        recentChanges: null,
+        currentMedications: null,
+        activeConditions: null,
+        recentLabResults: null,
+        vitalsTrend: { note: 'Vitals will be measured at appointment' },
+        questionsToAsk: concerns ? concerns.split('\n').filter((c: string) => c.trim()) : [
+          'What are the next steps for my care?',
+          'Are there any lifestyle changes I should make?',
+          'When should I follow up?',
+        ],
+        symptomsToReport: { note: 'Please prepare to discuss any symptoms' },
+        exportFormat: null,
+        exportedAt: null,
+        shareLink: null,
+        shareLinkExpiry: null,
+        aiGenerated: true,
+        generatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      };
+
+      demoAppointmentPrep.push(newSummary);
+      return res.status(201).json(newSummary);
+    }
+
+    // Family summary endpoint
+    if (req.method === 'GET' && req.url === '/api/family/summary') {
+      const summary = demoFamilyMembers.map(member => ({
+        ...member,
+        pendingActions: 0,
+      }));
+      return res.status(200).json({
+        members: summary,
+        totalPendingActions: 0,
+      });
     }
 
     // Default response for other API calls

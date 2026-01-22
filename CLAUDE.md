@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development
 - `npm run dev` - Start development server with hot reloading (uses tsx for backend)
-- `npm run check` - TypeScript type checking
+- `npm run check` - TypeScript type checking (must pass with zero errors)
 - `npm run db:push` - Push database schema changes using Drizzle Kit
 
 ### Production
@@ -27,80 +27,77 @@ This is a full-stack healthcare application (Liara AI Health) using SMART on FHI
 - **Charts**: Recharts for visualizations, D3 for advanced charts
 - **Forms**: react-hook-form with Zod validation
 
+### Dual Environment Architecture
+
+**CRITICAL**: This app runs differently in development vs production:
+
+| Environment | Server | API Handler | When Used |
+|-------------|--------|-------------|-----------|
+| Development | Express (`server/routes.ts`) | Full Express routing | `npm run dev` |
+| Production (Vercel) | Serverless | `api/index.ts` only | Deployed to Vercel |
+
+**When adding new API routes**, you MUST add them to BOTH:
+1. `server/routes.ts` or `server/external-api-routes.ts` (for Express/dev)
+2. `api/index.ts` (for Vercel serverless/production)
+
+Failure to update both will cause features to work in dev but fail in production.
+
 ### Project Structure
 
 ```
 root/
+├── api/
+│   └── index.ts              # Vercel serverless function (PRODUCTION)
 ├── client/                    # React frontend
 │   ├── src/
 │   │   ├── App.tsx           # Root with Router, Providers
 │   │   ├── pages/            # Route components
 │   │   ├── components/
-│   │   │   ├── ui/           # shadcn/ui components (50+)
-│   │   │   ├── health/       # Health data display
-│   │   │   ├── analytics/    # Analytics & readiness score
-│   │   │   ├── medications/  # Medication management
-│   │   │   ├── scheduling/   # Appointments
-│   │   │   ├── chat/         # AI chat interface
-│   │   │   ├── branding/     # White-label branding
-│   │   │   ├── tour/         # Guided tour (driver.js)
-│   │   │   └── visualizations/ # Charts & graphs
-│   │   ├── hooks/            # Custom React hooks
-│   │   └── lib/              # Utilities (fhir-client, providers, queryClient)
-├── server/                    # Express backend
+│   │   │   ├── ui/           # shadcn/ui components
+│   │   │   ├── health/       # Health data display (4 pillars)
+│   │   │   ├── medications/  # DrugInteractionChecker
+│   │   │   ├── provider/     # ProviderFinder (NPI search)
+│   │   │   ├── insurance/    # PriorAuthWorkflow
+│   │   │   └── research/     # ResearchInsights (bioRxiv)
+│   │   ├── hooks/            # Custom hooks including use-external-apis.ts
+│   │   └── lib/              # Utilities (fhir-client, queryClient)
+├── server/                    # Express backend (DEVELOPMENT)
 │   ├── index.ts              # Server entry point
-│   ├── routes.ts             # All API routes (~3000 lines)
+│   ├── routes.ts             # Main API routes (~3000 lines)
+│   ├── external-api-routes.ts # External healthcare APIs
+│   ├── integrations/         # External API clients
+│   │   ├── clinicaltrials.ts # ClinicalTrials.gov API
+│   │   ├── openfda.ts        # OpenFDA drug API
+│   │   ├── npi.ts            # NPI Registry API
+│   │   └── biorxiv.ts        # bioRxiv/medRxiv API
 │   ├── fhir-client.ts        # HapiFhirClient class
 │   ├── ai-service.ts         # OpenAI integration
-│   ├── care-gaps-service.ts  # Preventive care analysis
-│   ├── storage.ts            # IStorage interface + MemStorage
-│   └── database-storage.ts   # PostgreSQL implementation
+│   └── care-gaps-service.ts  # Preventive care (HEDIS)
 ├── shared/
 │   └── schema.ts             # DB tables + Zod FHIR schemas
-└── migrations/               # Drizzle migrations
+└── vercel.json               # Vercel deployment config
 ```
 
-### Key Files
+### API Routes
 
-**Server**:
-- `server/routes.ts` - Main API routes (FHIR endpoints, chat, care gaps, demo data)
-- `server/fhir-client.ts` - HapiFhirClient class for FHIR server communication
-- `server/ai-service.ts` - OpenAI integration for health insights (optional, graceful fallback)
-- `server/care-gaps-service.ts` - Preventive care gap analysis (HEDIS-based)
-- `server/user-routes.ts` - Authentication routes (Passport.js)
-- `server/storage.ts` - Database queries and session storage
-
-**Shared**:
-- `shared/schema.ts` - Database tables (users, fhirSessions, chatMessages) and FHIR resource Zod schemas
-
-**Client**:
-- `client/src/App.tsx` - Root component with providers (Theme, Brand, Query)
-- `client/src/pages/dashboard.tsx` - Main patient health dashboard
-- `client/src/components/health/` - Health data display components
-- `client/src/components/branding/BrandProvider.tsx` - White-label branding context
-
-### API Routes Pattern
-
-All FHIR endpoints follow `/api/fhir/{resource}` pattern:
+**FHIR endpoints** (`/api/fhir/*`):
 - `/api/fhir/patient`, `/api/fhir/condition`, `/api/fhir/observation`
-- `/api/fhir/medicationrequest`, `/api/fhir/allergyintolerance`, `/api/fhir/immunization`
-- `/api/fhir/coverage`, `/api/fhir/claim`, `/api/fhir/explanation-of-benefit`
-- `/api/fhir/practitioner`, `/api/fhir/organization`, `/api/fhir/appointment`
-- `/api/fhir/care-gaps` - Care gap analysis endpoint
+- `/api/fhir/medicationrequest`, `/api/fhir/allergyintolerance`
+- `/api/fhir/care-gaps` - HEDIS-based care gap analysis
 - `/api/fhir/demo/connect` - Demo mode connection (POST)
-- `/api/fhir/hapi/connect` - HAPI FHIR server connection (POST)
 - `/api/fhir/sessions/current` - Current FHIR session (GET/DELETE)
 
-Chat endpoints: `/api/chat/messages` (GET/POST/DELETE)
-
-User endpoints: `/api/user/profile`, `/api/user/theme`, `/api/user/notifications`
+**External Healthcare APIs** (`/api/external/*`):
+- `/api/external/providers/specialists` - NPI Registry provider search
+- `/api/external/providers/specialties` - Available specialties list
+- `/api/external/research/condition/:condition` - bioRxiv/medRxiv preprints
+- `/api/external/trials/*` - ClinicalTrials.gov search
+- `/api/external/drugs/*` - OpenFDA drug interactions
 
 ### Client Routes
 
-- `/` - Landing page (home)
-- `/dashboard` - Main patient health dashboard
-- `/about` - About page
-- `/tutorial` - Onboarding tutorial
+- `/` - Landing page
+- `/dashboard` - Main patient health dashboard (10 tabs)
 - `/callback` - SMART on FHIR OAuth callback
 
 ### Environment Variables
@@ -112,17 +109,14 @@ Optional:
 - `OPENAI_API_KEY` - For AI health insights (gracefully disabled if not set)
 - `FHIR_SERVER_URL` - External FHIR server (defaults to localhost:8000/fhir)
 - `PORT` - Server port (defaults to 5000)
-- `NODE_ENV` - Set to "production" for prod builds
 
 ### Key Patterns
 
-**FHIR Resources**: All FHIR types defined as Zod schemas in `shared/schema.ts` with TypeScript types exported. Supports Patient, Condition, Observation, MedicationRequest, AllergyIntolerance, Immunization, Coverage, Claim, ExplanationOfBenefit, Practitioner, Organization, Location, Appointment, PractitionerRole.
+**FHIR Resources**: All FHIR types defined as Zod schemas in `shared/schema.ts` with TypeScript types exported.
 
-**Demo Mode**: `server/routes.ts` contains sample FHIR data for demo purposes, allowing the app to function without a real FHIR connection. Access via `POST /api/fhir/demo/connect`.
+**Demo Mode**: `server/routes.ts` and `api/index.ts` contain sample FHIR data for demo purposes. Access via `POST /api/fhir/demo/connect`.
 
-**Theming**: Dark mode support via ThemeProvider with system/light/dark options. Semantic color tokens in Tailwind for consistent theming.
-
-**White-Label**: BrandProvider supports enterprise customization of branding elements.
+**External API Hooks**: `client/src/hooks/use-external-apis.ts` provides React Query hooks for all external healthcare APIs (NPI, OpenFDA, ClinicalTrials.gov, bioRxiv).
 
 **Storage Layer**: Abstract IStorage interface with MemStorage (in-memory fallback) and DatabaseStorage (PostgreSQL) implementations.
 
@@ -134,7 +128,7 @@ Optional:
 
 - Frontend builds to `dist/public/` (Vite)
 - Backend builds to `dist/index.js` (ESBuild)
-- Both served from same Express instance on port 5000
+- Vercel uses `api/index.ts` directly as serverless function
 
 ### Important Notes
 
@@ -142,3 +136,4 @@ Optional:
 2. **No OpenAI Required**: App starts and demo works without OPENAI_API_KEY
 3. **No Database Required**: Falls back to MemStorage for demo/development
 4. **Windows Compatible**: Server uses standard listen() without reusePort option
+5. **Express Route Order**: Specific routes (e.g., `/providers/specialists`) must be defined BEFORE parameterized routes (e.g., `/providers/:npi`) to avoid incorrect matching
