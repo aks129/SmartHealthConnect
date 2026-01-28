@@ -1,0 +1,64 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schemas/manifest/v0.3.json",
+  "name": "SmartHealthConnect",
+  "version": "1.0.0",
+  "description": "A comprehensive healthcare integration app that connects to SMART on FHIR electronic health records. View patient health summaries, check drug interactions, find specialists, search clinical trials, and explore medical research.",
+  "author": {
+    "name": "SmartHealthConnect",
+    "url": "https://github.com/anthropics/SmartHealthConnect"
+  },
+  "icon": "icon.svg",
+  "privacy_policies": [
+    {
+      "url": "https://github.com/anthropics/SmartHealthConnect/blob/main/PRIVACY.md",
+      "description": "Privacy policy for handling health data"
+    }
+  ],
+  "homepage": "https://github.com/anthropics/SmartHealthConnect",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/SmartHealthConnect.git"
+  },
+  "license": "MIT",
+  "categories": ["health", "medical", "fhir", "healthcare"],
+  "capabilities": {
+    "tools": true,
+    "resources": true
+  },
+  "tools": [
+    {
+      "name": "health_summary",
+      "title": "Health Summary",
+      "description": "View comprehensive patient health summary including conditions, vitals, medications, and allergies."
+    },
+    {
+      "name": "care_gaps",
+      "title": "Care Gaps",
+      "description": "View preventive care gap recommendations based on HEDIS quality measures."
+    },
+    {
+      "name": "drug_interactions",
+      "title": "Drug Interaction Checker",
+      "description": "Check drug interactions for a medication using OpenFDA data."
+    },
+    {
+      "name": "find_specialists",
+      "title": "Find Specialists",
+      "description": "Search for healthcare specialists by specialty and location using the NPI Registry."
+    },
+    {
+      "name": "clinical_trials",
+      "title": "Clinical Trials",
+      "description": "Search for clinical trials by condition using ClinicalTrials.gov."
+    },
+    {
+      "name": "research_insights",
+      "title": "Research Insights",
+      "description": "Find recent research preprints from bioRxiv/medRxiv for a medical condition."
+    }
+  ],
+  "test_credentials": {
+    "description": "Demo mode is enabled by default. No credentials required.",
+    "instructions": "The app automatically connects to demo FHIR data when the backend is running at http://localhost:5000"
+  }
+}

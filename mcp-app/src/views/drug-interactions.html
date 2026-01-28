@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Drug Interactions - SmartHealthConnect</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; padding: 16px; }
+    .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0; }
+    .header h1 { font-size: 20px; font-weight: 700; }
+    .search-form { display: flex; gap: 8px; margin-bottom: 16px; }
+    .search-form input { flex: 1; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
+    .search-form input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+    .search-btn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    .search-btn:hover { background: #2563eb; }
+    .drug-name { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .drug-name h2 { font-size: 18px; }
+    .drug-name .meta { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+    .section { background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .section h3 { font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px; }
+    .interaction { padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .interaction:last-child { border-bottom: none; }
+    .severity-high { color: #dc2626; font-weight: 600; }
+    .severity-moderate { color: #d97706; font-weight: 600; }
+    .severity-low { color: #16a34a; font-weight: 600; }
+    .warning-list { list-style: none; }
+    .warning-list li { padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .warning-list li::before { content: "\26A0\FE0F "; }
+    .loading { text-align: center; padding: 40px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Drug Interaction Checker</h1>
+  </div>
+  <div class="search-form">
+    <input type="text" id="drug-input" placeholder="Enter drug name (e.g., metformin)" />
+    <button class="search-btn" id="search-btn">Check</button>
+  </div>
+  <div id="content"><div class="loading">Enter a drug name to check interactions</div></div>
+  <script type="module" src="./drug-interactions.ts"></script>
+</body>
+</html>

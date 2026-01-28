@@ -1,0 +1,31 @@
+{
+  "name": "@smarthealthconnect/mcp-app",
+  "version": "1.0.0",
+  "description": "SmartHealthConnect MCP App - Healthcare tools with embedded UI views for Claude Desktop",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc --noEmit && tsc -p tsconfig.server.json && node build-views.js",
+    "start": "concurrently \"cross-env NODE_ENV=development node build-views.js --watch\" \"tsx watch main.ts\"",
+    "start:stdio": "tsx main.ts --stdio",
+    "start:http": "tsx main.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.24.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.0",
+    "@types/node": "22.19.5",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.0.0",
+    "vite-plugin-singlefile": "^2.3.0"
+  }
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Health Summary - SmartHealthConnect</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; padding: 16px; }
+    .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0; }
+    .header h1 { font-size: 20px; font-weight: 700; color: #0f172a; }
+    .patient-banner { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .patient-banner h2 { font-size: 18px; margin-bottom: 4px; }
+    .patient-banner .meta { font-size: 13px; opacity: 0.9; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .card { background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+    .card h3 { font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .card h3 .icon { font-size: 16px; }
+    .item { padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .item:last-child { border-bottom: none; }
+    .item .label { font-weight: 600; color: #334155; }
+    .item .value { color: #64748b; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-active { background: #fef3c7; color: #92400e; }
+    .badge-normal { background: #d1fae5; color: #065f46; }
+    .badge-high { background: #fee2e2; color: #991b1b; }
+    .vital-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+    .vital-row:last-child { border-bottom: none; }
+    .vital-label { font-size: 13px; color: #334155; font-weight: 500; }
+    .vital-value { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .loading { text-align: center; padding: 40px; color: #94a3b8; }
+    .refresh-btn { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .refresh-btn:hover { background: #2563eb; }
+    .full-width { grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Patient Health Summary</h1>
+    <button class="refresh-btn" id="refresh-btn">Refresh</button>
+  </div>
+  <div id="content"><div class="loading">Loading health data...</div></div>
+  <script type="module" src="./health-summary.ts"></script>
+</body>
+</html>

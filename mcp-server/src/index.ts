@@ -82,6 +82,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
         },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
       },
       {
         name: "get_conditions",
@@ -90,6 +95,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           type: "object",
           properties: {},
         },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
       },
       {
         name: "get_medications",
@@ -97,6 +107,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {},
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
         },
       },
       {
@@ -111,6 +126,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
         },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
       },
       {
         name: "get_allergies",
@@ -118,6 +138,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {},
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
         },
       },
       // Family Management Tools
@@ -128,6 +153,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           type: "object",
           properties: {},
         },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
       },
       {
         name: "get_family_health_overview",
@@ -135,6 +165,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {},
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
         },
       },
       // Care Gap Tools
@@ -144,6 +179,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {},
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
         },
       },
       // Provider Search Tools
@@ -168,6 +208,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["specialty"],
         },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
       },
       // Drug Interaction Tools
       {
@@ -183,6 +228,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
           required: ["drugNames"],
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
         },
       },
       // Clinical Trials Tools
@@ -208,6 +258,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["condition"],
         },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
       },
       // Research Tools
       {
@@ -228,6 +283,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["condition"],
         },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
       },
       // Care Plan Tools
       {
@@ -241,6 +301,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Family member ID (default: 1 for primary)",
             },
           },
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
         },
       },
       {
@@ -260,6 +325,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["conditionName"],
         },
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
       },
       // Journal Tools
       {
@@ -278,6 +349,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Filter by entry type",
             },
           },
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
         },
       },
       {
@@ -321,6 +397,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["entryType"],
         },
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
       },
       // Appointment Prep Tools
       {
@@ -334,6 +416,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Family member ID (default: 1)",
             },
           },
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
         },
       },
       {
@@ -364,6 +451,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
           required: ["appointmentDate", "visitType"],
+        },
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
         },
       },
     ],

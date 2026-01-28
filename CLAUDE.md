@@ -5,11 +5,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Common Commands
 
 ### Development
+
 - `npm run dev` - Start development server with hot reloading (uses tsx for backend)
 - `npm run check` - TypeScript type checking (must pass with zero errors)
 - `npm run db:push` - Push database schema changes using Drizzle Kit
 
+### Testing
+
+- `npm test` - Run all tests once (Vitest)
+- `npm run test:watch` - Run tests in watch mode during development
+- `npm run test:coverage` - Generate coverage report (v8 provider)
+- Tests live in `tests/` directory, matched by `tests/**/*.test.ts`
+- Coverage thresholds: 60% statements, 50% branches, 60% functions, 60% lines
+
 ### Production
+
 - `npm run build` - Build frontend (Vite) and backend (ESBuild) for production
 - `npm start` - Run production server from dist/ directory
 
@@ -18,6 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a full-stack healthcare application (Liara AI Health) using SMART on FHIR protocols for electronic health records integration.
 
 ### Technology Stack
+
 - **Frontend**: React 18 + TypeScript with Vite bundling
 - **Backend**: Express.js + TypeScript (tsx for dev, ESBuild for prod)
 - **Database**: PostgreSQL with Drizzle ORM (Neon serverless compatible)
@@ -31,20 +42,32 @@ This is a full-stack healthcare application (Liara AI Health) using SMART on FHI
 
 **CRITICAL**: This app runs differently in development vs production:
 
-| Environment | Server | API Handler | When Used |
-|-------------|--------|-------------|-----------|
-| Development | Express (`server/routes.ts`) | Full Express routing | `npm run dev` |
-| Production (Vercel) | Serverless | `api/index.ts` only | Deployed to Vercel |
+| Environment          | Server     | API Handler            | When Used           |
+| -------------------- | ---------- | ---------------------- | ------------------- |
+| Development          | Express    | `server/routes.ts`     | `npm run dev`       |
+| Production (Vercel)  | Serverless | `api/index.ts` only    | Deployed to Vercel  |
 
 **When adding new API routes**, you MUST add them to BOTH:
+
 1. `server/routes.ts` or `server/external-api-routes.ts` (for Express/dev)
 2. `api/index.ts` (for Vercel serverless/production)
 
 Failure to update both will cause features to work in dev but fail in production.
 
+### Vite-Express Integration
+
+In development, Vite runs in middleware mode inside the Express server (see `server/vite.ts`):
+
+1. Express listens on port 5000
+2. All `/api/*` routes handled by Express first
+3. Vite middleware handles module transformations and HMR
+4. Catch-all route renders `client/index.html` for SPA routing
+
+No separate proxy config is needed — Vite middleware is embedded directly into Express.
+
 ### Project Structure
 
-```
+```text
 root/
 ├── api/
 │   └── index.ts              # Vercel serverless function (PRODUCTION)
@@ -54,7 +77,8 @@ root/
 │   │   ├── pages/            # Route components
 │   │   ├── components/
 │   │   │   ├── ui/           # shadcn/ui components
-│   │   │   ├── health/       # Health data display (4 pillars)
+│   │   │   ├── health/       # Health data, CarePlanGenerator, AppointmentPrep
+│   │   │   ├── journal/      # HealthJournal (symptom/mood/activity tracking)
 │   │   │   ├── medications/  # DrugInteractionChecker
 │   │   │   ├── provider/     # ProviderFinder (NPI search)
 │   │   │   ├── insurance/    # PriorAuthWorkflow
@@ -65,22 +89,23 @@ root/
 │   ├── index.ts              # Server entry point
 │   ├── routes.ts             # Main API routes (~3000 lines)
 │   ├── external-api-routes.ts # External healthcare APIs
-│   ├── integrations/         # External API clients
-│   │   ├── clinicaltrials.ts # ClinicalTrials.gov API
-│   │   ├── openfda.ts        # OpenFDA drug API
-│   │   ├── npi.ts            # NPI Registry API
-│   │   └── biorxiv.ts        # bioRxiv/medRxiv API
+│   ├── family-routes.ts      # Family member CRUD + journal/care plans
+│   ├── integrations/         # External API clients (NPI, OpenFDA, ClinicalTrials, bioRxiv)
 │   ├── fhir-client.ts        # HapiFhirClient class
 │   ├── ai-service.ts         # OpenAI integration
+│   ├── narrative-service.ts  # AI health narrative generation
 │   └── care-gaps-service.ts  # Preventive care (HEDIS)
 ├── shared/
 │   └── schema.ts             # DB tables + Zod FHIR schemas
+├── tests/                     # Vitest test files
+├── mcp-server/                # MCP server for Claude Desktop integration
 └── vercel.json               # Vercel deployment config
 ```
 
 ### API Routes
 
 **FHIR endpoints** (`/api/fhir/*`):
+
 - `/api/fhir/patient`, `/api/fhir/condition`, `/api/fhir/observation`
 - `/api/fhir/medicationrequest`, `/api/fhir/allergyintolerance`
 - `/api/fhir/care-gaps` - HEDIS-based care gap analysis
@@ -88,11 +113,19 @@ root/
 - `/api/fhir/sessions/current` - Current FHIR session (GET/DELETE)
 
 **External Healthcare APIs** (`/api/external/*`):
+
 - `/api/external/providers/specialists` - NPI Registry provider search
 - `/api/external/providers/specialties` - Available specialties list
 - `/api/external/research/condition/:condition` - bioRxiv/medRxiv preprints
 - `/api/external/trials/*` - ClinicalTrials.gov search
 - `/api/external/drugs/*` - OpenFDA drug interactions
+
+**Family Health** (`/api/family/*`):
+
+- `/api/family/members` - Family member CRUD
+- `/api/family/{id}/journal-entries` - Health journal entries
+- `/api/family/{id}/care-plans` - Care plans with goals/interventions
+- `/api/family/{id}/appointment-preps` - Appointment preparation summaries
 
 ### Client Routes
 
@@ -103,9 +136,11 @@ root/
 ### Environment Variables
 
 Required:
+
 - `DATABASE_URL` - PostgreSQL connection string (falls back to in-memory if not set)
 
 Optional:
+
 - `OPENAI_API_KEY` - For AI health insights (gracefully disabled if not set)
 - `FHIR_SERVER_URL` - External FHIR server (defaults to localhost:8000/fhir)
 - `PORT` - Server port (defaults to 5000)
@@ -114,13 +149,22 @@ Optional:
 
 **FHIR Resources**: All FHIR types defined as Zod schemas in `shared/schema.ts` with TypeScript types exported.
 
-**Demo Mode**: `server/routes.ts` and `api/index.ts` contain sample FHIR data for demo purposes. Access via `POST /api/fhir/demo/connect`.
+**Demo Mode**: `server/routes.ts` and `api/index.ts` contain hardcoded sample FHIR data (two demo patients with conditions, observations, medications, allergies, immunizations). Access via `POST /api/fhir/demo/connect`. Demo data must be kept in sync between both files.
 
 **External API Hooks**: `client/src/hooks/use-external-apis.ts` provides React Query hooks for all external healthcare APIs (NPI, OpenFDA, ClinicalTrials.gov, bioRxiv).
 
-**Storage Layer**: Abstract IStorage interface with MemStorage (in-memory fallback) and DatabaseStorage (PostgreSQL) implementations.
+**External API Caching**: In-memory caches with TTLs — ClinicalTrials.gov (15min), OpenFDA (1hr), NPI Registry (30min). Cache resets on server restart.
+
+**Storage Layer**: Abstract `IStorage` interface with `MemStorage` (in-memory fallback) and `DatabaseStorage` (PostgreSQL) implementations. Without `DATABASE_URL`, all data is lost on restart.
+
+**SMART on FHIR Auth**: Client-side OAuth via `fhirclient` library (`client/src/lib/smart-auth.ts`). Configured with `VITE_FHIR_CLIENT_ID`, `VITE_FHIR_SCOPE`, and `VITE_FHIR_ISS`. Sessions stored in `fhirSessions` table with access/refresh tokens.
+
+**Local Auth**: bcrypt password hashing (cost 12), JWT tokens (15min access, 7day refresh). Schemas in `server/auth/index.ts`.
+
+**React Query Config**: `staleTime: Infinity` and `refetchOnWindowFocus: false` — data never auto-refetches; manual invalidation required after mutations.
 
 **Path Aliases**:
+
 - `@/*` maps to `client/src/`
 - `@shared/*` maps to `shared/`
 
@@ -137,6 +181,9 @@ Optional:
 3. **No Database Required**: Falls back to MemStorage for demo/development
 4. **Windows Compatible**: Server uses standard listen() without reusePort option
 5. **Express Route Order**: Specific routes (e.g., `/providers/specialists`) must be defined BEFORE parameterized routes (e.g., `/providers/:npi`) to avoid incorrect matching
+6. **Database Migrations**: `npm run db:push` compares schema against DB and applies changes. No rollback capability — test on staging first. Migration SQL stored in `migrations/`
+7. **CI/CD**: GitHub Actions runs type check, tests, coverage upload (Codecov), build verification, and security audit on push/PR to main
+8. **HIPAA Audit Logging**: PHI endpoints are logged via `auditMiddleware` capturing user, action, resource, IP, and success/failure. Falls back to console if database unavailable
 
 ### MCP Server (Claude Integration)
 
