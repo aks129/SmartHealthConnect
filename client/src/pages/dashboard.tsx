@@ -318,7 +318,9 @@ export default function Dashboard() {
     );
   }
 
-  const patientName = patient?.name?.[0]?.given?.join(' ') + ' ' + patient?.name?.[0]?.family || 'Demo Patient';
+  const givenName = patient?.name?.[0]?.given?.join(' ');
+  const familyName = patient?.name?.[0]?.family;
+  const patientName = (givenName && familyName) ? `${givenName} ${familyName}` : 'Demo Patient';
   const patientAge = getAge(patient?.birthDate);
 
   return (

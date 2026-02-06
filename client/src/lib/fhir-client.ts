@@ -4,6 +4,9 @@ import { apiRequest } from './queryClient';
 import { queryClient } from './queryClient';
 import { toast } from '@/hooks/use-toast';
 
+// Re-export shared FHIR utilities so existing client imports continue to work
+export { getPatientName, formatFhirDate, formatFhirDateTime, getDisplayFromCodeableConcept } from '@shared/fhir-utils';
+
 // FHIR Resource Types we need to fetch
 export type FhirResourceType = 
   | 'Patient'
@@ -203,56 +206,7 @@ export async function fetchResources<T>(resourceType: FhirResourceType): Promise
   }
 }
 
-/**
- * Get formatted name from a FHIR Patient resource
- */
-export function getPatientName(patient: any): string {
-  if (!patient || !patient.name || !patient.name.length) {
-    return 'Unknown Patient';
-  }
-  
-  const nameObj = patient.name[0];
-  if (nameObj.text) return nameObj.text;
-  
-  const given = nameObj.given || [];
-  const family = nameObj.family || '';
-  
-  return [...given, family].filter(Boolean).join(' ');
-}
-
-/**
- * Format a FHIR date
- */
-export function formatFhirDate(date: string | undefined): string {
-  if (!date) return 'Unknown';
-  
-  try {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  } catch (e) {
-    return date;
-  }
-}
-
-/**
- * Format a FHIR datetime
- */
-export function formatFhirDateTime(datetime: string | undefined): string {
-  if (!datetime) return 'Unknown';
-  
-  try {
-    return new Date(datetime).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  } catch (e) {
-    return datetime;
-  }
-}
+// getPatientName, formatFhirDate, formatFhirDateTime are now re-exported from @shared/fhir-utils above
 
 /**
  * Get a value from a FHIR Observation
@@ -310,23 +264,10 @@ export function getObservationReferenceRange(observation: any): string {
 }
 
 /**
- * Get display text from a FHIR CodeableConcept
- */
-export function getDisplayFromCodeableConcept(codeableConcept: any): string {
-  if (!codeableConcept) return 'Unknown';
-  
-  if (codeableConcept.text) {
-    return codeableConcept.text;
-  }
-  
-  if (codeableConcept.coding && codeableConcept.coding.length > 0) {
-    return codeableConcept.coding[0].display || codeableConcept.coding[0].code || 'Unknown';
-  }
-  
-  return 'Unknown';
-}
+  * getDisplayFromCodeableConcept is now re-exported from @shared/fhir-utils above
+  */
 
-/**
+  /**
  * Determine observation status for display
  */
 export function getObservationStatusClass(observation: any): { color: string, label: string } {

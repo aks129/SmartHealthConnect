@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { Patient, Condition, Observation, MedicationRequest, AllergyIntolerance, Immunization } from '@shared/schema';
-import { getPatientName, formatFhirDate, getDisplayFromCodeableConcept } from '../client/src/lib/fhir-client';
+import { getPatientName, formatFhirDate, getDisplayFromCodeableConcept } from '../shared/fhir-utils';
 
 // Initialize the OpenAI client (only if API key is present)
 const openai = process.env.OPENAI_API_KEY

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { eq, and, desc } from 'drizzle-orm';
+import { z } from 'zod';
 import { db } from './db';
 import {
   familyMembers,
@@ -179,7 +180,14 @@ router.delete('/members/:id', async (req: Request, res: Response) => {
 router.post('/members/:id/link-fhir', async (req: Request, res: Response) => {
   try {
     const memberId = parseInt(req.params.id);
-    const { fhirSessionId } = req.body;
+    const linkSchema = z.object({ fhirSessionId: z.number().int().positive() });
+    const validation = linkSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      return res.status(400).json({ error: validation.error.errors });
+    }
+
+    const { fhirSessionId } = validation.data;
 
     const [updated] = await db
       .update(familyMembers)
@@ -322,11 +330,15 @@ router.post('/goals', async (req: Request, res: Response) => {
 router.put('/goals/:id', async (req: Request, res: Response) => {
   try {
     const goalId = parseInt(req.params.id);
-    const updates = req.body;
+    const validation = healthGoalInputSchema.partial().safeParse(req.body);
+
+    if (!validation.success) {
+      return res.status(400).json({ error: validation.error.errors });
+    }
 
     const [updated] = await db
       .update(healthGoals)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...validation.data, updatedAt: new Date() })
       .where(eq(healthGoals.id, goalId))
       .returning();
 
@@ -462,15 +474,26 @@ router.post('/actions', async (req: Request, res: Response) => {
 router.post('/actions/:id/schedule', async (req: Request, res: Response) => {
   try {
     const actionId = parseInt(req.params.id);
-    const { scheduledDate, scheduledProvider, scheduledLocation } = req.body;
+    const scheduleSchema = z.object({
+      scheduledDate: z.string().min(1),
+      scheduledProvider: z.string().optional(),
+      scheduledLocation: z.string().optional(),
+    });
+    const validation = scheduleSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      return res.status(400).json({ error: validation.error.errors });
+    }
+
+    const { scheduledDate, scheduledProvider, scheduledLocation } = validation.data;
 
     const [updated] = await db
       .update(actionItems)
       .set({
         status: 'scheduled',
         scheduledDate,
-        scheduledProvider,
-        scheduledLocation,
+        scheduledProvider: scheduledProvider ?? null,
+        scheduledLocation: scheduledLocation ?? null,
       })
       .where(eq(actionItems.id, actionId))
       .returning();
@@ -515,11 +538,15 @@ router.post('/actions/:id/complete', async (req: Request, res: Response) => {
 router.put('/actions/:id', async (req: Request, res: Response) => {
   try {
     const actionId = parseInt(req.params.id);
-    const updates = req.body;
+    const validation = actionItemInputSchema.partial().safeParse(req.body);
+
+    if (!validation.success) {
+      return res.status(400).json({ error: validation.error.errors });
+    }
 
     const [updated] = await db
       .update(actionItems)
-      .set(updates)
+      .set(validation.data)
       .where(eq(actionItems.id, actionId))
       .returning();
 
@@ -664,11 +691,15 @@ router.post('/:memberId/journal', async (req: Request, res: Response) => {
 router.put('/journal/:id', async (req: Request, res: Response) => {
   try {
     const entryId = parseInt(req.params.id);
-    const updates = req.body;
+    const validation = healthJournalInputSchema.partial().safeParse(req.body);
+
+    if (!validation.success) {
+      return res.status(400).json({ error: validation.error.errors });
+    }
 
     const [updated] = await db
       .update(healthJournalEntries)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...validation.data, updatedAt: new Date() })
       .where(eq(healthJournalEntries.id, entryId))
       .returning();
 
