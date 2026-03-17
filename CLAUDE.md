@@ -15,8 +15,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm test` - Run all tests once (Vitest)
 - `npm run test:watch` - Run tests in watch mode during development
 - `npm run test:coverage` - Generate coverage report (v8 provider)
+- `npx vitest run tests/some-file.test.ts` - Run a single test file
 - Tests live in `tests/` directory, matched by `tests/**/*.test.ts`
 - Coverage thresholds: 60% statements, 50% branches, 60% functions, 60% lines
+- Coverage only measures `server/**/*.ts` (excludes `server/index.ts`); client code is not covered
 
 ### Production
 
@@ -181,7 +183,7 @@ Optional:
 3. **No Database Required**: Falls back to MemStorage for demo/development
 4. **Windows Compatible**: Server uses standard listen() without reusePort option
 5. **Express Route Order**: Specific routes (e.g., `/providers/specialists`) must be defined BEFORE parameterized routes (e.g., `/providers/:npi`) to avoid incorrect matching
-6. **Database Migrations**: `npm run db:push` compares schema against DB and applies changes. No rollback capability — test on staging first. Migration SQL stored in `migrations/`
+6. **Database Migrations**: `npm run db:push` compares schema against DB and applies changes. No rollback capability — test on staging first
 7. **CI/CD**: GitHub Actions runs type check, tests, coverage upload (Codecov), build verification, and security audit on push/PR to main
 8. **HIPAA Audit Logging**: PHI endpoints are logged via `auditMiddleware` capturing user, action, resource, IP, and success/failure. Falls back to console if database unavailable
 
