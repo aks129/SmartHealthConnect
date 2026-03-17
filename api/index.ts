@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import axios from 'axios';
+import crypto from 'crypto';
 
 // Simple in-memory session storage for demo
 let demoSession: any = null;
@@ -929,6 +930,70 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({
         members: summary,
         totalPendingActions: 0,
+      });
+    }
+
+    // ============================================
+    // Data Connections API Routes
+    // ============================================
+
+    // Get available connection methods
+    if (req.method === 'GET' && req.url === '/api/connections/available') {
+      return res.status(200).json({
+        connections: [
+          {
+            id: 'flexpa',
+            name: 'Flexpa (Insurance/Payer)',
+            description: 'Connect to your health insurance to import claims, medications, and care data',
+            configured: !!(process.env.FLEXPA_PUBLISHABLE_KEY && process.env.FLEXPA_SECRET_KEY),
+            type: 'oauth',
+          },
+          {
+            id: 'health-skillz',
+            name: 'Patient Portal (Health Skillz)',
+            description: 'Import records directly from your patient portal (Epic, etc.) via end-to-end encrypted transfer',
+            configured: true,
+            type: 'session',
+          },
+          {
+            id: 'smart-on-fhir',
+            name: 'SMART on FHIR (Direct)',
+            description: 'Connect directly to a FHIR-enabled health system',
+            configured: true,
+            type: 'oauth',
+          },
+        ],
+      });
+    }
+
+    // MCP audit log
+    if (req.method === 'GET' && req.url?.startsWith('/api/connections/audit-log')) {
+      return res.status(200).json({ entries: [], count: 0 });
+    }
+
+    // Flexpa authorize
+    if (req.method === 'POST' && req.url === '/api/connections/flexpa/authorize') {
+      const publishableKey = process.env.FLEXPA_PUBLISHABLE_KEY;
+      const secretKey = process.env.FLEXPA_SECRET_KEY;
+      if (!publishableKey || !secretKey) {
+        return res.status(503).json({
+          error: 'Flexpa integration not configured',
+          detail: 'Set FLEXPA_PUBLISHABLE_KEY and FLEXPA_SECRET_KEY environment variables',
+        });
+      }
+      // In production, would use the full Flexpa client — simplified for serverless
+      return res.status(200).json({
+        authorizationUrl: `https://auth.flexpa.com/authorize?client_id=${publishableKey}`,
+        state: crypto.randomUUID(),
+      });
+    }
+
+    // Health Skillz session creation
+    if (req.method === 'POST' && req.url === '/api/connections/health-skillz/session') {
+      return res.status(200).json({
+        sessionId: crypto.randomUUID(),
+        connectUrl: `https://health-skillz.joshuamandel.com/connect/${crypto.randomUUID()}`,
+        instructions: 'Open the connect URL in your browser to link your patient portal.',
       });
     }
 

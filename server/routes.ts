@@ -12,6 +12,7 @@ import familyRoutes from './family-routes';
 import schedulingService from './scheduling-service';
 import notificationService from './notification-service';
 import externalApiRoutes from './external-api-routes';
+import dataConnectionsRoutes from './data-connections-routes';
 
 // De-identified Sample FHIR data for demo purposes
 // All data is completely fictional - no PHI or real patient information
@@ -3880,6 +3881,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register external API routes (ClinicalTrials.gov, OpenFDA, NPI Registry)
   app.use('/api/external', externalApiRoutes);
+
+  // Register data connections routes (Flexpa, Health Skillz, audit log)
+  app.use('/api/connections', dataConnectionsRoutes);
 
   return httpServer;
 }

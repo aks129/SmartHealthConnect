@@ -57,6 +57,40 @@ export const insertFhirSessionSchema = createInsertSchema(fhirSessions).omit({
 });
 
 export type InsertFhirSession = z.infer<typeof insertFhirSessionSchema>;
+
+// Data Connections (Flexpa, Health Skillz)
+export const dataConnections = pgTable("data_connections", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  source: text("source").notNull(), // 'flexpa' | 'health-skillz' | 'smart-on-fhir'
+  status: text("status").notNull().default("pending"), // 'pending' | 'connected' | 'expired' | 'error'
+  accessToken: text("access_token"),
+  expiresAt: timestamp("expires_at"),
+  metadata: jsonb("metadata"), // source-specific metadata (provider info, session details)
+  resourceCounts: jsonb("resource_counts"), // { Patient: 1, Condition: 3, ... }
+  lastSyncAt: timestamp("last_sync_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertDataConnectionSchema = createInsertSchema(dataConnections).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDataConnection = z.infer<typeof insertDataConnectionSchema>;
+export type DataConnection = typeof dataConnections.$inferSelect;
+
+// MCP Audit Log (persistent audit trail for guardrail compliance)
+export const mcpAuditLog = pgTable("mcp_audit_log", {
+  id: serial("id").primaryKey(),
+  toolName: text("tool_name").notNull(),
+  action: text("action").notNull(), // 'read' | 'write'
+  outcome: text("outcome").notNull(), // 'success' | 'error'
+  redactionApplied: boolean("redaction_applied").default(false),
+  phiAccessed: boolean("phi_accessed").default(false),
+  detail: text("detail"),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
 export type FhirSession = typeof fhirSessions.$inferSelect;
 
 // FHIR Resource Schemas (used for validation)

@@ -129,6 +129,18 @@ root/
 - `/api/family/{id}/care-plans` - Care plans with goals/interventions
 - `/api/family/{id}/appointment-preps` - Appointment preparation summaries
 
+**Data Connections** (`/api/connections/*`):
+
+- `/api/connections/available` - List available connection methods and config status
+- `/api/connections/flexpa/authorize` - Start Flexpa OAuth PKCE flow (POST)
+- `/api/connections/flexpa/callback` - Flexpa OAuth callback (GET)
+- `/api/connections/flexpa/exchange` - Exchange Flexpa auth code for token (POST)
+- `/api/connections/flexpa/fhir` - Fetch FHIR data from active Flexpa connection (POST)
+- `/api/connections/health-skillz/session` - Create Health Skillz import session (POST)
+- `/api/connections/health-skillz/session/:id/status` - Poll session status (GET)
+- `/api/connections/health-skillz/session/:id/download` - Download imported data (POST)
+- `/api/connections/audit-log` - MCP guardrails audit log (GET)
+
 ### Client Routes
 
 - `/` - Landing page
@@ -145,6 +157,9 @@ Optional:
 
 - `OPENAI_API_KEY` - For AI health insights (gracefully disabled if not set)
 - `FHIR_SERVER_URL` - External FHIR server (defaults to localhost:8000/fhir)
+- `FLEXPA_PUBLISHABLE_KEY` - Flexpa OAuth publishable key (for payer data import)
+- `FLEXPA_SECRET_KEY` - Flexpa OAuth secret key (server-side only)
+- `HEALTH_SKILLZ_URL` - Health Skillz server URL (defaults to https://health-skillz.joshuamandel.com)
 - `PORT` - Server port (defaults to 5000)
 
 ### Key Patterns
@@ -162,6 +177,10 @@ Optional:
 **SMART on FHIR Auth**: Client-side OAuth via `fhirclient` library (`client/src/lib/smart-auth.ts`). Configured with `VITE_FHIR_CLIENT_ID`, `VITE_FHIR_SCOPE`, and `VITE_FHIR_ISS`. Sessions stored in `fhirSessions` table with access/refresh tokens.
 
 **Local Auth**: bcrypt password hashing (cost 12), JWT tokens (15min access, 7day refresh). Schemas in `server/auth/index.ts`.
+
+**Data Connections**: Three import methods in `server/data-connections-routes.ts`: Flexpa (insurance/payer FHIR via OAuth PKCE), Health Skillz (patient portal import via E2E encrypted sessions), and SMART on FHIR (direct). Flexpa client in `server/integrations/flexpa-client.ts`, Health Skillz client in `server/integrations/health-skillz-client.ts`. React hooks in `client/src/hooks/use-data-connections.ts`.
+
+**MCP Guardrails**: All MCP tool responses pass through `mcp-server/src/guardrails.ts` which applies: (1) PHI redaction — names truncated to initials, identifiers masked, addresses stripped, telecom redacted, birth dates to year only; (2) Medical disclaimers on clinical data; (3) Audit logging of all tool executions; (4) Human-in-the-loop notices on write tools (`generate_care_plan`, `add_journal_entry`, `generate_appointment_prep`). Server-side guardrails module also in `server/mcp-guardrails.ts` with additional HIPAA Safe Harbor de-identification support.
 
 **React Query Config**: `staleTime: Infinity` and `refetchOnWindowFocus: false` — data never auto-refetches; manual invalidation required after mutations.
 

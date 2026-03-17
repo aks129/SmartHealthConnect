@@ -9,6 +9,7 @@ import {
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { applyGuardrails, logAuditError, getAuditLog } from "./guardrails.js";
 
 // Configuration
 const API_BASE_URL = process.env.SMARTHEALTHCONNECT_API_URL || "http://localhost:5000";
@@ -404,6 +405,88 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           openWorldHint: true,
         },
       },
+      // Data Connection Tools
+      {
+        name: "connect_flexpa",
+        description: "Start a Flexpa connection to import health data from your insurance/payer. Returns an authorization URL for the user to visit.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            redirectUri: {
+              type: "string",
+              description: "OAuth redirect URI (optional, defaults to server callback)",
+            },
+          },
+        },
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
+      },
+      {
+        name: "connect_health_portal",
+        description: "Start a Health Skillz session to import records from a patient portal (Epic, etc.) via end-to-end encrypted transfer. Returns a connect URL for the user.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+        },
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
+      },
+      {
+        name: "check_portal_status",
+        description: "Check the status of a Health Skillz patient portal import session",
+        inputSchema: {
+          type: "object",
+          properties: {
+            sessionId: {
+              type: "string",
+              description: "The session ID from connect_health_portal",
+            },
+          },
+          required: ["sessionId"],
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
+      },
+      {
+        name: "get_available_connections",
+        description: "List available data connection methods (Flexpa, Health Skillz, SMART on FHIR) and their configuration status",
+        inputSchema: {
+          type: "object",
+          properties: {},
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
+      },
+      {
+        name: "get_mcp_audit_log",
+        description: "Get the MCP guardrails audit log showing all tool executions, PHI access, and redaction events",
+        inputSchema: {
+          type: "object",
+          properties: {
+            limit: {
+              type: "number",
+              description: "Maximum number of entries to return (default: 50)",
+            },
+          },
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
+      },
       // Appointment Prep Tools
       {
         name: "get_appointment_preps",
@@ -511,21 +594,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
 
         return {
-          content: [{ type: "text", text: JSON.stringify(summary, null, 2) }],
+          content: applyGuardrails("get_health_summary", summary),
         };
       }
 
       case "get_conditions": {
         const conditions = await apiCall("GET", "/api/fhir/condition");
         return {
-          content: [{ type: "text", text: JSON.stringify(conditions, null, 2) }],
+          content: applyGuardrails("get_conditions", conditions),
         };
       }
 
       case "get_medications": {
         const medications = await apiCall("GET", "/api/fhir/medicationrequest");
         return {
-          content: [{ type: "text", text: JSON.stringify(medications, null, 2) }],
+          content: applyGuardrails("get_medications", medications),
         };
       }
 
@@ -533,14 +616,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const observations = await apiCall("GET", "/api/fhir/observation");
         const limit = (args as any)?.limit || 20;
         return {
-          content: [{ type: "text", text: JSON.stringify(observations.slice(0, limit), null, 2) }],
+          content: applyGuardrails("get_vitals", observations.slice(0, limit)),
         };
       }
 
       case "get_allergies": {
         const allergies = await apiCall("GET", "/api/fhir/allergyintolerance");
         return {
-          content: [{ type: "text", text: JSON.stringify(allergies, null, 2) }],
+          content: applyGuardrails("get_allergies", allergies),
         };
       }
 
@@ -548,47 +631,30 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "get_family_members": {
         try {
           const members = await apiCall("GET", "/api/family/members");
-          return {
-            content: [{ type: "text", text: JSON.stringify(members, null, 2) }],
-          };
+          return { content: applyGuardrails("get_family_members", members) };
         } catch {
-          // Return demo data if API fails
-          return {
-            content: [{
-              type: "text",
-              text: JSON.stringify([
-                { id: 1, name: "Self", relationship: "self", isPrimary: true },
-              ], null, 2),
-            }],
-          };
+          const fallback = [{ id: 1, name: "Self", relationship: "self", isPrimary: true }];
+          return { content: applyGuardrails("get_family_members", fallback) };
         }
       }
 
       case "get_family_health_overview": {
         try {
           const summary = await apiCall("GET", "/api/family/summary");
-          return {
-            content: [{ type: "text", text: JSON.stringify(summary, null, 2) }],
-          };
+          return { content: applyGuardrails("get_family_health_overview", summary) };
         } catch {
-          return {
-            content: [{
-              type: "text",
-              text: JSON.stringify({
-                members: [{ id: 1, name: "Self", relationship: "self", pendingActions: 0 }],
-                totalPendingActions: 0,
-              }, null, 2),
-            }],
+          const fallback = {
+            members: [{ id: 1, name: "Self", relationship: "self", pendingActions: 0 }],
+            totalPendingActions: 0,
           };
+          return { content: applyGuardrails("get_family_health_overview", fallback) };
         }
       }
 
       // Care Gaps
       case "get_care_gaps": {
         const careGaps = await apiCall("GET", "/api/fhir/care-gaps");
-        return {
-          content: [{ type: "text", text: JSON.stringify(careGaps, null, 2) }],
-        };
+        return { content: applyGuardrails("get_care_gaps", careGaps) };
       }
 
       // Provider Search
@@ -599,18 +665,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (state) params.append("state", state);
 
         const providers = await apiCall("GET", `/api/external/providers/specialists?${params}`);
-        return {
-          content: [{ type: "text", text: JSON.stringify(providers, null, 2) }],
-        };
+        return { content: applyGuardrails("find_specialists", providers) };
       }
 
       // Drug Interactions
       case "check_drug_interactions": {
         const { drugNames } = args as { drugNames: string[] };
         const interactions = await apiCall("POST", "/api/external/drugs/interactions", { drugs: drugNames });
-        return {
-          content: [{ type: "text", text: JSON.stringify(interactions, null, 2) }],
-        };
+        return { content: applyGuardrails("check_drug_interactions", interactions) };
       }
 
       // Clinical Trials
@@ -621,9 +683,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (status) params.append("status", status);
 
         const trials = await apiCall("GET", `/api/external/trials/search?${params}`);
-        return {
-          content: [{ type: "text", text: JSON.stringify(trials, null, 2) }],
-        };
+        return { content: applyGuardrails("find_clinical_trials", trials) };
       }
 
       // Research
@@ -631,9 +691,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const { condition, server } = args as { condition: string; server?: string };
         const params = server ? `?server=${server}` : "";
         const research = await apiCall("GET", `/api/external/research/condition/${encodeURIComponent(condition)}${params}`);
-        return {
-          content: [{ type: "text", text: JSON.stringify(research, null, 2) }],
-        };
+        return { content: applyGuardrails("get_research_insights", research) };
       }
 
       // Care Plans
@@ -641,28 +699,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const familyMemberId = (args as any)?.familyMemberId || 1;
         try {
           const plans = await apiCall("GET", `/api/family/${familyMemberId}/care-plans`);
-          return {
-            content: [{ type: "text", text: JSON.stringify(plans, null, 2) }],
-          };
+          return { content: applyGuardrails("get_care_plans", plans) };
         } catch {
-          // Return demo care plans
-          return {
-            content: [{
-              type: "text",
-              text: JSON.stringify([
-                {
-                  id: 1,
-                  conditionName: "Type 2 Diabetes",
-                  title: "Diabetes Management Plan",
-                  status: "active",
-                  goals: [
-                    { goal: "Reduce A1C to below 7%", status: "in_progress" },
-                    { goal: "Check blood glucose twice daily", status: "achieved" },
-                  ],
-                },
-              ], null, 2),
-            }],
-          };
+          const fallback = [{
+            id: 1, conditionName: "Type 2 Diabetes", title: "Diabetes Management Plan",
+            status: "active",
+            goals: [
+              { goal: "Reduce A1C to below 7%", status: "in_progress" },
+              { goal: "Check blood glucose twice daily", status: "achieved" },
+            ],
+          }];
+          return { content: applyGuardrails("get_care_plans", fallback) };
         }
       }
 
@@ -670,18 +717,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const { conditionName, familyMemberId = 1 } = args as { conditionName: string; familyMemberId?: number };
         try {
           const plan = await apiCall("POST", `/api/family/${familyMemberId}/care-plans/generate`, {
-            conditionName,
-            memberName: "Patient",
+            conditionName, memberName: "Patient",
           });
-          return {
-            content: [{ type: "text", text: JSON.stringify(plan, null, 2) }],
-          };
+          return { content: applyGuardrails("generate_care_plan", plan) };
         } catch {
           return {
-            content: [{
-              type: "text",
-              text: `Generated care plan template for ${conditionName}. Note: Full AI generation requires database connection.`,
-            }],
+            content: applyGuardrails("generate_care_plan", {
+              message: `Care plan template for ${conditionName}. Full AI generation requires database connection.`,
+            }),
           };
         }
       }
@@ -692,25 +735,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const params = entryType ? `?type=${entryType}` : "";
         try {
           const entries = await apiCall("GET", `/api/family/${familyMemberId}/journal${params}`);
-          return {
-            content: [{ type: "text", text: JSON.stringify(entries, null, 2) }],
-          };
+          return { content: applyGuardrails("get_health_journal", entries) };
         } catch {
-          return {
-            content: [{
-              type: "text",
-              text: JSON.stringify([
-                {
-                  id: 1,
-                  entryType: "mood",
-                  title: "Morning Check-in",
-                  mood: 8,
-                  content: "Feeling well-rested",
-                  entryDate: new Date().toISOString().split("T")[0],
-                },
-              ], null, 2),
-            }],
-          };
+          const fallback = [{
+            id: 1, entryType: "mood", title: "Morning Check-in",
+            mood: 8, content: "Feeling well-rested",
+            entryDate: new Date().toISOString().split("T")[0],
+          }];
+          return { content: applyGuardrails("get_health_journal", fallback) };
         }
       }
 
@@ -722,15 +754,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             entryDate: new Date().toISOString().split("T")[0],
             entryTime: new Date().toTimeString().split(" ")[0].slice(0, 5),
           });
-          return {
-            content: [{ type: "text", text: JSON.stringify(entry, null, 2) }],
-          };
+          return { content: applyGuardrails("add_journal_entry", entry) };
         } catch {
           return {
-            content: [{
-              type: "text",
-              text: `Journal entry recorded: ${entryData.entryType} - ${entryData.title || "Entry"}. Note: Persistence requires database connection.`,
-            }],
+            content: applyGuardrails("add_journal_entry", {
+              message: `Journal entry recorded: ${entryData.entryType} - ${entryData.title || "Entry"}. Persistence requires database connection.`,
+            }),
           };
         }
       }
@@ -740,24 +769,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const familyMemberId = (args as any)?.familyMemberId || 1;
         try {
           const preps = await apiCall("GET", `/api/family/${familyMemberId}/appointment-prep`);
-          return {
-            content: [{ type: "text", text: JSON.stringify(preps, null, 2) }],
-          };
+          return { content: applyGuardrails("get_appointment_preps", preps) };
         } catch {
-          return {
-            content: [{
-              type: "text",
-              text: JSON.stringify([
-                {
-                  id: 1,
-                  appointmentDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-                  visitType: "Annual Physical",
-                  providerName: "Dr. Smith",
-                  questionsToAsk: ["Review current medications", "Discuss preventive screenings"],
-                },
-              ], null, 2),
-            }],
-          };
+          const fallback = [{
+            id: 1,
+            appointmentDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+            visitType: "Annual Physical", providerName: "Dr. Smith",
+            questionsToAsk: ["Review current medications", "Discuss preventive screenings"],
+          }];
+          return { content: applyGuardrails("get_appointment_preps", fallback) };
         }
       }
 
@@ -765,22 +785,56 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const { familyMemberId = 1, appointmentDate, visitType, providerName, concerns } = args as any;
         try {
           const prep = await apiCall("POST", `/api/family/${familyMemberId}/appointment-prep/generate`, {
-            appointmentDate,
-            visitType,
-            providerName,
-            concerns,
+            appointmentDate, visitType, providerName, concerns,
           });
-          return {
-            content: [{ type: "text", text: JSON.stringify(prep, null, 2) }],
-          };
+          return { content: applyGuardrails("generate_appointment_prep", prep) };
         } catch {
           return {
-            content: [{
-              type: "text",
-              text: `Appointment prep created for ${visitType} on ${appointmentDate} with ${providerName || "provider"}. Note: Persistence requires database connection.`,
-            }],
+            content: applyGuardrails("generate_appointment_prep", {
+              message: `Appointment prep created for ${visitType} on ${appointmentDate} with ${providerName || "provider"}. Persistence requires database connection.`,
+            }),
           };
         }
+      }
+
+      // Data Connection Tools
+      case "connect_flexpa": {
+        const result = await apiCall("POST", "/api/connections/flexpa/authorize", {
+          redirectUri: (args as any)?.redirectUri,
+        });
+        return {
+          content: applyGuardrails("connect_flexpa", result),
+        };
+      }
+
+      case "connect_health_portal": {
+        const result = await apiCall("POST", "/api/connections/health-skillz/session");
+        return {
+          content: applyGuardrails("connect_health_portal", result),
+        };
+      }
+
+      case "check_portal_status": {
+        const { sessionId } = args as { sessionId: string };
+        const result = await apiCall("GET", `/api/connections/health-skillz/session/${sessionId}/status`);
+        return {
+          content: applyGuardrails("check_portal_status", result),
+        };
+      }
+
+      case "get_available_connections": {
+        const result = await apiCall("GET", "/api/connections/available");
+        return {
+          content: applyGuardrails("get_available_connections", result),
+        };
+      }
+
+      case "get_mcp_audit_log": {
+        const limit = (args as any)?.limit || 50;
+        const log = getAuditLog(limit);
+        return {
+          content: [{ type: "text", text: JSON.stringify({ entries: log, count: log.length }, null, 2) }],
+        };
       }
 
       default:
@@ -790,6 +844,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
     }
   } catch (error) {
+    logAuditError(name, error instanceof Error ? error.message : "Unknown error");
     return {
       content: [{
         type: "text",
