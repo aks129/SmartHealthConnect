@@ -22,6 +22,8 @@ let demoFamilyMembers: any[] = [
 let demoJournalEntries: any[] = [];
 let demoCarePlans: any[] = [];
 let demoAppointmentPrep: any[] = [];
+let demoVitalsReadings: any[] = [];
+let demoVitalsNextId = 1;
 
 // NPI Registry API
 const NPI_REGISTRY_BASE = 'https://npiregistry.cms.hhs.gov/api';
@@ -995,6 +997,162 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         connectUrl: `https://health-skillz.joshuamandel.com/connect/${crypto.randomUUID()}`,
         instructions: 'Open the connect URL in your browser to link your patient portal.',
       });
+    }
+
+    // ============================================
+    // Vitals Tracking Routes (BP & Blood Glucose)
+    // ============================================
+
+    // Vitals classification helpers
+    function classifyBP(systolic: number, diastolic: number) {
+      if (systolic < 120 && diastolic < 80) return { category: 'Normal', color: 'green', riskLevel: 'low' };
+      if (systolic < 130 && diastolic < 80) return { category: 'Elevated', color: 'yellow', riskLevel: 'moderate' };
+      if (systolic < 140 || diastolic < 90) return { category: 'High BP Stage 1', color: 'orange', riskLevel: 'high' };
+      if (systolic >= 140 || diastolic >= 90) return { category: 'High BP Stage 2', color: 'red', riskLevel: 'very_high' };
+      return { category: 'Unknown', color: 'gray', riskLevel: 'unknown' };
+    }
+
+    function classifyGlucose(value: number, context?: string) {
+      if (context === 'fasting' || context === 'before_meal') {
+        if (value < 70) return { category: 'Low (Hypoglycemia)', color: 'red', riskLevel: 'high' };
+        if (value <= 99) return { category: 'Normal', color: 'green', riskLevel: 'low' };
+        if (value <= 125) return { category: 'Prediabetic Range', color: 'yellow', riskLevel: 'moderate' };
+        return { category: 'Diabetic Range', color: 'red', riskLevel: 'high' };
+      }
+      if (value < 70) return { category: 'Low (Hypoglycemia)', color: 'red', riskLevel: 'high' };
+      if (value <= 140) return { category: 'Normal', color: 'green', riskLevel: 'low' };
+      if (value <= 199) return { category: 'Elevated', color: 'yellow', riskLevel: 'moderate' };
+      return { category: 'High', color: 'red', riskLevel: 'high' };
+    }
+
+    // GET /api/vitals/:memberId
+    const vitalsGetMatch = req.url?.match(/^\/api\/vitals\/(\d+)(?:\?|$)/);
+    if (req.method === 'GET' && vitalsGetMatch && !req.url?.includes('/trends')) {
+      const memberId = parseInt(vitalsGetMatch[1]);
+      let readings = demoVitalsReadings.filter((r: any) => r.familyMemberId === memberId);
+      const params = new URLSearchParams(req.url?.split('?')[1] || '');
+      if (params.get('type')) readings = readings.filter((r: any) => r.readingType === params.get('type'));
+      readings.sort((a: any, b: any) => b.readingDate.localeCompare(a.readingDate));
+      const limit = params.get('limit') ? parseInt(params.get('limit')!) : readings.length;
+      return res.status(200).json(readings.slice(0, limit));
+    }
+
+    // GET /api/vitals/:memberId/trends
+    const vitalsTrendsMatch = req.url?.match(/^\/api\/vitals\/(\d+)\/trends/);
+    if (req.method === 'GET' && vitalsTrendsMatch) {
+      const memberId = parseInt(vitalsTrendsMatch[1]);
+      const readings = demoVitalsReadings.filter((r: any) => r.familyMemberId === memberId);
+      const bpReadings = readings.filter((r: any) => r.readingType === 'blood_pressure');
+      const glucoseReadings = readings.filter((r: any) => r.readingType === 'blood_glucose');
+
+      const bpStats = bpReadings.length > 0 ? {
+        count: bpReadings.length,
+        latestSystolic: bpReadings[0].systolic,
+        latestDiastolic: bpReadings[0].diastolic,
+        avgSystolic: Math.round(bpReadings.reduce((s: number, r: any) => s + (r.systolic || 0), 0) / bpReadings.length),
+        avgDiastolic: Math.round(bpReadings.reduce((s: number, r: any) => s + (r.diastolic || 0), 0) / bpReadings.length),
+        classification: bpReadings[0].systolic ? classifyBP(bpReadings[0].systolic, bpReadings[0].diastolic) : null,
+      } : null;
+
+      const glucoseStats = glucoseReadings.length > 0 ? {
+        count: glucoseReadings.length,
+        latestValue: glucoseReadings[0].glucoseValue,
+        avgValue: Math.round(glucoseReadings.reduce((s: number, r: any) => s + (r.glucoseValue || 0), 0) / glucoseReadings.length),
+        classification: glucoseReadings[0].glucoseValue ? classifyGlucose(glucoseReadings[0].glucoseValue, glucoseReadings[0].glucoseContext) : null,
+      } : null;
+
+      return res.status(200).json({
+        bloodPressure: { stats: bpStats, chartData: bpReadings.slice(0, 30).reverse() },
+        bloodGlucose: { stats: glucoseStats, chartData: glucoseReadings.slice(0, 30).reverse() },
+        education: readings[0]?.aiEducation || null,
+        totalReadings: readings.length,
+      });
+    }
+
+    // POST /api/vitals/:memberId
+    const vitalsPostMatch = req.url?.match(/^\/api\/vitals\/(\d+)$/);
+    if (req.method === 'POST' && vitalsPostMatch) {
+      const memberId = parseInt(vitalsPostMatch[1]);
+      const body = req.body;
+      const newReading: any = {
+        id: demoVitalsNextId++,
+        familyMemberId: memberId,
+        readingDate: body.readingDate,
+        readingTime: body.readingTime,
+        readingType: body.readingType,
+        systolic: body.systolic,
+        diastolic: body.diastolic,
+        heartRate: body.heartRate,
+        glucoseValue: body.glucoseValue,
+        glucoseContext: body.glucoseContext,
+        notes: body.notes,
+        source: body.source || 'manual',
+        tags: body.tags,
+        aiEducation: null,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Generate basic education
+      if (body.readingType === 'blood_pressure' && body.systolic && body.diastolic) {
+        const bp = classifyBP(body.systolic, body.diastolic);
+        newReading.aiEducation = {
+          summary: `Blood pressure ${body.systolic}/${body.diastolic} mmHg is classified as "${bp.category}".`,
+          tips: ['Measure at the same time daily', 'Sit quietly for 5 minutes before measuring'],
+          resources: [{ title: 'AHA Blood Pressure Guide', url: 'https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings', type: 'article' }],
+          riskLevel: bp.riskLevel,
+          category: bp.category,
+          trendDirection: 'stable',
+          infographic: { title: 'Blood Pressure', ranges: [], currentValue: `${body.systolic}/${body.diastolic}`, unit: 'mmHg' },
+        };
+      } else if (body.readingType === 'blood_glucose' && body.glucoseValue) {
+        const g = classifyGlucose(body.glucoseValue, body.glucoseContext);
+        newReading.aiEducation = {
+          summary: `Blood glucose ${body.glucoseValue} mg/dL is classified as "${g.category}".`,
+          tips: ['Log context (fasting, before/after meals)', 'Keep a food diary alongside readings'],
+          resources: [{ title: 'ADA Blood Sugar Guide', url: 'https://www.diabetes.org/healthy-living/medication-treatments/blood-glucose-testing-and-control', type: 'article' }],
+          riskLevel: g.riskLevel,
+          category: g.category,
+          trendDirection: 'stable',
+          infographic: { title: 'Blood Glucose', ranges: [], currentValue: `${body.glucoseValue}`, unit: 'mg/dL' },
+        };
+      }
+
+      demoVitalsReadings.unshift(newReading);
+      return res.status(201).json(newReading);
+    }
+
+    // POST /api/vitals/:memberId/parse-photo
+    const vitalsParseMatch = req.url?.match(/^\/api\/vitals\/(\d+)\/parse-photo$/);
+    if (req.method === 'POST' && vitalsParseMatch) {
+      const text = req.body?.text;
+      if (!text) return res.status(400).json({ error: 'Text content required' });
+      const result: any = { confidence: 0 };
+      const bpMatch = text.match(/(\d{2,3})\s*[\/\\]\s*(\d{2,3})/);
+      if (bpMatch) {
+        const sys = parseInt(bpMatch[1]);
+        const dia = parseInt(bpMatch[2]);
+        if (sys >= 50 && sys <= 300 && dia >= 20 && dia <= 200) {
+          result.parsed = true;
+          result.readingType = 'blood_pressure';
+          result.systolic = sys;
+          result.diastolic = dia;
+          result.confidence = 0.9;
+        }
+      }
+      if (!result.readingType) {
+        const glucoseMatch = text.match(/(?:glucose|sugar|bg)[:\s]*(\d{2,3})/i) || text.match(/(\d{2,3})\s*mg\s*\/?\s*d[lL]/i);
+        if (glucoseMatch) {
+          const val = parseInt(glucoseMatch[1]);
+          if (val >= 20 && val <= 600) {
+            result.parsed = true;
+            result.readingType = 'blood_glucose';
+            result.glucoseValue = val;
+            result.confidence = 0.85;
+          }
+        }
+      }
+      if (!result.readingType) return res.status(200).json({ parsed: false, message: 'Could not detect values. Please enter manually.' });
+      return res.status(200).json(result);
     }
 
     // Default response for other API calls

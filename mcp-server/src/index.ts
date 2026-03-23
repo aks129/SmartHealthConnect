@@ -542,6 +542,98 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           openWorldHint: true,
         },
       },
+      // Vitals Tracking Tools
+      {
+        name: "log_vitals_reading",
+        description: "Log a blood pressure or blood glucose reading for a family member. Returns the saved reading with personalized health education.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: {
+              type: "number",
+              description: "Family member ID (default: 1)",
+            },
+            readingType: {
+              type: "string",
+              enum: ["blood_pressure", "blood_glucose"],
+              description: "Type of vital sign reading",
+            },
+            systolic: {
+              type: "number",
+              description: "Systolic blood pressure in mmHg (required for blood_pressure)",
+            },
+            diastolic: {
+              type: "number",
+              description: "Diastolic blood pressure in mmHg (required for blood_pressure)",
+            },
+            heartRate: {
+              type: "number",
+              description: "Heart rate in bpm (optional, for blood_pressure)",
+            },
+            glucoseValue: {
+              type: "number",
+              description: "Blood glucose in mg/dL (required for blood_glucose)",
+            },
+            glucoseContext: {
+              type: "string",
+              enum: ["fasting", "before_meal", "after_meal", "bedtime", "random"],
+              description: "Context of glucose reading (optional)",
+            },
+            notes: {
+              type: "string",
+              description: "Optional notes about the reading",
+            },
+          },
+          required: ["readingType"],
+        },
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      {
+        name: "get_vitals_log",
+        description: "Get logged blood pressure and blood glucose readings with trend analysis and personalized education",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: {
+              type: "number",
+              description: "Family member ID (default: 1)",
+            },
+            type: {
+              type: "string",
+              enum: ["blood_pressure", "blood_glucose"],
+              description: "Filter by reading type (optional)",
+            },
+          },
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
+      },
+      {
+        name: "get_vitals_education",
+        description: "Get personalized health education content based on recent vitals readings, including tips, risk assessment, and recommended resources",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: {
+              type: "number",
+              description: "Family member ID (default: 1)",
+            },
+          },
+        },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
+      },
     ],
   };
 });
@@ -834,6 +926,73 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const log = getAuditLog(limit);
         return {
           content: [{ type: "text", text: JSON.stringify({ entries: log, count: log.length }, null, 2) }],
+        };
+      }
+
+      // Vitals Tracking Tools
+      case "log_vitals_reading": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date().toTimeString().slice(0, 5);
+
+        const readingData: Record<string, unknown> = {
+          readingDate: today,
+          readingTime: now,
+          readingType: (args as any).readingType,
+          source: 'mcp',
+          notes: (args as any)?.notes,
+        };
+
+        if ((args as any).readingType === 'blood_pressure') {
+          readingData.systolic = (args as any).systolic;
+          readingData.diastolic = (args as any).diastolic;
+          readingData.heartRate = (args as any)?.heartRate;
+        } else {
+          readingData.glucoseValue = (args as any).glucoseValue;
+          readingData.glucoseContext = (args as any)?.glucoseContext || 'random';
+        }
+
+        const saved = await apiCall("POST", `/api/vitals/${memberId}`, readingData);
+        return {
+          content: applyGuardrails("log_vitals_reading", {
+            reading: saved,
+            education: saved.aiEducation,
+            _humanInTheLoop: "This vitals reading has been logged. The health education provided is for informational purposes only — please verify with your healthcare provider.",
+          }),
+        };
+      }
+
+      case "get_vitals_log": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const typeFilter = (args as any)?.type ? `?type=${(args as any).type}` : '';
+        const [readings, trends] = await Promise.all([
+          apiCall("GET", `/api/vitals/${memberId}${typeFilter}`),
+          apiCall("GET", `/api/vitals/${memberId}/trends`),
+        ]);
+
+        return {
+          content: applyGuardrails("get_vitals_log", {
+            readings: readings.slice(0, 20),
+            trends: {
+              bloodPressure: trends.bloodPressure?.stats,
+              bloodGlucose: trends.bloodGlucose?.stats,
+            },
+            totalReadings: trends.totalReadings,
+          }),
+        };
+      }
+
+      case "get_vitals_education": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const trends = await apiCall("GET", `/api/vitals/${memberId}/trends`);
+
+        return {
+          content: applyGuardrails("get_vitals_education", {
+            education: trends.education,
+            bloodPressureClassification: trends.bloodPressure?.stats?.classification,
+            bloodGlucoseClassification: trends.bloodGlucose?.stats?.classification,
+            _medicalDisclaimer: "This education content is generated based on standard clinical guidelines (AHA, ADA) and is for informational purposes only. It does not constitute medical advice.",
+          }),
         };
       }
 

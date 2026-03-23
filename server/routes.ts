@@ -13,6 +13,7 @@ import schedulingService from './scheduling-service';
 import notificationService from './notification-service';
 import externalApiRoutes from './external-api-routes';
 import dataConnectionsRoutes from './data-connections-routes';
+import vitalsRoutes from './vitals-routes';
 
 // De-identified Sample FHIR data for demo purposes
 // All data is completely fictional - no PHI or real patient information
@@ -3884,6 +3885,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register data connections routes (Flexpa, Health Skillz, audit log)
   app.use('/api/connections', dataConnectionsRoutes);
+
+  // Register vitals tracking routes (BP & Blood Glucose)
+  app.use('/api/vitals', vitalsRoutes);
 
   return httpServer;
 }
