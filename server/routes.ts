@@ -14,6 +14,12 @@ import notificationService from './notification-service';
 import externalApiRoutes from './external-api-routes';
 import dataConnectionsRoutes from './data-connections-routes';
 import vitalsRoutes from './vitals-routes';
+import refillRoutes from './refill-routes';
+import careCompletionRoutes from './care-completion-routes';
+import activityRoutes from './activity-routes';
+import pediatricRoutes from './pediatric-routes';
+import habitsRoutes from './habits-routes';
+import researchMonitorRoutes from './research-monitor-routes';
 
 // De-identified Sample FHIR data for demo purposes
 // All data is completely fictional - no PHI or real patient information
@@ -3888,6 +3894,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register vitals tracking routes (BP & Blood Glucose)
   app.use('/api/vitals', vitalsRoutes);
+
+  // Register OpenClaw Health CLAW skill routes
+  app.use('/api/refills', refillRoutes);
+  app.use('/api/care-completion', careCompletionRoutes);
+  app.use('/api/activity', activityRoutes);
+  app.use('/api/pediatric', pediatricRoutes);
+  app.use('/api/habits', habitsRoutes);
+  app.use('/api/research-monitor', researchMonitorRoutes);
 
   return httpServer;
 }

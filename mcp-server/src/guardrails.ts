@@ -143,6 +143,11 @@ const WRITE_TOOLS = new Set([
   'generate_care_plan',
   'add_journal_entry',
   'generate_appointment_prep',
+  'request_medication_refill',
+  'track_referral',
+  'log_activity',
+  'log_habit',
+  'monitor_research_for_conditions',
 ]);
 
 // ============================================

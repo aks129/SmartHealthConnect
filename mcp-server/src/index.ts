@@ -12,7 +12,7 @@ import { z } from "zod";
 import { applyGuardrails, logAuditError, getAuditLog } from "./guardrails.js";
 
 // Configuration
-const API_BASE_URL = process.env.SMARTHEALTHCONNECT_API_URL || "http://localhost:5000";
+const API_BASE_URL = process.env.SMARTHEALTHCONNECT_API_URL || "http://localhost:5050";
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD || "SmartHealth2025";
 
 // Session state
@@ -26,6 +26,7 @@ async function apiCall(method: string, endpoint: string, body?: any): Promise<an
     headers: {
       "Content-Type": "application/json",
     },
+    signal: AbortSignal.timeout(15000),
   };
   if (body) {
     options.body = JSON.stringify(body);
@@ -33,8 +34,8 @@ async function apiCall(method: string, endpoint: string, body?: any): Promise<an
 
   const response = await fetch(url, options);
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`API Error: ${response.status} - ${error}`);
+    const error = await response.text().catch(() => "");
+    throw new Error(`API Error ${response.status}: ${error || response.statusText}`);
   }
   return response.json();
 }
@@ -46,8 +47,16 @@ async function ensureSession(): Promise<void> {
       await apiCall("POST", "/api/fhir/demo/connect", { password: DEMO_PASSWORD });
       sessionActive = true;
     } catch (error) {
-      // Session might already exist
-      sessionActive = true;
+      // Check if a session already exists
+      try {
+        await apiCall("GET", "/api/fhir/sessions/current");
+        sessionActive = true;
+      } catch {
+        throw new Error(
+          `Cannot connect to SmartHealthConnect backend at ${API_BASE_URL}. ` +
+          `Start it with: cd SmartHealthConnect && PORT=5050 npm run dev`
+        );
+      }
     }
   }
 }
@@ -634,6 +643,243 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           openWorldHint: true,
         },
       },
+      // ===== OpenClaw Health CLAW Skills =====
+      // Skill 1: Medication Refill Management
+      {
+        name: "check_refill_status",
+        description: "Check medication refill status including days remaining, refill eligibility, and pending requests",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "request_medication_refill",
+        description: "Request a medication refill. Creates a tracked refill request for a specific medication.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+            medicationName: { type: "string", description: "Name of the medication to refill" },
+            pharmacyName: { type: "string", description: "Pharmacy name (optional)" },
+          },
+          required: ["medicationName"],
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      },
+      {
+        name: "get_refill_timeline",
+        description: "Get a timeline of upcoming medication refill dates for the next 90 days",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+            daysAhead: { type: "number", description: "How many days ahead to project (default: 90)" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      // Skill 2: Care Completion Tracking
+      {
+        name: "get_care_completion_summary",
+        description: "Get a comprehensive care completion dashboard showing care gaps, pending referrals, follow-ups, and overall completion percentage",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "track_referral",
+        description: "Create a tracked referral item (e.g., specialist referral, follow-up appointment, lab order)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+            referralType: { type: "string", description: "Type of referral (e.g., specialist, lab, imaging)" },
+            reason: { type: "string", description: "Reason for the referral" },
+            providerName: { type: "string", description: "Referring or target provider name" },
+            dueDate: { type: "string", description: "Due date (YYYY-MM-DD)" },
+          },
+          required: ["referralType", "reason"],
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      },
+      {
+        name: "get_overdue_items",
+        description: "Get overdue care items including missed screenings, expired referrals, and past-due follow-ups",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      // Skill 3: Diet & Exercise Routines
+      {
+        name: "log_activity",
+        description: "Log a physical activity or exercise session with type, duration, and intensity",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+            activityType: { type: "string", description: "Type of activity (e.g., walking, running, swimming, yoga)" },
+            durationMinutes: { type: "number", description: "Duration in minutes" },
+            intensity: { type: "string", enum: ["light", "moderate", "vigorous"], description: "Exercise intensity" },
+            notes: { type: "string", description: "Optional notes" },
+          },
+          required: ["activityType", "durationMinutes", "intensity"],
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      },
+      {
+        name: "get_activity_correlations",
+        description: "Analyze correlations between exercise/diet and health outcomes (BP, glucose). Shows how activity impacts vitals.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+            days: { type: "number", description: "Number of days to analyze (default: 30)" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "get_diet_exercise_summary",
+        description: "Get a weekly or monthly summary of diet and exercise patterns including total activity, sleep quality, and top activities",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+            period: { type: "string", enum: ["week", "month"], description: "Summary period (default: week)" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      // Skill 4: Kids/Family Health Management
+      {
+        name: "get_immunization_schedule",
+        description: "Get CDC-recommended immunization schedule for a family member compared against their actual vaccination records",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "get_wellchild_visits",
+        description: "Get AAP-recommended well-child visit schedule showing completed and upcoming visits based on age",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "check_school_health_compliance",
+        description: "Check if a child meets school immunization requirements and identify any missing vaccinations",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID" },
+            state: { type: "string", description: "US state code for state-specific requirements (default: general)" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      // Skill 5: Healthy Habits Operating Picture
+      {
+        name: "get_health_operating_picture",
+        description: "Get a comprehensive 'health operating picture' — an integrated dashboard of sleep, exercise, medication adherence, vitals trends, and goal progress over the last 30 days",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+            days: { type: "number", description: "Number of days to include (default: 30)" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "log_habit",
+        description: "Log a daily habit (water intake, steps, meditation, stretching, etc.)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+            habitType: { type: "string", enum: ["water", "steps", "meditation", "stretch", "other"], description: "Type of habit" },
+            value: { type: "number", description: "Numeric value (e.g., glasses of water, step count)" },
+            unit: { type: "string", description: "Unit of measurement (e.g., glasses, steps, minutes)" },
+            notes: { type: "string", description: "Optional notes" },
+          },
+          required: ["habitType"],
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      },
+      {
+        name: "get_habit_streaks",
+        description: "Get current and longest streaks for tracked habits (consecutive days of logging)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      // Skill 6: Research Monitoring
+      {
+        name: "monitor_research_for_conditions",
+        description: "Set up automatic research monitoring for a health condition. Searches bioRxiv, medRxiv, and ClinicalTrials.gov for relevant new research.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+            conditionName: { type: "string", description: "Health condition to monitor (e.g., diabetes, hypertension)" },
+            sources: {
+              type: "array",
+              items: { type: "string" },
+              description: "Sources to monitor (default: all). Options: biorxiv, medrxiv, clinicaltrials, openfda",
+            },
+          },
+          required: ["conditionName"],
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      },
+      {
+        name: "get_research_digest",
+        description: "Get a research digest with new articles and clinical trials matching your monitored conditions since last check",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+      },
+      {
+        name: "check_trial_eligibility",
+        description: "Check if a patient might be eligible for a clinical trial based on their age, gender, and conditions",
+        inputSchema: {
+          type: "object",
+          properties: {
+            familyMemberId: { type: "number", description: "Family member ID (default: 1)" },
+            nctId: { type: "string", description: "Specific ClinicalTrials.gov NCT ID to check" },
+            condition: { type: "string", description: "Condition to find matching trials for" },
+          },
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+      },
     ],
   };
 });
@@ -994,6 +1240,147 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             _medicalDisclaimer: "This education content is generated based on standard clinical guidelines (AHA, ADA) and is for informational purposes only. It does not constitute medical advice.",
           }),
         };
+      }
+
+      // ===== OpenClaw Health CLAW Skills =====
+
+      // Skill 1: Medication Refills
+      case "check_refill_status": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const result = await apiCall("GET", `/api/refills/${memberId}/status`);
+        return { content: applyGuardrails("check_refill_status", result) };
+      }
+
+      case "request_medication_refill": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const { medicationName, pharmacyName } = args as { medicationName: string; pharmacyName?: string };
+        const result = await apiCall("POST", `/api/refills/${memberId}/request`, {
+          medicationName, pharmacyName,
+        });
+        return { content: applyGuardrails("request_medication_refill", result) };
+      }
+
+      case "get_refill_timeline": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const days = (args as any)?.daysAhead || 90;
+        const result = await apiCall("GET", `/api/refills/${memberId}/timeline?days=${days}`);
+        return { content: applyGuardrails("get_refill_timeline", result) };
+      }
+
+      // Skill 2: Care Completion
+      case "get_care_completion_summary": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const result = await apiCall("GET", `/api/care-completion/${memberId}/summary`);
+        return { content: applyGuardrails("get_care_completion_summary", result) };
+      }
+
+      case "track_referral": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const { referralType, reason, providerName, dueDate } = args as any;
+        const result = await apiCall("POST", `/api/care-completion/${memberId}/referral`, {
+          referralType, reason, providerName, dueDate,
+        });
+        return { content: applyGuardrails("track_referral", result) };
+      }
+
+      case "get_overdue_items": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const result = await apiCall("GET", `/api/care-completion/${memberId}/overdue`);
+        return { content: applyGuardrails("get_overdue_items", result) };
+      }
+
+      // Skill 3: Diet & Exercise
+      case "log_activity": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const { activityType, durationMinutes, intensity, notes } = args as any;
+        const result = await apiCall("POST", `/api/activity/${memberId}/log`, {
+          activityType, durationMinutes, intensity, notes,
+        });
+        return { content: applyGuardrails("log_activity", result) };
+      }
+
+      case "get_activity_correlations": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const days = (args as any)?.days || 30;
+        const result = await apiCall("GET", `/api/activity/${memberId}/correlations?days=${days}`);
+        return { content: applyGuardrails("get_activity_correlations", result) };
+      }
+
+      case "get_diet_exercise_summary": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const period = (args as any)?.period || "week";
+        const result = await apiCall("GET", `/api/activity/${memberId}/summary?period=${period}`);
+        return { content: applyGuardrails("get_diet_exercise_summary", result) };
+      }
+
+      // Skill 4: Kids/Family Health
+      case "get_immunization_schedule": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const result = await apiCall("GET", `/api/pediatric/${memberId}/immunization-schedule`);
+        return { content: applyGuardrails("get_immunization_schedule", result) };
+      }
+
+      case "get_wellchild_visits": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const result = await apiCall("GET", `/api/pediatric/${memberId}/wellchild-visits`);
+        return { content: applyGuardrails("get_wellchild_visits", result) };
+      }
+
+      case "check_school_health_compliance": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const state = (args as any)?.state || "default";
+        const result = await apiCall("GET", `/api/pediatric/${memberId}/school-compliance?state=${state}`);
+        return { content: applyGuardrails("check_school_health_compliance", result) };
+      }
+
+      // Skill 5: Healthy Habits
+      case "get_health_operating_picture": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const days = (args as any)?.days || 30;
+        const result = await apiCall("GET", `/api/habits/${memberId}/operating-picture?days=${days}`);
+        return { content: applyGuardrails("get_health_operating_picture", result) };
+      }
+
+      case "log_habit": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const { habitType, value, unit, notes } = args as any;
+        const result = await apiCall("POST", `/api/habits/${memberId}/log`, {
+          habitType, value, unit, notes,
+        });
+        return { content: applyGuardrails("log_habit", result) };
+      }
+
+      case "get_habit_streaks": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const result = await apiCall("GET", `/api/habits/${memberId}/streaks`);
+        return { content: applyGuardrails("get_habit_streaks", result) };
+      }
+
+      // Skill 6: Research Monitoring
+      case "monitor_research_for_conditions": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const { conditionName, sources } = args as { conditionName: string; sources?: string[] };
+        const result = await apiCall("POST", `/api/research-monitor/${memberId}/monitor`, {
+          conditionName, sources,
+        });
+        return { content: applyGuardrails("monitor_research_for_conditions", result) };
+      }
+
+      case "get_research_digest": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const result = await apiCall("GET", `/api/research-monitor/${memberId}/digest`);
+        return { content: applyGuardrails("get_research_digest", result) };
+      }
+
+      case "check_trial_eligibility": {
+        const memberId = (args as any)?.familyMemberId || 1;
+        const nctId = (args as any)?.nctId;
+        const condition = (args as any)?.condition;
+        const params = new URLSearchParams();
+        if (nctId) params.append("nctId", nctId);
+        if (condition) params.append("condition", condition);
+        const result = await apiCall("GET", `/api/research-monitor/${memberId}/trial-eligibility?${params}`);
+        return { content: applyGuardrails("check_trial_eligibility", result) };
       }
 
       default:

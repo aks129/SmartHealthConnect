@@ -10,12 +10,18 @@ import { z } from "zod";
 
 const DIST_DIR = path.join(import.meta.dirname, "dist", "src", "views");
 const API_BASE =
-  process.env.SMARTHEALTHCONNECT_API_URL || "http://localhost:5000";
+  process.env.SMARTHEALTHCONNECT_API_URL || "http://localhost:5050";
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || "SmartHealth2025";
 
 async function apiFetch(endpoint: string): Promise<unknown> {
-  const res = await fetch(`${API_BASE}${endpoint}`);
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    signal: AbortSignal.timeout(15000),
+  });
   if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${await res.text()}`);
+    const text = await res.text().catch(() => "");
+    throw new Error(
+      `API error (${res.status}): ${text || res.statusText}. Is the backend running at ${API_BASE}?`,
+    );
   }
   return res.json();
 }
@@ -28,9 +34,13 @@ async function apiPost(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${await res.text()}`);
+    const text = await res.text().catch(() => "");
+    throw new Error(
+      `API error (${res.status}): ${text || res.statusText}. Is the backend running at ${API_BASE}?`,
+    );
   }
   return res.json();
 }
@@ -45,12 +55,24 @@ export function createServer(): McpServer {
     version: "1.0.0",
   });
 
-  // ─── Ensure demo session on startup ───
+  // ─── Ensure demo session is active ───
+  let sessionActive = false;
   async function ensureDemoSession(): Promise<void> {
+    if (sessionActive) return;
     try {
-      await apiPost("/api/fhir/demo/connect", {});
+      await apiPost("/api/fhir/demo/connect", { password: DEMO_PASSWORD });
+      sessionActive = true;
     } catch {
-      // Server might not be running yet
+      // Check if session already exists
+      try {
+        await apiFetch("/api/fhir/sessions/current");
+        sessionActive = true;
+      } catch {
+        throw new Error(
+          `Cannot connect to SmartHealthConnect backend at ${API_BASE}. ` +
+            `Start it with: cd SmartHealthConnect && PORT=5050 npm run dev`,
+        );
+      }
     }
   }
 

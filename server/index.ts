@@ -56,9 +56,9 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Serve the app on the specified port (default 5000)
-  // This serves both the API and the client.
-  const port = parseInt(process.env.PORT || "5000", 10);
+  // Serve the app on the specified port (default 5050)
+  // Default to 5050 to avoid macOS AirPlay Receiver conflict on port 5000
+  const port = parseInt(process.env.PORT || "5050", 10);
   server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });

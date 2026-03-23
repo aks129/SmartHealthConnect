@@ -1412,3 +1412,53 @@ export const insertAppointmentPrepSummarySchema = createInsertSchema(appointment
 
 export type InsertAppointmentPrepSummary = z.infer<typeof insertAppointmentPrepSummarySchema>;
 export type AppointmentPrepSummary = typeof appointmentPrepSummaries.$inferSelect;
+
+// ============================================
+// OpenClaw Health CLAW Skills
+// ============================================
+
+// Skill 1: Medication Refill Tracking
+export const refillRequests = pgTable("refill_requests", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").references(() => familyMembers.id).notNull(),
+  medicationName: text("medication_name").notNull(),
+  medicationId: text("medication_id"), // FHIR MedicationRequest ID
+  status: text("status").notNull().default("pending"), // pending, requested, processing, ready, picked_up, cancelled
+  daysSupply: integer("days_supply").default(30),
+  lastFilledDate: text("last_filled_date"), // ISO date
+  nextRefillDate: text("next_refill_date"), // ISO date, computed
+  pharmacyName: text("pharmacy_name"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertRefillRequestSchema = createInsertSchema(refillRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertRefillRequest = z.infer<typeof insertRefillRequestSchema>;
+export type RefillRequest = typeof refillRequests.$inferSelect;
+
+// Skill 6: Research Monitoring Subscriptions
+export const researchMonitors = pgTable("research_monitors", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").references(() => familyMembers.id).notNull(),
+  conditionName: text("condition_name").notNull(),
+  keywords: jsonb("keywords"), // string[]
+  sources: jsonb("sources"), // string[] - 'biorxiv','medrxiv','clinicaltrials','openfda'
+  lastCheckedAt: timestamp("last_checked_at"),
+  lastResults: jsonb("last_results"), // cached search results
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertResearchMonitorSchema = createInsertSchema(researchMonitors).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertResearchMonitor = z.infer<typeof insertResearchMonitorSchema>;
+export type ResearchMonitor = typeof researchMonitors.$inferSelect;
