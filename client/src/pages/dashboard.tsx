@@ -16,6 +16,7 @@ import { DrugInteractionChecker } from '@/components/medications/DrugInteraction
 import { ProviderFinder } from '@/components/provider/ProviderFinder';
 import { PriorAuthWorkflow } from '@/components/insurance/PriorAuthWorkflow';
 import { ResearchInsights } from '@/components/research/ResearchInsights';
+import { VitalsTracker } from '@/components/health/VitalsTracker';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import {
   Heart,
@@ -377,6 +378,10 @@ export default function Dashboard() {
               <LayoutDashboard className="w-4 h-4 mr-2" />
               Summary
             </TabsTrigger>
+            <TabsTrigger value="vitals" className="data-[state=active]:bg-background">
+              <Heart className="w-4 h-4 mr-2" />
+              Vitals
+            </TabsTrigger>
             <TabsTrigger value="timeline" className="data-[state=active]:bg-background">
               <LineChart className="w-4 h-4 mr-2" />
               Timeline
@@ -432,6 +437,11 @@ export default function Dashboard() {
                 setShowSchedulingModal(true);
               }}
             />
+          </TabsContent>
+
+          {/* Vitals Tab - BP & Blood Glucose Tracking with Education */}
+          <TabsContent value="vitals" className="animate-fade-in">
+            <VitalsTracker familyMemberId={1} />
           </TabsContent>
 
           {/* Timeline Tab - Longitudinal Health Analysis (Pillar 1) */}

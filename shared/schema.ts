@@ -1189,6 +1189,69 @@ export const healthAlertInputSchema = z.object({
 });
 
 // ============================================
+// Vitals Readings - Patient-Entered BP & Glucose
+// ============================================
+
+export const vitalsReadings = pgTable("vitals_readings", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").references(() => familyMembers.id).notNull(),
+  readingDate: text("reading_date").notNull(), // ISO date string YYYY-MM-DD
+  readingTime: text("reading_time"), // HH:MM format
+  readingType: text("reading_type").notNull(), // 'blood_pressure', 'blood_glucose'
+  // Blood pressure fields
+  systolic: integer("systolic"), // mmHg
+  diastolic: integer("diastolic"), // mmHg
+  heartRate: integer("heart_rate"), // bpm (optional, often measured with BP)
+  // Blood glucose fields
+  glucoseValue: integer("glucose_value"), // mg/dL
+  glucoseContext: text("glucose_context"), // 'fasting', 'before_meal', 'after_meal', 'bedtime', 'random'
+  // Shared fields
+  notes: text("notes"), // Patient notes about the reading
+  source: text("source").default("manual"), // 'manual', 'photo_ocr', 'device_sync'
+  tags: jsonb("tags"), // Custom tags like ['left_arm', 'seated', 'stressed']
+  // AI-generated education (cached per reading)
+  aiEducation: jsonb("ai_education"), // { summary, tips, resources, riskLevel }
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertVitalsReadingSchema = createInsertSchema(vitalsReadings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertVitalsReading = z.infer<typeof insertVitalsReadingSchema>;
+export type VitalsReading = typeof vitalsReadings.$inferSelect;
+
+// Vitals reading input validation
+export const vitalsReadingInputSchema = z.object({
+  familyMemberId: z.number(),
+  readingDate: z.string(),
+  readingTime: z.string().optional(),
+  readingType: z.enum(['blood_pressure', 'blood_glucose']),
+  systolic: z.number().min(50).max(300).optional(),
+  diastolic: z.number().min(20).max(200).optional(),
+  heartRate: z.number().min(30).max(250).optional(),
+  glucoseValue: z.number().min(20).max(600).optional(),
+  glucoseContext: z.enum(['fasting', 'before_meal', 'after_meal', 'bedtime', 'random']).optional(),
+  notes: z.string().optional(),
+  source: z.enum(['manual', 'photo_ocr', 'device_sync']).optional(),
+  tags: z.array(z.string()).optional(),
+}).refine(
+  (data) => {
+    if (data.readingType === 'blood_pressure') {
+      return data.systolic !== undefined && data.diastolic !== undefined;
+    }
+    if (data.readingType === 'blood_glucose') {
+      return data.glucoseValue !== undefined;
+    }
+    return true;
+  },
+  { message: "Blood pressure requires systolic and diastolic. Blood glucose requires glucoseValue." }
+);
+
+// ============================================
 // Health Journal - Symptom & Mood Tracking
 // ============================================
 
