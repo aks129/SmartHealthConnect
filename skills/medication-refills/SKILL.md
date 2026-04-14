@@ -1,6 +1,12 @@
 ---
 name: medication-refills
-description: Monitor medication refill windows, request refills, and track prescription timelines to prevent missed doses.
+description: >
+  Monitor medication refill windows, request refills proactively, and project
+  prescription timelines so no dose gets missed. Use when: (1) "Which meds am I
+  about to run out of?", (2) "Refill my lisinopril / metformin / statin",
+  (3) "When is my next refill due?", (4) "Show my 90-day medication projection",
+  (5) reviewing adherence over a period, (6) flagging meds at risk of lapse. Reads
+  FHIR MedicationRequest + MedicationDispense with patient-authorized pharmacy data.
 metadata: {"openclaw":{"emoji":"💊","requires":{"env":["SMARTHEALTHCONNECT_API_URL"]},"primaryEnv":"SMARTHEALTHCONNECT_API_URL"}}
 ---
 

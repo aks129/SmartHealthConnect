@@ -1,6 +1,13 @@
 ---
 name: research-monitor
-description: Monitor biomedical research, clinical trials, and FDA drug safety data relevant to a patient's specific health conditions.
+description: >
+  Monitor biomedical research preprints (bioRxiv, medRxiv), clinical trials
+  (ClinicalTrials.gov), and FDA drug-safety signals (OpenFDA) filtered to the
+  patient's actual conditions and medications. Use when: (1) "Any new research on
+  my condition this month?", (2) "Am I eligible for a clinical trial for X?",
+  (3) "Has the FDA flagged anything new about my meds?", (4) "Weekly research digest",
+  (5) "Find trials near me for diabetes / cancer / RA", (6) setting up ongoing
+  research monitoring for a specific condition.
 metadata: {"openclaw":{"emoji":"🔬","requires":{"env":["SMARTHEALTHCONNECT_API_URL"]},"primaryEnv":"SMARTHEALTHCONNECT_API_URL"}}
 ---
 

@@ -1,6 +1,12 @@
 ---
 name: healthy-habits
-description: Maintain a longitudinal health operating picture integrating sleep, exercise, medication adherence, vitals, and goal progress.
+description: >
+  Maintain a longitudinal health operating picture integrating sleep, exercise,
+  medication adherence, vital signs, and goal progress into one dashboard. Use when:
+  (1) "How am I doing overall this week / month?", (2) "Show my health dashboard",
+  (3) "Am I hitting my sleep / step / medication goals?", (4) "Build me an operating
+  picture of my health", (5) logging a new habit or goal, (6) reviewing streaks and
+  trends across modalities. Correlates sleep, activity, adherence, and biomarkers.
 metadata: {"openclaw":{"emoji":"📊","requires":{"env":["SMARTHEALTHCONNECT_API_URL"]},"primaryEnv":"SMARTHEALTHCONNECT_API_URL"}}
 ---
 

@@ -1,6 +1,12 @@
 ---
 name: diet-exercise
-description: Log physical activities, analyze correlations between exercise and health outcomes, and summarize diet/exercise patterns.
+description: >
+  Log physical activity, meals, and wellness patterns, and analyze correlations
+  between exercise/diet and clinical outcomes (BP, glucose, weight, HbA1c). Use when:
+  (1) "Log my run / workout / meal", (2) "How did my exercise affect my blood pressure
+  this month?", (3) "Weekly or monthly activity summary", (4) "Show correlation between
+  cardio and resting heart rate", (5) reviewing adherence to activity goals,
+  (6) spotting streaks and lapses. Reads from FHIR Observation + activity logs.
 metadata: {"openclaw":{"emoji":"🏃","requires":{"env":["SMARTHEALTHCONNECT_API_URL"]},"primaryEnv":"SMARTHEALTHCONNECT_API_URL"}}
 ---
 

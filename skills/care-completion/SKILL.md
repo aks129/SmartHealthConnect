@@ -1,6 +1,12 @@
 ---
 name: care-completion
-description: Track care completion including preventive screenings, referrals, and follow-ups to ensure nothing falls through the cracks.
+description: >
+  Track care completion for preventive screenings, specialist referrals, and follow-up
+  visits against HEDIS quality measures. Use when: (1) "What preventive screenings am I
+  due for?", (2) "Did I follow up on that referral?", (3) "Show me my care gaps",
+  (4) "Am I up to date on mammogram / colonoscopy / A1c?", (5) generating a summary of
+  outstanding care items, (6) explaining why a screening is overdue given age/sex/conditions.
+  Covers HEDIS, USPSTF, and condition-specific follow-up logic.
 metadata: {"openclaw":{"emoji":"✅","requires":{"env":["SMARTHEALTHCONNECT_API_URL"]},"primaryEnv":"SMARTHEALTHCONNECT_API_URL"}}
 ---
 

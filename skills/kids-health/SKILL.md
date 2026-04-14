@@ -1,6 +1,12 @@
 ---
 name: kids-health
-description: Manage children's immunization schedules against CDC guidelines, track well-child visits, and check school health compliance.
+description: >
+  Manage pediatric health against CDC immunization schedules, well-child visit
+  cadence, and state school health compliance. Use when: (1) "What vaccines does
+  my kid need next?", (2) "Are my child's immunizations up to date for school?",
+  (3) "When is the next well-child visit?", (4) "Show development milestones for
+  age N", (5) generating a school form / camp form summary, (6) checking state-level
+  school entry requirements. Supports infants, toddlers, school-age, and adolescents.
 metadata: {"openclaw":{"emoji":"👶","requires":{"env":["SMARTHEALTHCONNECT_API_URL"]},"primaryEnv":"SMARTHEALTHCONNECT_API_URL"}}
 ---
 

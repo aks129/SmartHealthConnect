@@ -1,0 +1,27 @@
+{
+  "name": "smarthealthconnect",
+  "description": "SmartHealthConnect — personal health management skills covering preventive care gap tracking (HEDIS), medication refill monitoring, healthy habits dashboard, diet & exercise analytics, pediatric immunizations (CDC schedules + school compliance), and biomedical research / clinical trial monitoring (bioRxiv, medRxiv, ClinicalTrials.gov, OpenFDA). SMART on FHIR + MCP server with PHI redaction, audit logging, and human-in-the-loop on write tools.",
+  "version": "1.0.0",
+  "author": {
+    "name": "aks129"
+  },
+  "homepage": "https://github.com/aks129/SmartHealthConnect",
+  "repository": "https://github.com/aks129/SmartHealthConnect",
+  "license": "MIT",
+  "keywords": [
+    "fhir", "smart-on-fhir", "mcp", "personal-health", "hedis",
+    "preventive-care", "medications", "pediatric", "immunizations",
+    "clinical-trials", "research", "wellness"
+  ],
+  "skills": "./skills",
+  "mcpServers": {
+    "smarthealthconnect": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["./mcp-server/dist/index.js"],
+      "env": {
+        "SMARTHEALTHCONNECT_API_URL": "http://localhost:5000"
+      }
+    }
+  }
+}
