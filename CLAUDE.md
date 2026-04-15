@@ -29,7 +29,9 @@ Configure with `HEALTHCLAW_MCP_URL=http://localhost:3001/mcp/rpc` (or your deplo
 - `npm run test:watch` - Run tests in watch mode during development
 - `npm run test:coverage` - Generate coverage report (v8 provider)
 - `npx vitest run tests/some-file.test.ts` - Run a single test file
-- Tests live in `tests/` directory, matched by `tests/**/*.test.ts`
+- `npx playwright test` - Run Playwright E2E tests (no npm script; see `playwright.config.ts`)
+- Unit tests live in `tests/*.test.ts`; E2E specs in `tests/e2e/*.spec.ts`
+- E2E tests auto-start the server on port **5050** (not 5000) via `playwright.config.ts` `webServer`
 - Coverage is reported and uploaded to Codecov but not gated by thresholds (see note in `vitest.config.ts`)
 - Coverage only measures `server/**/*.ts` (excludes `server/index.ts`); client code is not covered
 
@@ -102,30 +104,41 @@ root/
 │   │   └── lib/              # Utilities (fhir-client, queryClient)
 ├── server/                    # Express backend (DEVELOPMENT)
 │   ├── index.ts              # Server entry point
-│   ├── routes.ts             # Main API routes (~3000 lines)
+│   ├── routes.ts             # Main API routes (~3900 lines)
 │   ├── external-api-routes.ts # External healthcare APIs
 │   ├── family-routes.ts      # Family member CRUD + journal/care plans
-│   ├── integrations/         # External API clients (NPI, OpenFDA, ClinicalTrials, bioRxiv)
+│   ├── {vitals,refill,care-completion,activity,pediatric,habits,research-monitor}-routes.ts
+│   │                          # One file per HealthClaw patient skill, mounted at /api/<skill>
+│   ├── cdc-schedule.ts       # CDC immunization schedule data (used by pediatric)
+│   ├── integrations/         # External API clients (NPI, OpenFDA, ClinicalTrials, bioRxiv, Flexpa, Health Skillz)
 │   ├── fhir-client.ts        # HapiFhirClient class
 │   ├── ai-service.ts         # OpenAI integration
 │   ├── narrative-service.ts  # AI health narrative generation
 │   └── care-gaps-service.ts  # Preventive care (HEDIS)
 ├── shared/
 │   └── schema.ts             # DB tables + Zod FHIR schemas
-├── tests/                     # Vitest test files
+├── tests/                     # Vitest unit tests (tests/*.test.ts)
 │   ├── auth.test.ts
 │   ├── data-connections-routes.test.ts
 │   ├── flexpa-client.test.ts
 │   ├── health-skillz-client.test.ts
-│   └── mcp-guardrails.test.ts
-├── mcp-server/                # MCP server for Claude Desktop integration
+│   ├── mcp-guardrails.test.ts
+│   └── e2e/                  # Playwright specs (port 5050 via webServer)
+├── mcp-server/                # MCP server for Claude Desktop integration (legacy direct-FHIR tools + get_compiled_truth proxy)
 ├── mcp-app/                   # MCP v0.3 manifest-based app (7 tools + HTML views)
 │   ├── manifest.json          # Tool definitions and UI resource mappings
 │   ├── server.ts              # MCP app server (calls backend FHIR API endpoints)
 │   └── src/views/             # HTML UI views for each tool
-├── skill/                     # Claude skill CLI scripts (untracked)
-│   ├── SKILL.md               # Skill definition for health record imports
+├── skills/                    # 6 HealthClaw patient skills (tracked) — care-completion,
+│   └── <skill>/SKILL.md       # diet-exercise, healthy-habits, kids-health, medication-refills,
+│                              # research-monitor. Each SKILL.md is consumed by Claude.
+├── skill/                     # LOCAL-ONLY Claude skill CLI scripts — singular, untracked,
+│   ├── SKILL.md               # distinct from the plural tracked `skills/` dir above.
 │   └── scripts/               # connect-portal.ts, connect-insurance.ts, fetch-data.ts
+├── .claude-plugin/
+│   └── plugin.json            # Claude Code plugin manifest
+├── .health-context.yaml       # Engine/surface declaration (sister file to HealthClawGuardrails)
+├── playwright.config.ts       # Playwright config (webServer on :5050)
 └── vercel.json               # Vercel deployment config
 ```
 
@@ -166,10 +179,20 @@ root/
 - `/api/connections/health-skillz/session/:id/download` - Download imported data (POST)
 - `/api/connections/audit-log` - MCP guardrails audit log (GET)
 
+**Patient Skills** (`/api/<skill>/*`) — one mount per HealthClaw skill, implemented in the corresponding `server/<skill>-routes.ts`:
+
+- `/api/vitals/*` - BP/glucose readings, classifications, trends, education
+- `/api/refills/*` - medication refill timeline + adherence projections
+- `/api/care-completion/*` - preventive screenings, referrals, follow-ups vs HEDIS/USPSTF
+- `/api/activity/*` - workouts, meals, correlations with vitals
+- `/api/pediatric/*` - CDC immunization schedule, well-child visits, school forms
+- `/api/habits/*` - unified sleep/activity/adherence/vitals dashboard
+- `/api/research-monitor/*` - bioRxiv/medRxiv/ClinicalTrials/OpenFDA filtered to patient conditions
+
 ### Client Routes
 
 - `/` - Landing page
-- `/dashboard` - Main patient health dashboard (10 tabs)
+- `/dashboard` - Main patient health dashboard (11 tabs incl. VitalsTracker)
 - `/callback` - SMART on FHIR OAuth callback
 
 ### Environment Variables
@@ -185,8 +208,11 @@ Optional:
 - `FLEXPA_PUBLISHABLE_KEY` - Flexpa OAuth publishable key (for payer data import)
 - `FLEXPA_SECRET_KEY` - Flexpa OAuth secret key (server-side only)
 - `HEALTH_SKILLZ_URL` - Health Skillz server URL (defaults to `https://health-skillz.joshuamandel.com`)
+- `HEALTHCLAW_MCP_URL` - HealthClaw Guardrails MCP endpoint (e.g. `http://localhost:3001/mcp/rpc`). Required for the `get_compiled_truth` proxy tool
+- `HEALTHCLAW_TENANT_ID` - Tenant identifier forwarded with HealthClaw calls
+- `DEMO_PASSWORD` - Demo session password used by `mcp-app/server.ts` (default `SmartHealth2025`)
 - `JWT_SECRET` - Secret for signing JWT tokens (required in CI test environment)
-- `PORT` - Server port (defaults to 5000)
+- `PORT` - Server port (defaults to 5000; E2E tests override to 5050)
 
 ### Key Patterns
 
@@ -229,8 +255,9 @@ Optional:
 4. **Windows Compatible**: Server uses standard listen() without reusePort option
 5. **Express Route Order**: Specific routes (e.g., `/providers/specialists`) must be defined BEFORE parameterized routes (e.g., `/providers/:npi`) to avoid incorrect matching
 6. **Database Migrations**: `npm run db:push` compares schema against DB and applies changes. No rollback capability — test on staging first
-7. **CI/CD**: GitHub Actions runs type check, tests, coverage upload (Codecov), build verification, and security audit on push/PR to main
-8. **HIPAA Audit Logging**: PHI endpoints are logged via `auditMiddleware` capturing user, action, resource, IP, and success/failure. Falls back to console if database unavailable
+7. **CI/CD**: GitHub Actions runs type check, tests, coverage upload (Codecov), build verification, and security audit on push/PR to main. Uses **Node 22 + npm 10** — see next item
+8. **Lockfile must be npm 10–compatible**: CI's Node 22 ships bundled npm 10. Regenerating `package-lock.json` on Node 23+ (npm 11) silently produces a lockfile that `npm ci` on npm 10 rejects with "Missing: expo@… from lock file" (npm 11 handles transitive peer deps differently). When you touch the lockfile, use `npx -y npm@10 install` to keep it npm-10 compatible
+9. **HIPAA Audit Logging**: PHI endpoints are logged via `auditMiddleware` capturing user, action, resource, IP, and success/failure. Falls back to console if database unavailable
 
 ### MCP Server (Claude Integration)
 
@@ -246,13 +273,18 @@ npm run build
 
 **Available Tools:**
 
-- Health: `get_health_summary`, `get_conditions`, `get_medications`, `get_vitals`, `get_allergies`
+Per the engine/surface contract, **new skill code should call `get_compiled_truth`** (proxies HealthClaw's `fhir_compiled_truth`) rather than the per-resource read tools below. The direct-FHIR tools remain for backwards compatibility and demo mode, but must not be used for new resource-level claims.
+
+- Compiled Truth (canonical): `get_compiled_truth`
+- Health (legacy direct FHIR): `get_health_summary`, `get_conditions`, `get_medications`, `get_vitals`, `get_allergies`
 - Family: `get_family_members`, `get_family_health_overview`
-- Care: `get_care_gaps`, `get_care_plans`, `generate_care_plan`
+- Care: `get_care_gaps`, `get_care_plans`, `generate_care_plan`, `get_care_completion_summary`, `get_overdue_items`
 - Providers: `find_specialists`
 - Research: `find_clinical_trials`, `get_research_insights`
 - Journal: `get_health_journal`, `add_journal_entry`
 - Appointments: `get_appointment_preps`, `generate_appointment_prep`
+- Skill endpoints: `get_vitals_log`, `get_vitals_education`, `get_refill_timeline`, `get_activity_correlations`
+- Connections: `get_available_connections`, `get_mcp_audit_log`
 
 **Claude Desktop Config** (`claude_desktop_config.json`):
 
