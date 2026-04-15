@@ -1,0 +1,33 @@
+# SmartHealthConnect — Health Context Declaration
+#
+# Sister file to HealthClaw Guardrails' .health-context.yaml. This repo is
+# the patient-facing surface; HealthClaw is the engine. Data, policy,
+# guardrails, and compiled truth live there. Skills + conversational
+# patterns + client UI live here.
+
+name: SmartHealthConnect
+version: 1.1.0
+role: surface
+
+# Jurisdiction determines which regulatory overlay applies to patient-facing
+# flows. Supported today: us.
+jurisdiction: us
+regulations:
+  - hipaa
+
+# The audience is strictly the patient (and, via skills like kids-health,
+# caregivers acting on behalf of a patient).
+audience:
+  - patient
+
+# Every skill treats all data as PHI by default.
+data_sensitivity: phi
+
+# Engine that enforces guardrails. Patient skills MUST route reads and
+# writes through this engine's MCP tools — never direct FHIR access.
+engine:
+  name: healthclaw-guardrails
+  repo: https://github.com/aks129/HealthClawGuardrails
+  # When set, the SmartHealthConnect MCP server exposes a get_compiled_truth
+  # proxying tool that forwards to HealthClaw's fhir_compiled_truth.
+  mcp_url_env: HEALTHCLAW_MCP_URL

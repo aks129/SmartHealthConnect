@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Engine / surface contract (v1.1.0)
+
+SmartHealthConnect is the **patient-facing surface** of the HealthClaw platform. It does NOT own data, policy, or the canonical record. Those belong to the engine.
+
+- **Engine**: [HealthClaw Guardrails](https://github.com/aks129/HealthClawGuardrails) — FHIR store, PHI redaction, audit trail, step-up auth, tenant isolation, Compiled Truth primitive.
+- **Surface** (this repo): 6 patient skills, React client, conversational patterns, MCP server that proxies into the engine.
+
+**Rule**: patient skills never read FHIR directly. Resource-specific claims must go through `get_compiled_truth` (proxies to HealthClaw's `fhir_compiled_truth`) which returns current redacted state + `curation_state` + `quality_score` + Provenance timeline. See each skill's `SKILL.md` for the requirement.
+
+Configure with `HEALTHCLAW_MCP_URL=http://localhost:3001/mcp/rpc` (or your deployed URL) and optionally `HEALTHCLAW_TENANT_ID=<tenant>`.
+
+`.health-context.yaml` at repo root declares `role: surface` with `engine: healthclaw-guardrails`. The engine has the mirror file declaring `role: engine`.
+
 ## Common Commands
 
 ### Development

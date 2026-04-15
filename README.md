@@ -1,12 +1,23 @@
-# Liara AI Health
+# SmartHealthConnect (Liara AI Health)
 
-A SMART on FHIR patient health records platform with AI-powered insights.
+The patient-facing surface of the HealthClaw platform.
 
-**Status: MVP** - Production-ready for beta deployment.
+**v1.1.0** — now routes through [HealthClaw Guardrails](https://github.com/aks129/HealthClawGuardrails) v1.2.0's Compiled Truth engine.
+
+## Engine / surface contract
+
+SmartHealthConnect **does not** own data, policy, or the canonical record.
+
+- **Engine** — [HealthClaw Guardrails](https://github.com/aks129/HealthClawGuardrails) owns the FHIR store, PHI redaction, audit trail, step-up auth, tenant isolation, and the **Compiled Truth** primitive (current state + Provenance timeline for every resource).
+- **Surface** — this repo owns the 6 patient skills (`healthy-habits`, `care-completion`, `medication-refills`, `diet-exercise`, `kids-health`, `research-monitor`), the React client, and the conversational patterns.
+
+Every skill that makes a resource-specific claim to the patient must call the `get_compiled_truth` MCP tool first — it proxies to HealthClaw's `fhir_compiled_truth` and returns the current redacted resource + an append-only evidence timeline. See each skill's `SKILL.md` for the rule. Configure with `HEALTHCLAW_MCP_URL=http://localhost:3001/mcp/rpc` (or your deployed URL).
+
+`.health-context.yaml` at the repo root declares `role: surface` and names HealthClaw as the engine. Mirrored in the engine repo.
 
 ## Overview
 
-Liara AI Health enables patients to connect their healthcare providers and view their complete health records in one secure platform. The application uses SMART on FHIR standards for interoperability and includes AI-powered health insights.
+SmartHealthConnect enables patients to connect their healthcare providers and view their complete health records in one secure platform. The application uses SMART on FHIR standards for interoperability and delegates guardrail enforcement to HealthClaw.
 
 ## Features
 

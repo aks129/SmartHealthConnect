@@ -65,7 +65,7 @@ async function ensureSession(): Promise<void> {
 const server = new Server(
   {
     name: "smarthealthconnect",
-    version: "1.0.0",
+    version: "1.1.0",
   },
   {
     capabilities: {
@@ -880,6 +880,30 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
         annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
       },
+      // --- Compiled Truth (proxy to HealthClaw Guardrails engine) ---
+      {
+        name: "get_compiled_truth",
+        description: "Get the current best-known state of a FHIR resource plus the append-only evidence timeline of corrections. Proxies to HealthClaw Guardrails' fhir_compiled_truth tool — the engine this surface depends on. Call this before making resource-specific claims so you can say not just WHAT the record says but WHY it says it. Requires HEALTHCLAW_MCP_URL env var to be set (e.g. http://localhost:3001/mcp/rpc).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            resource_type: {
+              type: "string",
+              description: "FHIR resource type (e.g. 'Condition', 'AllergyIntolerance', 'MedicationRequest')",
+            },
+            resource_id: {
+              type: "string",
+              description: "ID of the resource",
+            },
+            tenant_id: {
+              type: "string",
+              description: "HealthClaw tenant identifier. Defaults to the HEALTHCLAW_TENANT_ID env var or 'desktop-demo'.",
+            },
+          },
+          required: ["resource_type", "resource_id"],
+        },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      },
     ],
   };
 });
@@ -1381,6 +1405,66 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (condition) params.append("condition", condition);
         const result = await apiCall("GET", `/api/research-monitor/${memberId}/trial-eligibility?${params}`);
         return { content: applyGuardrails("check_trial_eligibility", result) };
+      }
+
+      // Compiled Truth — proxy to HealthClaw Guardrails' fhir_compiled_truth
+      // MCP tool. This is the engine/surface boundary: SmartHealthConnect
+      // never reads FHIR directly, and this is the canonical way patient
+      // skills learn the current state + evidence trail of any resource.
+      case "get_compiled_truth": {
+        const mcpUrl = process.env.HEALTHCLAW_MCP_URL;
+        if (!mcpUrl) {
+          return {
+            content: [{
+              type: "text",
+              text: (
+                "get_compiled_truth requires HEALTHCLAW_MCP_URL to be set. " +
+                "Example: HEALTHCLAW_MCP_URL=http://localhost:3001/mcp/rpc. " +
+                "See .health-context.yaml for the engine/surface contract."
+              ),
+            }],
+            isError: true,
+          };
+        }
+        const a = args as {
+          resource_type: string;
+          resource_id: string;
+          tenant_id?: string;
+        };
+        const tenant = a.tenant_id || process.env.HEALTHCLAW_TENANT_ID || "desktop-demo";
+        const rpcBody = {
+          jsonrpc: "2.0",
+          id: Date.now(),
+          method: "tools/call",
+          params: {
+            name: "fhir_compiled_truth",
+            arguments: {
+              resource_type: a.resource_type,
+              resource_id: a.resource_id,
+            },
+          },
+        };
+        const resp = await fetch(mcpUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Tenant-Id": tenant,
+          },
+          body: JSON.stringify(rpcBody),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (!resp.ok) {
+          const errText = await resp.text().catch(() => "");
+          return {
+            content: [{
+              type: "text",
+              text: `HealthClaw compiled-truth call failed: ${resp.status} ${errText.slice(0, 200)}`,
+            }],
+            isError: true,
+          };
+        }
+        const result = await resp.json();
+        return { content: applyGuardrails("get_compiled_truth", result) };
       }
 
       default:
