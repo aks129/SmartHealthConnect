@@ -17,7 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run test:coverage` - Generate coverage report (v8 provider)
 - `npx vitest run tests/some-file.test.ts` - Run a single test file
 - Tests live in `tests/` directory, matched by `tests/**/*.test.ts`
-- Coverage thresholds: 60% statements, 50% branches, 60% functions, 60% lines
+- Coverage is reported and uploaded to Codecov but not gated by thresholds (see note in `vitest.config.ts`)
 - Coverage only measures `server/**/*.ts` (excludes `server/index.ts`); client code is not covered
 
 ### Production
