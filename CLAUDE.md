@@ -15,6 +15,14 @@ Configure with `HEALTHCLAW_MCP_URL=http://localhost:3001/mcp/rpc` (or your deplo
 
 `.health-context.yaml` at repo root declares `role: surface` with `engine: healthclaw-guardrails`. The engine has the mirror file declaring `role: engine`.
 
+## Release ritual
+
+Every version bump in `package.json` must be accompanied by a populated retrospective in `retrospectives/v<X.Y.Z>.md`, scaffolded from [`retrospectives/TEMPLATE.md`](retrospectives/TEMPLATE.md). Depth scales with SemVer scope (patch may be skipped unless an incident occurred; minor should be terse but complete; major or contract-breaking changes get the full treatment).
+
+The retrospective is part of the release — do not merge a version bump without one. Section 2 (engine/surface contract check) is non-optional and must confirm that any new FHIR reads route through `get_compiled_truth` and any PHI-bearing schemas have redaction coverage.
+
+When starting a session that modifies `package.json`'s `version` field, assume a retro is the tail of the work unless the user explicitly says otherwise.
+
 ## Common Commands
 
 ### Development
