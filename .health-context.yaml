@@ -6,7 +6,7 @@
 # patterns + client UI live here.
 
 name: SmartHealthConnect
-version: 1.1.0
+version: 1.2.0
 role: surface
 
 # Jurisdiction determines which regulatory overlay applies to patient-facing

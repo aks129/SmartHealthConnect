@@ -2,7 +2,11 @@
 
 The patient-facing surface of the HealthClaw platform.
 
-**v1.1.0** — now routes through [HealthClaw Guardrails](https://github.com/aks129/HealthClawGuardrails) v1.2.0's Compiled Truth engine.
+**v1.2.0** — now reads wearable signals (Garmin, Oura, Polar, Suunto, Whoop, Fitbit, Strava) sourced from [HealthClaw Guardrails](https://github.com/aks129/HealthClawGuardrails) v1.3.0. Still routes through the Compiled Truth engine from v1.1.0.
+
+## New in v1.2.0 — Wearable signals
+
+When HealthClaw's `OPEN_WEARABLES_URL` is configured, wearable data arrives as FHIR Observations with LOINC codes and device Provenance. The existing `healthy-habits`, `diet-exercise`, and `medication-refills` skills read them through the same `fhir_search` they already use — no new tools in this repo. Each skill's `SKILL.md` now lists the LOINC codes worth knowing.
 
 ## Engine / surface contract
 

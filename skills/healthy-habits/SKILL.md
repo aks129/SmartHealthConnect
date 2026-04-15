@@ -51,3 +51,17 @@ Surface the current state AND cite the timeline in your response. Example: "Your
 **Never** fetch FHIR resources through any path that bypasses HealthClaw. No direct EHR calls, no internal-only lookups for claims you make to the patient. Route through the engine.
 
 If `HEALTHCLAW_MCP_URL` is not set, `get_compiled_truth` returns a helpful error. In that case, fall back to the skill's own tools but warn the patient that the evidence trail cannot be shown.
+
+## Wearable signals (v1.2.0)
+
+When the HealthClaw engine has `OPEN_WEARABLES_URL` set, wearable data from Garmin, Oura, Polar, Suunto, Whoop, Fitbit, Strava, and Ultrahuman arrives as FHIR Observations with LOINC codes and device Provenance. No new MCP tool needed — this skill's existing `fhir_search` calls automatically pick up wearable-sourced Observations.
+
+**LOINC codes worth knowing** for this skill:
+
+- Heart rate → `8867-4` · Resting HR → `40443-4` · HRV (SDNN) → `80404-7`
+- SpO2 → `59408-5` · Respiratory rate → `9279-1` · Body temp → `8310-5`
+- Steps → `55423-8` · Sleep duration → `93832-4` · VO2max → `65757-1`
+- Body weight → `29463-7` · Systolic BP → `8480-6` · Diastolic BP → `8462-4`
+- Blood glucose → `15074-8`
+
+When narrating a wearable-sourced reading, also call `get_compiled_truth` on the Observation — the timeline + device Provenance let you say not just "your resting HR is 58" but "Garmin recorded a resting HR of 58 this morning, part of a 14-day trend down from 62."

@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Wearable signals (v1.2.0)
+
+When the engine has `OPEN_WEARABLES_URL` set, wearable data (Garmin, Oura, Polar, Suunto, Whoop, Fitbit, Strava, Ultrahuman) arrives in HealthClaw as FHIR Observations. `healthy-habits`, `diet-exercise`, and `medication-refills` read them through existing `fhir_search` calls — no new SmartHealthConnect tools. The MCP tool `wearables_sync_status` (in HealthClaw) + its MCP App surface connection management. See each skill's SKILL.md for the relevant LOINC codes.
+
 ## Engine / surface contract (v1.1.0)
 
 SmartHealthConnect is the **patient-facing surface** of the HealthClaw platform. It does NOT own data, policy, or the canonical record. Those belong to the engine.
