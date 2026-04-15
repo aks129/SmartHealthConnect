@@ -284,22 +284,22 @@ router.get('/:memberId/trends', async (req: Request, res: Response) => {
   try {
     const memberId = parseInt(req.params.memberId);
 
-    const readings = await db
+    const readings: VitalsReading[] = await db
       .select()
       .from(vitalsReadings)
       .where(eq(vitalsReadings.familyMemberId, memberId))
       .orderBy(desc(vitalsReadings.readingDate));
 
-    const bpReadings = readings.filter(r => r.readingType === 'blood_pressure');
-    const glucoseReadings = readings.filter(r => r.readingType === 'blood_glucose');
+    const bpReadings = readings.filter((r: VitalsReading) => r.readingType === 'blood_pressure');
+    const glucoseReadings = readings.filter((r: VitalsReading) => r.readingType === 'blood_glucose');
 
     // Compute stats
     const bpStats = bpReadings.length > 0 ? {
       count: bpReadings.length,
       latestSystolic: bpReadings[0].systolic,
       latestDiastolic: bpReadings[0].diastolic,
-      avgSystolic: Math.round(bpReadings.reduce((s, r) => s + (r.systolic || 0), 0) / bpReadings.length),
-      avgDiastolic: Math.round(bpReadings.reduce((s, r) => s + (r.diastolic || 0), 0) / bpReadings.length),
+      avgSystolic: Math.round(bpReadings.reduce((s: number, r: VitalsReading) => s + (r.systolic || 0), 0) / bpReadings.length),
+      avgDiastolic: Math.round(bpReadings.reduce((s: number, r: VitalsReading) => s + (r.diastolic || 0), 0) / bpReadings.length),
       classification: bpReadings[0].systolic && bpReadings[0].diastolic
         ? classifyBP(bpReadings[0].systolic, bpReadings[0].diastolic)
         : null,
@@ -308,14 +308,14 @@ router.get('/:memberId/trends', async (req: Request, res: Response) => {
     const glucoseStats = glucoseReadings.length > 0 ? {
       count: glucoseReadings.length,
       latestValue: glucoseReadings[0].glucoseValue,
-      avgValue: Math.round(glucoseReadings.reduce((s, r) => s + (r.glucoseValue || 0), 0) / glucoseReadings.length),
+      avgValue: Math.round(glucoseReadings.reduce((s: number, r: VitalsReading) => s + (r.glucoseValue || 0), 0) / glucoseReadings.length),
       classification: glucoseReadings[0].glucoseValue
         ? classifyGlucose(glucoseReadings[0].glucoseValue, glucoseReadings[0].glucoseContext || undefined)
         : null,
     } : null;
 
     // Chart data (last 30 readings of each type)
-    const bpChartData = bpReadings.slice(0, 30).reverse().map(r => ({
+    const bpChartData = bpReadings.slice(0, 30).reverse().map((r: VitalsReading) => ({
       date: r.readingDate,
       time: r.readingTime,
       systolic: r.systolic,
@@ -323,7 +323,7 @@ router.get('/:memberId/trends', async (req: Request, res: Response) => {
       heartRate: r.heartRate,
     }));
 
-    const glucoseChartData = glucoseReadings.slice(0, 30).reverse().map(r => ({
+    const glucoseChartData = glucoseReadings.slice(0, 30).reverse().map((r: VitalsReading) => ({
       date: r.readingDate,
       time: r.readingTime,
       value: r.glucoseValue,
