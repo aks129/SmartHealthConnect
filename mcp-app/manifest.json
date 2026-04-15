@@ -55,6 +55,11 @@
       "name": "research_insights",
       "title": "Research Insights",
       "description": "Find recent research preprints from bioRxiv/medRxiv for a medical condition."
+    },
+    {
+      "name": "data_connections",
+      "title": "Data Connections",
+      "description": "View and manage health data connections (patient portals, insurance) and PHI access audit log."
     }
   ],
   "test_credentials": {

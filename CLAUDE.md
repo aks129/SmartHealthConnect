@@ -30,7 +30,7 @@ Configure with `HEALTHCLAW_MCP_URL=http://localhost:3001/mcp/rpc` (or your deplo
 - `npm run test:coverage` - Generate coverage report (v8 provider)
 - `npx vitest run tests/some-file.test.ts` - Run a single test file
 - Tests live in `tests/` directory, matched by `tests/**/*.test.ts`
-- Coverage thresholds: 60% statements, 50% branches, 60% functions, 60% lines
+- Coverage is reported and uploaded to Codecov but not gated by thresholds (see note in `vitest.config.ts`)
 - Coverage only measures `server/**/*.ts` (excludes `server/index.ts`); client code is not covered
 
 ### Production
@@ -113,7 +113,19 @@ root/
 ├── shared/
 │   └── schema.ts             # DB tables + Zod FHIR schemas
 ├── tests/                     # Vitest test files
+│   ├── auth.test.ts
+│   ├── data-connections-routes.test.ts
+│   ├── flexpa-client.test.ts
+│   ├── health-skillz-client.test.ts
+│   └── mcp-guardrails.test.ts
 ├── mcp-server/                # MCP server for Claude Desktop integration
+├── mcp-app/                   # MCP v0.3 manifest-based app (7 tools + HTML views)
+│   ├── manifest.json          # Tool definitions and UI resource mappings
+│   ├── server.ts              # MCP app server (calls backend FHIR API endpoints)
+│   └── src/views/             # HTML UI views for each tool
+├── skill/                     # Claude skill CLI scripts (untracked)
+│   ├── SKILL.md               # Skill definition for health record imports
+│   └── scripts/               # connect-portal.ts, connect-insurance.ts, fetch-data.ts
 └── vercel.json               # Vercel deployment config
 ```
 
@@ -172,7 +184,8 @@ Optional:
 - `FHIR_SERVER_URL` - External FHIR server (defaults to localhost:8000/fhir)
 - `FLEXPA_PUBLISHABLE_KEY` - Flexpa OAuth publishable key (for payer data import)
 - `FLEXPA_SECRET_KEY` - Flexpa OAuth secret key (server-side only)
-- `HEALTH_SKILLZ_URL` - Health Skillz server URL (defaults to https://health-skillz.joshuamandel.com)
+- `HEALTH_SKILLZ_URL` - Health Skillz server URL (defaults to `https://health-skillz.joshuamandel.com`)
+- `JWT_SECRET` - Secret for signing JWT tokens (required in CI test environment)
 - `PORT` - Server port (defaults to 5000)
 
 ### Key Patterns

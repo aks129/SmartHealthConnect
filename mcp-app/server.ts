@@ -389,5 +389,60 @@ export function createServer(): McpServer {
     }),
   );
 
+  // ─── 7. Data Connections (Tool + UI) ───
+  const dataConnectionsUri =
+    "ui://data-connections/data-connections.html";
+
+  registerAppTool(
+    server,
+    "data_connections",
+    {
+      title: "Data Connections",
+      description:
+        "View and manage health data connections (patient portals, insurance) and PHI access audit log.",
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        openWorldHint: true,
+      },
+      _meta: { ui: { resourceUri: dataConnectionsUri } },
+    },
+    async () => {
+      const [connections, auditLog] = await Promise.all([
+        apiFetch("/api/connections/available").catch(() => ({
+          connections: [],
+        })),
+        apiFetch("/api/connections/audit-log?limit=50").catch(() => ({
+          entries: [],
+          count: 0,
+        })),
+      ]);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({ connections: (connections as any).connections, auditLog }),
+          },
+        ],
+      };
+    },
+  );
+
+  registerAppResource(
+    server,
+    "Data Connections View",
+    dataConnectionsUri,
+    {},
+    async () => ({
+      contents: [
+        {
+          uri: dataConnectionsUri,
+          mimeType: RESOURCE_MIME_TYPE,
+          text: await loadView("data-connections.html"),
+        },
+      ],
+    }),
+  );
+
   return server;
 }
