@@ -24,9 +24,6 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ProviderLogo } from '@/components/ui/provider-logo';
-// Import icons from react-icons
-import { SiEpicgames, SiBitcoinsv, SiSpring, SiAmazonpay } from 'react-icons/si';
-
 interface ConnectCardProps {
   provider: FhirProvider;
   className?: string;
